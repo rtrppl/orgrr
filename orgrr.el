@@ -1,0 +1,53 @@
+(defun orgrr-get-title (filename)
+  "Get value for #+TITLE:/#+title for any file."
+(setq line (shell-command-to-string (concat "rg \"\\#\\+title: \" " filename)))
+(let ((case-fold-search t))
+    (when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)"
+                        line)
+      (match-string 2 line))))
+
+(defun orgrr-show-backlinks ()
+  "Show all backlinks to current file."
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                        default-directory
+                      (buffer-file-name))))
+    (pcase (org-collect-keywords '("TITLE"))
+      (`(("TITLE" . ,val))
+         (setq title (car val))))
+    (with-temp-buffer
+      (insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " org-directory)))
+      (let ((result '())
+            (current-entry "")
+            (lines (split-string (buffer-string) "\n" t)))
+        (dolist (line lines)
+          (if (string-match "^\\(.*?\\):\\(.*\\)$" line)
+              (progn
+                (setq current-entry (match-string 1 line))
+                (setq result (plist-put result current-entry (match-string 2 line))))
+            (setq current-entry (concat current-entry "\n" line)))
+          (setq result-list result))))
+      (with-current-buffer (get-buffer-create "*Orgrr Backlinks*")
+        (let ((inhibit-read-only t))
+          (erase-buffer)
+          (insert (concat "\*\[\[file:" filename "\]\[" title "\]\]\*\n\n"))
+          (if (= (- (length result-list) 1) 1)
+              (insert "* 1 Backlink\n\n")
+          (insert (concat "* " (number-to-string (- (length  result-list) 1)) " Backlinks\n\n")))          
+          (dolist (entry result-list)
+            (when (and (stringp entry)
+                       (not (string= entry filename)))
+              (let ((key entry)
+                    (value (plist-get result-list entry)))
+                (when (stringp value)
+                  (let ((result (orgrr-get-title key)))
+                    (insert (concat "\*\* \[\[file:" key "\]" "\[" result "\]\]:\n" value "\n\n"))))))))
+        (display-buffer-in-side-window
+         (current-buffer)
+         '((side . right)
+           (slot . -1)
+           (window-width . 60)))
+(with-current-buffer "*Orgrr Backlinks*"
+      (org-mode)
+      (beginning-of-buffer))
+)))
