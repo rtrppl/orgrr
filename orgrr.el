@@ -49,5 +49,5 @@
            (window-width . 60)))
 (with-current-buffer "*Orgrr Backlinks*"
       (org-mode)
-      (beginning-of-buffer))
-)))
+      (beginning-of-buffer)
+))))
