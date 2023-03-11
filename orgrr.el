@@ -15,6 +15,7 @@
     (pcase (org-collect-keywords '("TITLE"))
       (`(("TITLE" . ,val))
          (setq title (car val))))
+(setq backlinks 0)
     (with-temp-buffer
       (insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " org-directory)))
       (let ((result '())
@@ -23,6 +24,7 @@
         (dolist (line lines)
           (if (string-match "^\\(.*?\\):\\(.*\\)$" line)
               (progn
+		(setq backlinks (+ backlinks 1))
                 (setq current-entry (match-string 1 line))
                 (setq result (plist-put result current-entry (match-string 2 line))))
             (setq current-entry (concat current-entry "\n" line)))
@@ -33,7 +35,7 @@
           (insert (concat "\*\[\[file:" filename "\]\[" title "\]\]\*\n\n"))
           (if (= (- (length result-list) 1) 1)
               (insert "* 1 Backlink\n\n")
-          (insert (concat "* " (number-to-string (- (length  result-list) 1)) " Backlinks\n\n")))          
+          (insert (concat "* " (number-to-string backlinks) " Backlinks\n\n")))          
           (dolist (entry result-list)
             (when (and (stringp entry)
                        (not (string= entry filename)))
@@ -41,7 +43,7 @@
                     (value (plist-get result-list entry)))
                 (when (stringp value)
                   (let ((result (orgrr-get-title key)))
-                    (insert (concat "\*\* \[\[file:" key "\]" "\[" result "\]\]:\n" value "\n\n"))))))))
+                    (insert (concat "\*\* \[\[file:" key "\]" "\[" result "\]\]:\n\n" value "\n\n"))))))))
         (display-buffer-in-side-window
          (current-buffer)
          '((side . right)
@@ -49,5 +51,4 @@
            (window-width . 60)))
 (with-current-buffer "*Orgrr Backlinks*"
       (org-mode)
-      (beginning-of-buffer)
-))))
+      (beginning-of-buffer)))))
