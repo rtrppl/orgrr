@@ -6,6 +6,8 @@
                         line)
       (match-string 2 line))))
 
+
+
 (defun orgrr-show-backlinks ()
   "Show all backlinks to current file."
   (interactive)
@@ -42,7 +44,8 @@
               (let ((key entry)
                     (value (plist-get result-list entry)))
                 (when (stringp value)
-                  (let ((result (orgrr-get-title key)))
+                  (let ((result (orgrr-get-title key))
+			(line-number (orgrr-get-line-number key filename)
                     (insert (concat "\*\* \[\[file:" key "\]" "\[" result "\]\]:\n\n" value "\n\n"))))))))
         (display-buffer-in-side-window
          (current-buffer)
@@ -52,3 +55,59 @@
 (with-current-buffer "*Orgrr Backlinks*"
       (org-mode)
       (beginning-of-buffer)))))
+
+(defun orgrr-update ()
+  "Insert a link to another org-file in org-directory via mini-buffer completion"
+  (interactive)
+  (with-temp-buffer
+      (insert (shell-command-to-string (concat "rg -l --sortr modified  \"\\#\\+title:\" " org-directory)))
+      (let ((result '())
+            (current-entry "")
+            (lines (split-string (buffer-string) "\n" t)))
+        (dolist (line lines)
+                (setq current-entry line)
+                (setq result (plist-put result (orgrr-get-title current-entry) current-entry)))
+;	  (setq result (cons (orgrr-get-title current-entry) result)))
+          (setq orgrr-files-titles result)))
+(message "orgrr updated!"))
+
+
+(defun orgrr-update-test ()
+  "Insert a link to another org-file in org-directory via mini-buffer completion"
+  (interactive)
+  (setq current-entry "")
+  (setq orgrr-files "")
+  (with-temp-buffer
+      (insert (shell-command-to-string (concat "rg -l --sort accessed  \"\\#\\+title:\" " org-directory)))
+      (goto-char (point-min))
+          (while (not (eobp))
+	    (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
+            (setq orgrr-files (cons (orgrr-get-title current-entry) orgrr-files))
+            (forward-line)))
+  (message "orgrr updated!"))
+
+(defun orgrr-get-all-titles ()
+  "Get value for #+TITLE:/#+title for all org-files."
+  (setq current-entry "")
+  (setq orgrr-titles "")
+  (with-temp-buffer
+      (insert (shell-command-to-string (concat "rg --sort modified \"\\#\\+title:\" " org-directory)))
+      (goto-char (point-min))
+          (while (not (eobp))
+	    (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
+	     (when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
+		    (setq orgrr-titles (cons (match-string 2 current-entry) orgrr-titles)))  
+            (forward-line)))
+ (message "orgrr updated!"))
+
+(defun orgrr-insert ()
+  "Insert a link to another org-file in org-directory via mini-buffer completion"
+  (interactive)
+  (orgrr-get-all-titles)
+  (setq selection (completing-read "" orgrr-titles))
+  (setq line (shell-command-to-string (concat "rg -l -e '\\#\\+title: " selection "' " org-directory)))
+  (setq line (string-trim-right line "\n"))
+  (insert (concat "\[\[file:" line "\]\[" selection "\]\]")))
+
+
+
