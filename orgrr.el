@@ -91,7 +91,7 @@
   (setq current-entry "")
   (setq orgrr-titles "")
   (with-temp-buffer
-      (insert (shell-command-to-string (concat "rg --sort modified \"\\#\\+title:\" " org-directory)))
+      (insert (shell-command-to-string (concat "rg -i --sort modified \"\\#\\+title:\" " org-directory)))
       (goto-char (point-min))
           (while (not (eobp))
 	    (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
@@ -105,7 +105,8 @@
   (interactive)
   (orgrr-get-all-titles)
   (setq selection (completing-read "" orgrr-titles))
-  (setq line (shell-command-to-string (concat "rg -l -e '\\#\\+title: " selection "' " org-directory)))
+  (setq line (shell-command-to-string (concat "rg -l -i -e '\\#\\+title: " selection "$' " org-directory)))
+  (print line)
   (setq line (string-trim-right line "\n"))
   (insert (concat "\[\[file:" line "\]\[" selection "\]\]")))
 
