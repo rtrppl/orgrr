@@ -104,5 +104,21 @@
   (setq line (string-trim-right line "\n"))
   (insert (concat "\[\[file:" line "\]\[" selection "\]\]")))
 
+(defun orgrr-find ()
+  "Find org-file in org-directory via mini-buffer completion. Create a new one, if not existent."
+  (interactive)
+  (orgrr-get-all-titles)
+  (setq selection (completing-read "" orgrr-titles))
+  (if (member selection (flatten-tree orgrr-titles))
+    (progn
+      (setq line (shell-command-to-string (concat "rg -l -i -e '\\#\\+title: " selection "$' " org-directory)))
+      (setq line (string-trim-right line "\n"))
+      (org-open-file line))
+    (let* ((time (format-time-string "%Y%m%d%H%M%S"))
+         (filename (concat org-directory time "-" (replace-regexp-in-string "[^a-zA-Z0-9-]" "_" selection))))
+	 (find-file (concat filename ".org"))
+	 (insert (concat "#+title: " selection))
+	 (next-line)
+	 (next-line))))
 
 
