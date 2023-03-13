@@ -1,6 +1,6 @@
 (defun orgrr-get-title (filename)
   "Get value for #+TITLE:/#+title for any file."
-(setq line (shell-command-to-string (concat "rg \"\\#\\+title: \" " filename)))
+(setq line (shell-command-to-string (concat "rg -i \"\\#\\+title: \" " filename)))
 (let ((case-fold-search t))
     (when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)"
                         line)
