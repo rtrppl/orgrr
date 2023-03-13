@@ -8,6 +8,8 @@
 
 (defun orgrr-show-backlinks ()
   "Show all backlinks to current file."
+;; TODO: add unlinked references below backlinks!
+;;
   (interactive)
   (let ((filename (if (equal major-mode 'dired-mode)
                         default-directory
@@ -17,7 +19,7 @@
           (setq title (car val))))
  (setq backlinks 0)
      (with-temp-buffer
-       (insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " org-directory)))
+       (insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " org-directory " -g \"*.org\"")))
        (let ((result '())
             (current-entry "")
             (lines (split-string (buffer-string) "\n" t)))
@@ -51,10 +53,14 @@
             (window-width . 60)))
  (with-current-buffer "*Orgrr Backlinks*"
        (org-mode)
-       (beginning-of-buffer)))))
+       (beginning-of-buffer))))
+ (let ((window (get-buffer-window "*Orgrr Backlinks*")))
+  (when window
+    (select-window window)))
+    (next-line 4))
 
 (defun orgrr-update ()
-  "Insert a link to another org-file in org-directory via mini-buffer completion"
+  "This creates a list with the location of the file and the title of the note. It takes about 30 seconds to complete. Not practical."
   (with-temp-buffer
       (insert (shell-command-to-string (concat "rg -l --sortr modified  \"\\#\\+title:\" " org-directory)))
       (let ((result '())
@@ -67,9 +73,8 @@
           (setq orgrr-files-titles result)))
 (message "orgrr updated!"))
 
-
 (defun orgrr-update-test ()
-  "Insert a link to another org-file in org-directory via mini-buffer completion"
+  "A different attempt to do orgrr-update."
   (setq current-entry "")
   (setq orgrr-files "")
   (with-temp-buffer
@@ -86,7 +91,7 @@
   (setq current-entry "")
   (setq orgrr-titles "")
   (with-temp-buffer
-      (insert (shell-command-to-string (concat "rg -i --sort modified \"\\#\\+title:\" " org-directory)))
+      (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+title:\" " org-directory)))
       (goto-char (point-min))
           (while (not (eobp))
 	    (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
@@ -96,29 +101,26 @@
 
 (defun orgrr-insert ()
   "Insert a link to another org-file in org-directory via mini-buffer completion"
+;; TODO: integrate roam_alias
   (interactive)
   (orgrr-get-all-titles)
   (setq selection (completing-read "" orgrr-titles))
-  (setq line (shell-command-to-string (concat "rg -l -i -e '\\#\\+title: " selection "$' " org-directory)))
-  (print line)
+  (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." selection "$\" " org-directory " -g \"*.org\"")))
   (setq line (string-trim-right line "\n"))
   (insert (concat "\[\[file:" line "\]\[" selection "\]\]")))
 
 (defun orgrr-find ()
   "Find org-file in org-directory via mini-buffer completion. Create a new one, if not existent."
+;; TODO: integrate roam_alias
   (interactive)
   (orgrr-get-all-titles)
   (setq selection (completing-read "" orgrr-titles))
   (if (member selection (flatten-tree orgrr-titles))
     (progn
-      (setq line (shell-command-to-string (concat "rg -l -i -e '\\#\\+title: " selection "$' " org-directory)))
+      (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." selection "$\" " org-directory " -g \"*.org\"")))
       (setq line (string-trim-right line "\n"))
       (org-open-file line))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
          (filename (concat org-directory time "-" (replace-regexp-in-string "[^a-zA-Z0-9-]" "_" selection))))
 	 (find-file (concat filename ".org"))
-	 (insert (concat "#+title: " selection))
-	 (next-line)
-	 (next-line))))
-
-
+	 (insert (concat "#+title: " selection "\n\n")))))
