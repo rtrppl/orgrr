@@ -105,7 +105,7 @@
   (interactive)
   (orgrr-get-all-titles)
   (setq selection (completing-read "" orgrr-titles))
-  (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." selection "$\" " org-directory " -g \"*.org\"")))
+  (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." (replace-regexp-in-string "[\"]" "." selection) "$\" " org-directory " -g \"*.org\"")))
   (setq line (string-trim-right line "\n"))
   (insert (concat "\[\[file:" line "\]\[" selection "\]\]")))
 
@@ -117,10 +117,12 @@
   (setq selection (completing-read "" orgrr-titles))
   (if (member selection (flatten-tree orgrr-titles))
     (progn
-      (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." selection "$\" " org-directory " -g \"*.org\"")))
+      (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." (replace-regexp-in-string "[\"]" "." selection) "$\" " org-directory " -g \"*.org\"")))
       (setq line (string-trim-right line "\n"))
       (org-open-file line))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
          (filename (concat org-directory time "-" (replace-regexp-in-string "[^a-zA-Z0-9-]" "_" selection))))
 	 (find-file (concat filename ".org"))
 	 (insert (concat "#+title: " selection "\n\n")))))
+
+
