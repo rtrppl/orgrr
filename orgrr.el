@@ -107,6 +107,11 @@
   (setq selection (completing-read "" orgrr-titles))
   (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." (replace-regexp-in-string "[\"]" "." selection) "$\" " org-directory " -g \"*.org\"")))
   (setq line (string-trim-right line "\n"))
+  (setq path-of-current-note
+      (if (buffer-file-name)
+          (file-name-directory (buffer-file-name))
+        default-directory))  
+  (setq line (file-relative-name line path-of-current-note))
   (insert (concat "\[\[file:" line "\]\[" selection "\]\]")))
 
 (defun orgrr-find ()
