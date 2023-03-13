@@ -52,12 +52,12 @@
             (slot . -1)
             (window-width . 60)))
  (with-current-buffer "*Orgrr Backlinks*"
-       (org-mode)
-       (beginning-of-buffer))))
+       (org-mode))))
  (let ((window (get-buffer-window "*Orgrr Backlinks*")))
   (when window
-    (select-window window)))
-    (next-line 4))
+    (select-window window)
+    (beginning-of-buffer)
+    (next-line 4))))
 
 (defun orgrr-update ()
   "This creates a list with the location of the file and the title of the note. It takes about 30 seconds to complete. Not practical."
