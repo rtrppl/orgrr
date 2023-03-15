@@ -99,7 +99,6 @@
 		    (setq orgrr-titles (cons (match-string 2 current-entry) orgrr-titles)))  
             (forward-line))))
 
-;; TODO: A function to add all roam_alias to another list that is only checked, when titles do not match. orgrr-titles and this orgrr-alias are added to orgrr-completion for the completion read
 ;; TODO: Add tags
 
 (defun orgrr-get-all-alias ()
@@ -111,8 +110,6 @@
       (goto-char (point-min))
     (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
       (push (match-string 1) orgrr-alias))))       
-
-;; if selection is not member of...
 
 (defun orgrr-insert ()
   "Insert a link to another org-file in org-directory via mini-buffer completion"
@@ -131,18 +128,26 @@
 
 (defun orgrr-find ()
   "Find org-file in org-directory via mini-buffer completion. Create a new one, if not existent."
-;; TODO: integrate roam_alias
+;; TODO: roam_tags
   (interactive)
   (orgrr-get-all-titles)
-  (setq selection (completing-read "" orgrr-titles))
+  (orgrr-get-all-alias)
+  (setq complete-list (append (flatten-tree orgrr-titles) (flatten-tree orgrr-alias)))
+  (setq selection (completing-read "" complete-list))
   (if (member selection (flatten-tree orgrr-titles))
     (progn
       (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." (replace-regexp-in-string "[\"]" "." selection) "$\" " org-directory " -g \"*.org\"")))
       (setq line (string-trim-right line "\n"))
       (org-open-file line))
+  (if (member selection (flatten-tree orgrr-alias))
+    (progn
+      (setq line (shell-command-to-string 
+       (concat "rg -l -i -e \"^.*alias.*" selection "\" " org-directory " -g \"*.org\"")))
+      (setq line (string-trim-right line "\n"))
+      (org-open-file line))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
          (filename (concat org-directory time "-" (replace-regexp-in-string "[^a-zA-Z0-9-]" "_" selection))))
 	 (find-file (concat filename ".org"))
-	 (insert (concat "#+title: " selection "\n\n")))))
+	 (insert (concat "#+title: " selection "\n\n"))))))
 
 
