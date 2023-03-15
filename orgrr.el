@@ -99,6 +99,21 @@
 		    (setq orgrr-titles (cons (match-string 2 current-entry) orgrr-titles)))  
             (forward-line))))
 
+;; TODO: A function to add all roam_alias to another list that is only checked, when titles do not match. orgrr-titles and this orgrr-alias are added to orgrr-completion for the completion read
+;; TODO: Add tags
+
+(defun orgrr-get-all-alias ()
+  "Get value for #+roam_alias for all org-files."
+  (setq current-entry "")
+  (setq orgrr-alias "")
+  (with-temp-buffer
+      (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+roam_alias:\" " org-directory)))
+      (goto-char (point-min))
+    (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
+      (push (match-string 1) orgrr-alias))))       
+
+;; if selection is not member of...
+
 (defun orgrr-insert ()
   "Insert a link to another org-file in org-directory via mini-buffer completion"
 ;; TODO: integrate roam_alias
