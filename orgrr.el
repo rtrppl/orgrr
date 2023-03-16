@@ -113,18 +113,30 @@
 
 (defun orgrr-insert ()
   "Insert a link to another org-file in org-directory via mini-buffer completion"
-;; TODO: integrate roam_alias
+;; TODO: roam_tags
   (interactive)
-  (orgrr-get-all-titles)
-  (setq selection (completing-read "" orgrr-titles))
-  (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." (replace-regexp-in-string "[\"]" "." selection) "$\" " org-directory " -g \"*.org\"")))
-  (setq line (string-trim-right line "\n"))
   (setq path-of-current-note
       (if (buffer-file-name)
           (file-name-directory (buffer-file-name))
-        default-directory))  
-  (setq line (file-relative-name line path-of-current-note))
-  (insert (concat "\[\[file:" line "\]\[" selection "\]\]")))
+        default-directory))
+  (orgrr-get-all-titles)
+  (orgrr-get-all-alias)
+  (setq complete-list (append (flatten-tree orgrr-titles) (flatten-tree orgrr-alias)))
+  (setq selection (completing-read "" complete-list))
+  (if (member selection (flatten-tree orgrr-titles))
+    (progn
+      (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." (replace-regexp-in-string "[\"]" "." selection) "$\" " org-directory " -g \"*.org\"")))
+      (setq line (string-trim-right line "\n"))
+      (setq line (file-relative-name line path-of-current-note))
+      (insert (concat "\[\[file:" line "\]\[" selection "\]\]")))
+    (if (member selection (flatten-tree orgrr-alias))
+	(progn
+	(setq line (shell-command-to-string 
+       (concat "rg -l -i -e \"^.*alias.*" selection "\" " org-directory " -g \"*.org\"")))
+      (setq line (string-trim-right line "\n"))
+      (setq line (file-relative-name line path-of-current-note))
+      (insert (concat "\[\[file:" line "\]\[" selection "\]\]"))))))
+
 
 (defun orgrr-find ()
   "Find org-file in org-directory via mini-buffer completion. Create a new one, if not existent."
