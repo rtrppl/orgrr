@@ -135,11 +135,14 @@
        (concat "rg -l -i -e \"^.*alias.*" selection "\" " org-directory " -g \"*.org\"")))
       (setq line (string-trim-right line "\n"))
       (setq line (file-relative-name line path-of-current-note))
-      (insert (concat "\[\[file:" line "\]\[" selection "\]\]"))))))
-
+      (insert (concat "\[\[file:" line "\]\[" selection "\]\]")))
+      (let* ((time (format-time-string "%Y%m%d%H%M%S"))
+         (filename (concat org-directory time "-" (replace-regexp-in-string "[^a-zA-Z0-9-]" "_" selection))))
+	 (find-file (concat filename ".org"))
+	 (insert (concat "#+title: " selection "\n\n"))))))
 
 (defun orgrr-find ()
-  "Find org-file in org-directory via mini-buffer completion. Create a new one, if not existent."
+  "Find org-file in org-directory via mini-buffer completion. If file does not exist, create a new one."
 ;; TODO: roam_tags
   (interactive)
   (orgrr-get-all-titles)
