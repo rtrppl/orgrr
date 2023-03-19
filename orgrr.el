@@ -1,5 +1,6 @@
 (defun orgrr-get-title (filename)
   "Get value for #+TITLE:/#+title for any file."
+;; Not used anymore. Now handled by orgrr-get-meta.
 (setq line (shell-command-to-string (concat "rg -i \"\\#\\+title: \" " filename)))
 (let ((case-fold-search t))
     (when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)"
@@ -9,8 +10,9 @@
 (defun orgrr-show-backlinks ()
   "Show all backlinks to current file."
 ;; TODO: add unlinked references below backlinks!
-;; TODO: Rewrite using hashtables.
+;; TODO: Full rewrite using hashtables.
   (interactive)
+  (orgrr-get-meta)
   (let ((filename (if (equal major-mode 'dired-mode)
                         default-directory
                       (buffer-file-name))))
@@ -44,7 +46,8 @@
                (let ((key entry)
                      (value (plist-get result-list entry)))
                  (when (stringp value)
-                   (let ((result (orgrr-get-title key)))
+;;                   (let ((result (orgrr-get-title key))) ;; a slower version
+		   (let ((result (gethash (concat "\\" key) orgrr-filename-title)))  
                      (insert (concat "\*\* \[\[file:" key "\]" "\[" result "\]\]:\n\n" value "\n\n"))))))))
          (display-buffer-in-side-window
           (current-buffer)
@@ -71,7 +74,7 @@
       (goto-char (point-min))
           (while (not (eobp))
 	    (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
-;; The following checks if this is a #+title line and is so, adds the title  + filename to orgrr-title-filename.
+;; The following checks if this is a #+title line and is so, adds the title + filename to orgrr-title-filename and filename + title to orgrr-filename-title.
 	    (if (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
 	     (progn
 	     (setq line (split-string current-entry "\\(: \\|:\\)" t))
@@ -79,7 +82,7 @@
 	     (setq title (car (cdr (cdr line))))
 	     (puthash title filename orgrr-title-filename)
 	     (puthash (concat "\\" filename) title orgrr-filename-title)))
-;; The following checks if this is a #+roam_alias line and if so, adds all alias  + filename to orgrr-alias-filename.
+;; The following checks if this is a #+roam_alias line and if so, adds all alias + filename to orgrr-alias-filename.
 	    (if (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
 	     (progn
 	       (setq line (split-string current-entry "\\(: \\|:\\)" t))
@@ -90,7 +93,7 @@
 		 (goto-char (point-min))
 		 (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
 		   (puthash (match-string 1) filename orgrr-alias-filename)))))
-;; The following checks if the line is about tags and if so copies the tags to  orgrr-tags-filename.
+;; The following checks if the line is about tags and if so copies the tags to orgrr-tags-filename.
 	     (if (string-match "\\(#\\+roam_tags:\\|#+ROAM_TAGS:\\)\\s-*\\(.+\\)" current-entry)
 	     (progn
 	     (setq line (split-string current-entry "\\(: \\|:\\)" t))
