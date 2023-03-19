@@ -59,110 +59,108 @@
     (beginning-of-buffer)
     (next-line 4))))
 
-(defun orgrr-update ()
-  "This creates a list with the location of the file and the title of the note. It takes about 30 seconds to complete. Not practical."
-  (with-temp-buffer
-      (insert (shell-command-to-string (concat "rg -l --sortr modified  \"\\#\\+title:\" " org-directory)))
-      (let ((result '())
-            (current-entry "")
-            (lines (split-string (buffer-string) "\n" t)))
-        (dolist (line lines)
-                (setq current-entry line)
-                (setq result (plist-put result (orgrr-get-title current-entry) current-entry)))
-;	  (setq result (cons (orgrr-get-title current-entry) result)))
-          (setq orgrr-files-titles result)))
-(message "orgrr updated!"))
-
-(defun orgrr-update-test ()
-  "A different attempt to do orgrr-update."
-  (setq current-entry "")
-  (setq orgrr-files "")
-  (with-temp-buffer
-      (insert (shell-command-to-string (concat "rg -l --sort accessed  \"\\#\\+title:\" " org-directory)))
-      (goto-char (point-min))
-          (while (not (eobp))
-	    (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
-            (setq orgrr-files (cons (orgrr-get-title current-entry) orgrr-files))
-            (forward-line)))
-  (message "orgrr updated!"))
-
-(defun orgrr-get-all-titles ()
+(defun orgrr-get-meta ()
   "Get value for #+TITLE:/#+title for all org-files."
   (setq current-entry "")
-  (setq orgrr-titles "")
+  (setq orgrr-title-filename (make-hash-table :test 'equal))
+  (setq orgrr-alias-filename (make-hash-table :test 'equal))
+  (setq orgrr-filename-tags (make-hash-table :test 'equal))
   (with-temp-buffer
-      (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+title:\" " org-directory)))
+      (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)\" " org-directory " -g \"*.org\"")))
       (goto-char (point-min))
           (while (not (eobp))
 	    (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
-	     (when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
-		    (setq orgrr-titles (cons (match-string 2 current-entry) orgrr-titles)))  
-            (forward-line))))
+;; The following checks if this is a #+title line and is so, adds the title  + filename to orgrr-title-filename.
+	    (if (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
+	     (progn
+	     (setq line (split-string current-entry "\\(: \\|:\\)" t))
+	     (setq filename (car line))
+	     (setq title (car (cdr (cdr line))))
+	     (puthash title filename orgrr-title-filename)))
+;	     (setq orgrr-title-filename (push (list :title title :filename filename) orgrr-title-filename))))
+;; The following checks if this is a #+roam_alias line and if so, adds all alias  + filename to orgrr-alias-filename.
+	    (if (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
+	     (progn
+	       (setq line (split-string current-entry "\\(: \\|:\\)" t))
+	     (setq filename (car line))
+	       (with-temp-buffer
+		 (setq alias "")
+		 (insert current-entry)
+		 (goto-char (point-min))
+		 (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
+		   (puthash (match-string 1) filename orgrr-alias-filename)))))
+;; The following checks if this is about tags and if so copies the the line orgrr-tags-filename.
+	     (if (string-match "\\(#\\+roam_tags:\\|#+ROAM_TAGS:\\)\\s-*\\(.+\\)" current-entry)
+	     (progn
+	     (setq line (split-string current-entry "\\(: \\|:\\)" t))
+	     (setq filename (car line))
+	     (setq tags (car (cdr (cdr line))))
+	     (puthash (concat "\\" filename) tags orgrr-filename-tags)))
+(forward-line))))
 
-;; TODO: Add tags
+(defun orgrr-selection ()
+ "This function prepares the variable orgrr-selection for completing-read and sends the result in selection to orgrr-find and orgrr-insert. It prepends tags before title and alias."
+ (setq orgrr-selection-list ())
+ (orgrr-get-meta)
+ (setq titles (hash-table-keys orgrr-title-filename))
+ (setq filenames-for-titles (hash-table-values orgrr-title-filename))
+ (setq aliases (hash-table-keys orgrr-alias-filename))
+ (setq filenames-for-alias (hash-table-values orgrr-alias-filename))
+ (setq filenames-for-tags (hash-table-keys orgrr-filename-tags))
+ (dolist (title titles)
+  (setq filename (gethash title orgrr-title-filename)) 
+  (if (member (concat "\\" filename) filenames-for-tags) 
+      (setq orgrr-selection-list (cons (concat "(" (gethash (concat "\\" filename) orgrr-filename-tags) ")" " " title) orgrr-selection-list))
+   (setq orgrr-selection-list (cons title orgrr-selection-list))))
+(dolist (alias aliases)
+  (setq filename (gethash alias orgrr-alias-filename)) 
+  (if (member (concat "\\" filename) filenames-for-tags) 
+      (setq orgrr-selection-list (cons (concat "(" (gethash (concat "\\" filename) orgrr-filename-tags) ")" " " alias) orgrr-selection-list))
+   (setq orgrr-selection-list (cons alias orgrr-selection-list))))
+(setq orgrr-selection-list (reverse orgrr-selection-list))
+(setq selection (completing-read "" orgrr-selection-list))
+(if (string-match "^\(" selection)
+    (setq selection (replace-regexp-in-string "\(.*?\) " "" selection))))
 
-(defun orgrr-get-all-alias ()
-  "Get value for #+roam_alias for all org-files."
-  (setq current-entry "")
-  (setq orgrr-alias "")
-  (with-temp-buffer
-      (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+roam_alias:\" " org-directory)))
-      (goto-char (point-min))
-    (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
-      (push (match-string 1) orgrr-alias))))       
+(defun orgrr-find ()
+  "Find org-file in org-directory via mini-buffer completion. If file does not exist, create a new one."
+;; TODO: roam_tags
+  (interactive)
+  (orgrr-selection)
+  (if (member selection titles)
+    (progn
+      (setq filename (gethash selection orgrr-title-filename))
+      (org-open-file filename))
+  (if (member selection aliases)
+    (progn
+      (setq filename (gethash selection orgrr-alias-filename))
+      (org-open-file filename))
+    (let* ((time (format-time-string "%Y%m%d%H%M%S"))
+         (filename (concat org-directory time "-" (replace-regexp-in-string "[^a-zA-Z0-9-]" "_" selection))))
+	 (find-file (concat filename ".org"))
+	 (insert (concat "#+title: " selection "\n\n"))))))
 
 (defun orgrr-insert ()
-  "Insert a link to another org-file in org-directory via mini-buffer completion"
+  "Find org-file in org-directory via mini-buffer completion. If file does not exist, create a new one."
 ;; TODO: roam_tags
   (interactive)
   (setq path-of-current-note
       (if (buffer-file-name)
           (file-name-directory (buffer-file-name))
         default-directory))
-  (orgrr-get-all-titles)
-  (orgrr-get-all-alias)
-  (setq complete-list (append (flatten-tree orgrr-titles) (flatten-tree orgrr-alias)))
-  (setq selection (completing-read "" complete-list))
-  (if (member selection (flatten-tree orgrr-titles))
+  (orgrr-selection)
+  (if (member selection titles)
     (progn
-      (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." (replace-regexp-in-string "[\"]" "." selection) "$\" " org-directory " -g \"*.org\"")))
-      (setq line (string-trim-right line "\n"))
-      (setq line (file-relative-name line path-of-current-note))
-      (insert (concat "\[\[file:" line "\]\[" selection "\]\]")))
-    (if (member selection (flatten-tree orgrr-alias))
-	(progn
-	(setq line (shell-command-to-string 
-       (concat "rg -l -i -e \"^.*alias.*" selection "\" " org-directory " -g \"*.org\"")))
-      (setq line (string-trim-right line "\n"))
-      (setq line (file-relative-name line path-of-current-note))
-      (insert (concat "\[\[file:" line "\]\[" selection "\]\]")))
-      (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[^a-zA-Z0-9-]" "_" selection))))
-	 (find-file (concat filename ".org"))
-	 (insert (concat "#+title: " selection "\n\n"))))))
-
-(defun orgrr-find ()
-  "Find org-file in org-directory via mini-buffer completion. If file does not exist, create a new one."
-;; TODO: roam_tags
-  (interactive)
-  (orgrr-get-all-titles)
-  (orgrr-get-all-alias)
-  (setq complete-list (append (flatten-tree orgrr-titles) (flatten-tree orgrr-alias)))
-  (setq selection (completing-read "" complete-list))
-  (if (member selection (flatten-tree orgrr-titles))
+      (setq filename (gethash selection orgrr-title-filename))
+      (setq filename (file-relative-name filename path-of-current-note))
+      (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
+  (if (member selection aliases)
     (progn
-      (setq line (shell-command-to-string (concat "rg -l -i -e \"^\\#\\+title:." (replace-regexp-in-string "[\"]" "." selection) "$\" " org-directory " -g \"*.org\"")))
-      (setq line (string-trim-right line "\n"))
-      (org-open-file line))
-  (if (member selection (flatten-tree orgrr-alias))
-    (progn
-      (setq line (shell-command-to-string 
-       (concat "rg -l -i -e \"^.*alias.*" selection "\" " org-directory " -g \"*.org\"")))
-      (setq line (string-trim-right line "\n"))
-      (org-open-file line))
+      (setq filename (gethash selection orgrr-alias-filename))
+      (setq filename (file-relative-name filename path-of-current-note))
+      (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
          (filename (concat org-directory time "-" (replace-regexp-in-string "[^a-zA-Z0-9-]" "_" selection))))
 	 (find-file (concat filename ".org"))
 	 (insert (concat "#+title: " selection "\n\n"))))))
-
 
