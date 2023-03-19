@@ -9,7 +9,7 @@
 (defun orgrr-show-backlinks ()
   "Show all backlinks to current file."
 ;; TODO: add unlinked references below backlinks!
-;;
+;; TODO: Rewrite using hashtables.
   (interactive)
   (let ((filename (if (equal major-mode 'dired-mode)
                         default-directory
@@ -63,6 +63,7 @@
   "Get value for #+TITLE:/#+title for all org-files."
   (setq current-entry "")
   (setq orgrr-title-filename (make-hash-table :test 'equal))
+  (setq orgrr-filename-title (make-hash-table :test 'equal))
   (setq orgrr-alias-filename (make-hash-table :test 'equal))
   (setq orgrr-filename-tags (make-hash-table :test 'equal))
   (with-temp-buffer
@@ -76,8 +77,8 @@
 	     (setq line (split-string current-entry "\\(: \\|:\\)" t))
 	     (setq filename (car line))
 	     (setq title (car (cdr (cdr line))))
-	     (puthash title filename orgrr-title-filename)))
-;	     (setq orgrr-title-filename (push (list :title title :filename filename) orgrr-title-filename))))
+	     (puthash title filename orgrr-title-filename)
+	     (puthash (concat "\\" filename) title orgrr-filename-title)))
 ;; The following checks if this is a #+roam_alias line and if so, adds all alias  + filename to orgrr-alias-filename.
 	    (if (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
 	     (progn
@@ -89,7 +90,7 @@
 		 (goto-char (point-min))
 		 (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
 		   (puthash (match-string 1) filename orgrr-alias-filename)))))
-;; The following checks if this is about tags and if so copies the the line orgrr-tags-filename.
+;; The following checks if the line is about tags and if so copies the tags to  orgrr-tags-filename.
 	     (if (string-match "\\(#\\+roam_tags:\\|#+ROAM_TAGS:\\)\\s-*\\(.+\\)" current-entry)
 	     (progn
 	     (setq line (split-string current-entry "\\(: \\|:\\)" t))
