@@ -1,16 +1,6 @@
-(defun orgrr-get-title (filename)
-  "Get value for #+TITLE:/#+title for any file."
-;; Not used anymore. Now handled by orgrr-get-meta.
-(setq line (shell-command-to-string (concat "rg -i \"\\#\\+title: \" " filename)))
-(let ((case-fold-search t))
-    (when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)"
-                        line)
-      (match-string 2 line))))
-
 (defun orgrr-show-backlinks ()
   "Show all backlinks to current file."
 ;; TODO: add unlinked references below backlinks!
-;; TODO: Full rewrite using hashtables.
   (interactive)
   (orgrr-get-meta)
   (let ((filename (if (equal major-mode 'dired-mode)
@@ -20,35 +10,39 @@
        (`(("TITLE" . ,val))
           (setq title (car val))))
  (setq backlinks 0)
+ (setq orgrr-counter-quote (make-hash-table :test 'equal))
+ (setq orgrr-counter-filename (make-hash-table :test 'equal))
      (with-temp-buffer
-       (insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " org-directory " -g \"*.org\"")))
+       (insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\"")))
        (let ((result '())
             (current-entry "")
             (lines (split-string (buffer-string) "\n" t)))
-         (dolist (line lines)
+	 (dolist (line lines)
            (if (string-match "^\\(.*?\\):\\(.*\\)$" line)
+;; This is used to split at the first colon. 
                (progn
  		(setq backlinks (+ backlinks 1))
-                 (setq current-entry (match-string 1 line))
-                 (setq result (plist-put result current-entry (match-string 2 line))))
-             (setq current-entry (concat current-entry "\n" line)))
-          (setq result-list result))))
+		(puthash backlinks (match-string 1 line) orgrr-counter-filename)
+		(puthash backlinks (match-string 2 line) orgrr-counter-quote))))))
+;; match-string 2 includes the line number!
       (with-current-buffer (get-buffer-create "*Orgrr Backlinks*")
         (let ((inhibit-read-only t))
           (erase-buffer)
            (insert (concat "\*\[\[file:" filename "\]\[" title "\]\]\*\n\n"))
            (if (= backlinks 1)
                (insert "* 1 Backlink\n\n")      
-           (insert (concat "* " (number-to-string backlinks) " Backlinks\n\n")))          
-           (dolist (entry result-list)
+           (insert (concat "* " (number-to-string backlinks) " Backlinks\n\n")))
+;; Going through the backlinks
+           (dolist (counter (hash-table-keys orgrr-counter-filename))
+	     (setq entry (gethash counter orgrr-counter-filename))
              (when (and (stringp entry)
                         (not (string= entry filename)))
                (let ((key entry)
-                     (value (plist-get result-list entry)))
+                     (value (gethash counter orgrr-counter-quote)))
                  (when (stringp value)
-;;                   (let ((result (orgrr-get-title key))) ;; a slower version
-		   (let ((result (gethash (concat "\\" key) orgrr-filename-title)))  
-                     (insert (concat "\*\* \[\[file:" key "\]" "\[" result "\]\]:\n\n" value "\n\n"))))))))
+		   (let ((result (gethash (concat "\\" key) orgrr-filename-title)))
+		     (string-match "^\\(.*?\\):\\(.*\\)$" value)
+                     (insert (concat "\*\* \[\[file:" key "::" (match-string 1 value) "\]" "\[" result "\]\]:\n\n" (match-string 2 value) "\n\n"))))))))
          (display-buffer-in-side-window
           (current-buffer)
           '((side . right)
@@ -60,7 +54,10 @@
   (when window
     (select-window window)
     (beginning-of-buffer)
-    (next-line 4))))
+    (next-line 4)))
+(clrhash orgrr-counter-quote)
+(clrhash orgrr-counter-filename)
+(clrhash orgrr-filename-title))
 
 (defun orgrr-get-meta ()
   "Get value for #+TITLE:/#+title for all org-files."
