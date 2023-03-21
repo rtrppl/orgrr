@@ -64,7 +64,6 @@
   (setq current-entry "")
   (setq orgrr-title-filename (make-hash-table :test 'equal))
   (setq orgrr-filename-title (make-hash-table :test 'equal))
-  (setq orgrr-alias-filename (make-hash-table :test 'equal))
   (setq orgrr-filename-tags (make-hash-table :test 'equal))
   (with-temp-buffer
       (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)\" " org-directory " -g \"*.org\"")))
@@ -89,7 +88,7 @@
 		 (insert current-entry)
 		 (goto-char (point-min))
 		 (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
-		   (puthash (match-string 1) filename orgrr-alias-filename)))))
+		   (puthash (match-string 1) filename orgrr-title-filename)))))
 ;; The following checks if the line is about tags and if so copies the tags to orgrr-tags-filename.
 	     (if (string-match "\\(#\\+roam_tags:\\|#+ROAM_TAGS:\\)\\s-*\\(.+\\)" current-entry)
 	     (progn
@@ -100,24 +99,17 @@
 (forward-line))))
 
 (defun orgrr-selection ()
- "This function prepares the variable orgrr-selection for completing-read and sends the result in selection to orgrr-find and orgrr-insert. It prepends tags before title and alias."
+ "This function prepares the variable orgrr-selection for completing-read and sends the result in selection to orgrr-find and orgrr-insert. It prepends tags in front of title and alias."
  (setq orgrr-selection-list ())
  (orgrr-get-meta)
  (setq titles (hash-table-keys orgrr-title-filename))
  (setq filenames-for-titles (hash-table-values orgrr-title-filename))
- (setq aliases (hash-table-keys orgrr-alias-filename))
- (setq filenames-for-alias (hash-table-values orgrr-alias-filename))
  (setq filenames-for-tags (hash-table-keys orgrr-filename-tags))
  (dolist (title titles)
   (setq filename (gethash title orgrr-title-filename)) 
   (if (member (concat "\\" filename) filenames-for-tags) 
       (setq orgrr-selection-list (cons (concat "(" (gethash (concat "\\" filename) orgrr-filename-tags) ")" " " title) orgrr-selection-list))
    (setq orgrr-selection-list (cons title orgrr-selection-list))))
-(dolist (alias aliases)
-  (setq filename (gethash alias orgrr-alias-filename)) 
-  (if (member (concat "\\" filename) filenames-for-tags) 
-      (setq orgrr-selection-list (cons (concat "(" (gethash (concat "\\" filename) orgrr-filename-tags) ")" " " alias) orgrr-selection-list))
-   (setq orgrr-selection-list (cons alias orgrr-selection-list))))
 (setq orgrr-selection-list (reverse orgrr-selection-list))
 (setq selection (completing-read "" orgrr-selection-list))
 (if (string-match "^\(" selection)
@@ -132,16 +124,11 @@
     (progn
       (setq filename (gethash selection orgrr-title-filename))
       (org-open-file filename))
-  (if (member selection aliases)
-    (progn
-      (setq filename (gethash selection orgrr-alias-filename))
-      (org-open-file filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
          (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\]" "_" selection))))
 	 (find-file (concat filename ".org"))
-	 (insert (concat "#+title: " selection "\n\n")))))
+	 (insert (concat "#+title: " selection "\n\n"))))
 (clrhash orgrr-title-filename)
-(clrhash orgrr-alias-filename)
 (clrhash orgrr-filename-title)
 (clrhash orgrr-filename-tags))
 
@@ -159,17 +146,12 @@
       (setq filename (gethash selection orgrr-title-filename))
       (setq filename (file-relative-name filename path-of-current-note))
       (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
-  (if (member selection aliases)
-    (progn
-      (setq filename (gethash selection orgrr-alias-filename))
-      (setq filename (file-relative-name filename path-of-current-note))
-      (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
          (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\]" "_" selection))))
 	 (find-file (concat filename ".org"))
-	 (insert (concat "#+title: " selection "\n\n")))))
+	 (insert (concat "#+title: " selection "\n\n"))))
 (clrhash orgrr-title-filename)
-(clrhash orgrr-alias-filename)
 (clrhash orgrr-filename-title)
 (clrhash orgrr-filename-tags))
+
 
