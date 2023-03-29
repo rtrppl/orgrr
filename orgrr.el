@@ -1,3 +1,53 @@
+;; orgrr.el --- org-roam-replica or org-roam-ripgrep -*- lexical-binding: t -*-
+
+;; Copyright (C) 2023 Free Software Foundation, Inc.
+
+;; Maintainer: René Trappel <rtrappel@gmail.com>
+;; URL: 
+;; Version: 0.1.0
+;; Package-Requires: emacs "26", rg
+;; Keywords: org-roam notes 
+
+;; This file is not part of GNU Emacs.
+
+;; This file is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+
+;; This file is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+;; GNU General Public License for more details.
+
+;; For a full copy of the GNU General Public License
+;; see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; orgrr is an almost feature-complete replica of the core functions 
+;; of org-roam v1 (insert, find, and show-backlinks) built around 
+;; ripgrep (rg), a lot of regex and hashtables. It does recognize 
+;; #+roam_alias, and #+roam_tags. A typical note in org-roam v1 and 
+;; orgrr looks like this:
+;;
+;;  #+title:       title of a note
+;;  #+roam_alias:  "alias 1" "alias 2"
+;;  #+roam_tags:   tag1 tag2 tag3
+;;  #+roam_key:    somekey
+;;
+;; (roam_key) is not yet incorporated. It is preferrable to create
+;; keybindings for orgrr-find, orgrr-insert and orgrr-show-backlinks.
+;; This is my first program, be kind :)
+;;
+;;; News
+;;
+;;  Version 0.1.0
+;;  Initial version
+;;
+;;; Code:
+
+
 (defun orgrr-show-backlinks ()
   "Show all backlinks to current file."
 ;; TODO: add unlinked references below backlinks!
@@ -19,7 +69,6 @@
             (lines (split-string (buffer-string) "\n" t)))
 	 (dolist (line lines)
            (if (string-match "^\\(.*?\\):\\(.*\\)$" line)
-;; This is used to split at the first colon. 
                (progn
  		(setq backlinks (+ backlinks 1))
 		(puthash backlinks (match-string 1 line) orgrr-counter-filename)
@@ -117,7 +166,6 @@
 
 (defun orgrr-find ()
   "Find org-file in org-directory via mini-buffer completion. If file does not exist, create a new one."
-;; TODO: roam_tags
   (interactive)
   (orgrr-selection)
   (if (member selection titles)
@@ -134,7 +182,6 @@
 
 (defun orgrr-insert ()
   "Find org-file in org-directory via mini-buffer completion. If file does not exist, create a new one."
-;; TODO: roam_tags
   (interactive)
   (setq path-of-current-note
       (if (buffer-file-name)
@@ -147,7 +194,8 @@
       (setq filename (file-relative-name filename path-of-current-note))
       (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\]" "_" selection))))
+         (filename (concat time "-" (replace-regexp-in-string "[\"'\\]" "_" selection))))
+         (insert (concat "\[\[file:" filename ".org" "\]\[" selection "\]\]"))
 	 (find-file (concat filename ".org"))
 	 (insert (concat "#+title: " selection "\n\n"))))
 (clrhash orgrr-title-filename)
