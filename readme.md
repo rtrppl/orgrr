@@ -1,12 +1,14 @@
 # orgrr 
 
-Orgrr is an almost feature-complete replica of the core functioniality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built around [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize `#+roam_alias`, and `#+roam_tags`. Orgrr only works with [org-files](https://orgmode.org) (i.e. files ending in `.org`).
+![orgrr-show-backlinks](/orgrr-show-backlinks.png)
+
+Orgrr is an almost feature-complete replica of the core functioniality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built around [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize `#+roam_alias` and `#+roam_tags`. Orgrr only works with [org-files](https://orgmode.org) (i.e. files ending in `.org`).
 
 Orgrr provides these functions:
 
 - **orgrr-find** will find a `.org` note file in the `org-directory` ([see here](#orgrr-find))
 
-- **orgrr-insert** will insert a like to another note find in the `org-directory` ([see here](#orgrr-insert))
+- **orgrr-insert** will insert a like to another note in the `org-directory` ([see here](#orgrr-insert))
 
 - **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a side-window  ([see here](#orgrr-show-backlinks))
 
