@@ -160,7 +160,9 @@
       (setq orgrr-selection-list (cons (concat "(" (gethash (concat "\\" filename) orgrr-filename-tags) ")" " " title) orgrr-selection-list))
    (setq orgrr-selection-list (cons title orgrr-selection-list))))
 (setq orgrr-selection-list (reverse orgrr-selection-list))
-(setq selection (completing-read "" orgrr-selection-list))
+(if (region-active-p)
+    (setq selection (completing-read "" orgrr-selection-list nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
+(setq selection (completing-read "" orgrr-selection-list)))
 (if (string-match "^\(" selection)
     (setq selection (replace-regexp-in-string "\(.*?\) " "" selection))))
 
