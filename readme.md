@@ -2,13 +2,13 @@
 
 Orgrr is an almost feature-complete replica of the core functioniality of org-roam v1 built around ripgrep (rg), a lot of regex and hashtables. It does recognize `#+roam_alias`, and `#+roam_tags`. Orgrr only works with org-files (i.e. files ending in `.org`).
 
-Orgrr's only functions are:
+Orgrr provides these functions:
 
-- orgrr-find will find a `.org` note file in the `org-directory` ([see here](#chatgpt-in-org-mode))
+- **orgrr-find** will find a `.org` note file in the `org-directory` ([see here](#orgrr-find))
 
-- orgrr-insert will insert a like to another note find in the `org-directory` ([see here](#chatgpt-in-org-mode))
+- **orgrr-insert** will insert a like to another note find in the `org-directory` ([see here](#orgrr-insert))
 
-- orgrr-backlinks will show all backlinks (=links from other notes to this note) in a sidebuffer  ([see here](#chatgpt-in-org-mode))
+- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in current buffer) in a side-window  ([see here](#orgrr-show-backlinks))
 
 _Note: In order to use this you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine. The easiest way to do so might be homebrew, i.e. "brew install rg"._
 
@@ -16,29 +16,35 @@ _Note: In order to use this you'll need [rg](https://github.com/BurntSushi/ripgr
 
 ## Table of Contents
 
-- [Orgrr (and org-roam v1) approach to notes](#Orgrr-(and-org-roam-v1)-approach-to-notes)
+- [Orgrr's way of dealing with notes](#Orgrr's-way-of-dealing-with-notes)
+  - [Basic design of a note](#Basic-design-of-a-note)
+  - [On the use of databases](#On-the-use-of-databases)
+- [Functions](#functions)
+  - [orgrr-find](#orgrr-find)
+  - [orgrr-insert](#orgrr-insert)
+  - [orgrr-show-backlinks](#orgrr-show-backlinks)
 - [FAQ](#faq)
 
 
-
-
-## Orgrr (and org-roam v1) approach to notes
+## Orgrr's way of dealing with notes
 
 ### Basic design of a note
 
-In orgrr all notes are assumed to follow a certain logic in that they include some metadata. At the very minimum, a note file for orgrr is an .org file that includes the following line:
+In orgrr all notes are assumed to follow a certain logic in that they include some metadata. The design principles used here are similar to org-roam v1 and interoperation between orgrr and org-roam v1 is possible. 
+
+At the very minimum, a note file for orgrr is an .org file that includes the following line:
 
 ```org
 #+title:       title of a note
 ```
 
-One of the unique strengths of org-roam v1 was the inclusion of `alias` for this title. This allows to add abbreviations or translated names to the original note. Orgrr also recognizes these alias, which have to be in quotation marks.
+One of the unique strengths of org-roam v1 was the inclusion of `alias` for the title of a note. This allows to add abbreviations or translated names to the original note. Orgrr also recognizes these alias, which have to be in quotation marks.
 
 ```org
 #+roam_alias:  "alias 1" "alias 2"
 ```
 
-Orgrr also recognizes tags in the same way as org-roam v1 did, separate from org-tags used throughout the document. I use this to add a very limited set of meta-data to my notes (type of source, date reading the source, status of processing the info). Tags are added without quotation marks, separated by space.
+Orgrr also recognizes tags in the same way as org-roam v1 did, in a way that is separate from org-tags used throughout the document. This has changed in org-roam v2. I use this to add a very limited set of meta-data for my notes (type of source, date reading the source, status of processing the info). Tags are added without quotation marks, separated by space.
 
 ```org
 #+roam_tags:   tag1 tag2 tag3
@@ -56,6 +62,23 @@ In total, orgrr therefore recognizes these three lines of meta-data in an org-fi
 
 A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about the org-files and their meta-data. I have about 3000 notes and the speed between org-roam and orgrr is comparable. 
 
+## Functions
+
+### orgrr-find
+
+This will search the org-directory (and all its subdirectories) for a note. I use Helm for completion and this works smooth. You can search for a combination of tags and title (or alias). A marked region is recognized to narrow search.
+
+If the note does not exist, then a new one with the same title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. 
+
+### orgrr-insert
+
+This will search the org-directory (and all its subdirectories) for a note and then insert a link to this note at point. You can search for a combination of tags and title (or alias). A marked region is recognized to narrow search.
+
+If the note does not exist, then a new one with the same title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. The link to the new note will also be added at point.
+
+### orgrr-show-backlinks
+
+This will show all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by pressing "n" and "p". The link takes you to the line of the snippet in the source document. 
 
 ## FAQ
 
