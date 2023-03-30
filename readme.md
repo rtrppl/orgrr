@@ -1,83 +1,74 @@
 # orgrr 
 
-A number of hacks that provide a replacement for the core functions of org-roam v1. Orgrr does not use any database but instead is built around rg (ripgrep), hashtables and regex.
+Orgrr is an almost feature-complete replica of the core functioniality of org-roam v1 built around ripgrep (rg), a lot of regex and hashtables. It does recognize `#+roam_alias`, and `#+roam_tags`. Orgrr only works with org-files (i.e. files ending in `.org`).
 
+Orgrr's only functions are:
 
-- use ChatGPT to generate text, having full control over system and user prompts ([demo](#chatgpt-in-org-mode))
-- generate images with a text prompt using DALL-E  ([demo](#dall-e-in-org-mode))
-- generate image variations of an input image ([demo](#image-variations))
+- orgrr-find will find a `.org` note file in the `org-directory` ([see here](#chatgpt-in-org-mode))
 
-Implemented in pure Emacs Lisp, no external dependencies required (except currently for image variations[^1]).
+- orgrr-insert will insert a like to another note find in the `org-directory` ([see here](#chatgpt-in-org-mode))
 
-_Note: In order to use this you'll need [rg](https://platform.openai.com/) installed on your machine. The easiest way to do so might be homebrew, i.e. "brew install rg"._
+- orgrr-backlinks will show all backlinks (=links from other notes to this note) in a sidebuffer  ([see here](#chatgpt-in-org-mode))
+
+_Note: In order to use this you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine. The easiest way to do so might be homebrew, i.e. "brew install rg"._
 
 ------------------------------
 
 ## Table of Contents
 
-- [Features](#features)
-- [Demos](#demos)
-    - [ChatGPT in org-mode](#chatgpt-in-org-mode)
-    - [DALL-E in org-mode](#dall-e-in-org-mode)
-    - [Image variations](#image-variations)
-- [Options](#options)
-- [Setup](#setup)
-    - [Melpa](#melpa)
-    - [Straight.el](#straightel)
-    - [Manual](#manual)
+- [Orgrr (and org-roam v1) approach to notes](#Orgrr-(and-org-roam-v1)-approach-to-notes)
 - [FAQ](#faq)
 
 
-## Features
 
-### `#+begin_ai...#+end_ai` special blocks
 
-Similar to org-babel, these blocks demarcate input (and for ChatGPT also output) for the AI model. You can use it for AI chat, text completion and text -> image generation. See [options](#options) below for more information.
+## Orgrr (and org-roam v1) approach to notes
 
-Create a block like
+### Basic design of a note
 
-```org
-#+begin_ai
-Is Emacs the greatest editor?
-#+end_ai
-```
-
-and press `C-c C-c`. The Chat input will appear inline and once the response is complete, you can enter your reply and so on. See [the demo](#chatgpt-in-org-mode) below. You can press `C-g` while the ai request is running to cancel it.
-
-You can also modify the _system_ prompt and other parameters used. The system prompt is injected before the user's input and "primes" the model to answer in a certain style. For example you can do:
+In orgrr all notes are assumed to follow a certain logic in that they include some metadata. At the very minimum, a note file for orgrr is an .org file that includes the following line:
 
 ```org
-#+begin_ai :max-tokens 250
-[SYS]: Act as if you are a powerful medival king.
-[ME]: What will you eat today?
-#+end_ai
+#+title:       title of a note
 ```
 
-This will result in an API payload like
+One of the unique strengths of org-roam v1 was the inclusion of `alias` for this title. This allows to add abbreviations or translated names to the original note. Orgrr also recognizes these alias, which have to be in quotation marks.
 
-```json
-{
-  "messages": [
-    {
-      "role": "system",
-      "content": "Act as if you are a powerful medival king."
-    },
-    {
-      "role": "user",
-      "content": "What will you eat today?"
-    }
-  ],
-  "model": "gpt-3.5-turbo",
-  "stream": true,
-  "max_tokens": 250,
-  "temperature": 1.2
-}
+```org
+#+roam_alias:  "alias 1" "alias 2"
 ```
 
-For some prompt ideas see for example [Awesome ChatGPT Prompts](https://github.com/f/awesome-chatgpt-prompts).
+Orgrr also recognizes tags in the same way as org-roam v1 did, separate from org-tags used throughout the document. I use this to add a very limited set of meta-data to my notes (type of source, date reading the source, status of processing the info). Tags are added without quotation marks, separated by space.
 
-When generating images using the `:image` flag, images will appear underneath the ai block inline. Images will be stored (together with their prompt) inside `org-ai-image-directory` which defaults to `~/org/org-ai-images/`.
+```org
+#+roam_tags:   tag1 tag2 tag3
+```
 
-### Image variation
+In total, orgrr therefore recognizes these three lines of meta-data in an org-file:
 
-You can also use an existing image as input to generate more similar looking images. The `org-ai-image-variation` command will prompt for a file path to an image, a size and a count and will then generate as many images and insert links to them inside the current `org-mode` buffer. Images will be stored inside `org-ai-image-directory`. See the [demo](#image-variations) below.
+```org
+#+title:       title of a note
+#+roam_alias:  "alias 1" "alias 2"
+#+roam_tags:   tag1 tag2 tag3
+```
+
+### On the use of databases
+
+A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about the org-files and their meta-data. I have about 3000 notes and the speed between org-roam and orgrr is comparable. 
+
+
+## FAQ
+
+- Isn't this a rediciulous waste of time? Why bother?
+
+Certainly. Newer versions of org-roam are far more advanced that this system. And if one does not like org-roam for one reason or another, there still is Denote or ZK to try out.
+
+Personally, the way how org-roam v1 operated really clicked for me. I liked the idea that my notes would be a collection of many small text files. The mandatory use of org-id in org-roam v2 made it difficult to know where links in the notes would be directing to. A potential conversion to Markdown or something else would also be much harder - in short (and might be incorrect about this) the changes between v1 and v2 seemed to make org-roam less future-proof, while offering little additional benefit for me.
+
+- But you could have continued to use org-roam v1!
+
+True and that is what I did for a long time. But everytime I (re-)installed my setup and with every change of Emacs I encountered some obscure issues with my time-frozen setup of org-roam v1. In particular I had issues with emacsql and everything database related.
+
+- Is that all?
+
+No. I also wanted to learn more elisp. Doing a small project like this seems to be best way doing this. 

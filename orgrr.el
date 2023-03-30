@@ -29,16 +29,17 @@
 ;; of org-roam v1 (insert, find, and show-backlinks) built around 
 ;; ripgrep (rg), a lot of regex and hashtables. It does recognize 
 ;; #+roam_alias, and #+roam_tags. A typical note in org-roam v1 and 
-;; orgrr looks like this:
+;; orgrr starts like this:
 ;;
 ;;  #+title:       title of a note
 ;;  #+roam_alias:  "alias 1" "alias 2"
 ;;  #+roam_tags:   tag1 tag2 tag3
 ;;  #+roam_key:    somekey
 ;;
-;; (roam_key) is not yet incorporated. It is preferrable to create
-;; keybindings for orgrr-find, orgrr-insert and orgrr-show-backlinks.
-;; This is my first program, be kind :)
+;; #+roam_key: is not yet incorporated. 
+;;
+;;
+;; This is my first Elisp package, be kind :)
 ;;
 ;;; News
 ;;
