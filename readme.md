@@ -2,7 +2,7 @@
 
 ![orgrr-show-backlinks](/orgrr-show-backlinks.png)
 
-Orgrr is an almost feature-complete replica of the core functioniality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built around [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize `#+roam_alias` and `#+roam_tags`. Orgrr only works with [org-files](https://orgmode.org) (i.e. files ending in `.org`).
+Orgrr is an almost feature-complete replica of the core functioniality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built around [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize `#+roam_alias` and `#+roam_tags` and only works with [org-files](https://orgmode.org) (i.e. files ending in .org).
 
 Orgrr provides these functions:
 
@@ -12,7 +12,7 @@ Orgrr provides these functions:
 
 - **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a side-window  ([see here](#orgrr-show-backlinks))
 
-_Note: In order to use this you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine. The easiest way to do so might be homebrew, i.e. "brew install rg"._
+If you are interested in a less minimalist and more comprehensive note taking experience you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). 
 
 ------------------------------
 
@@ -34,13 +34,21 @@ Clone the repository:
 
 ```git clone https://github.com/rtrppl/orgrr```
 
-Then load the package by adding it to your load-path in your .emacs or init.el:
+Then load the package by adding it to your .emacs or init.el:
 
 ```org
-(load "/path/to/orgrr/orgrr.el")
+(load "/path/to/orgrr/orgrr.el") ;; You actually only need orgrr.el
 ```
 
-You may also want to set keybindings for the three main functions:
+If you don't already have done so, you also have to set an org-directory.
+
+```org
+(setq org-directory "~/path/to/org-directory")
+```
+
+In order to use Orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine. The easiest way to do so might be homebrew, i.e. `brew install rg`.
+
+Finally, you may also want to set keybindings for the three main functions:
 
 ```org
 (global-set-key (kbd "M-s-f") 'orgrr-find)
@@ -116,8 +124,12 @@ True and that is what I did for a long time. But everytime I (re-)installed my s
 
 - Is that all?
 
-No. I also wanted to learn more elisp. Doing a small project like this seems to be best way doing this. 
+No. I also wanted to learn more elisp. Executing a small project like this seemed to be a good way of approaching this. 
 
 - What does orgrr stand for?
 
-Orgrr is an acronmy for "org-roam ripgrep" or "org-roam replica", as org-roam calls itself a [roam-research](https://roamresearch.com) replica. The point of this package is not at all to critize org-roam, it rather is a work of adminiration.
+Orgrr is an acronmy for "org-roam ripgrep" or "org-roam replica", as org-roam calls itself a [roam-research](https://roamresearch.com) replica. 
+
+- Is this subtile critizism on the org-roam approach?
+
+Not at all! The project was born out of the admiration of the pioneering work done by Jethro... and ... Org-roam also has way more capable programmers behind it, as do Denote and ZK. You should check out their projects, too. 
