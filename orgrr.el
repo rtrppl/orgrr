@@ -50,7 +50,7 @@
 
 
 (defun orgrr-show-backlinks ()
-  "Show all backlinks to current file."
+  "Shows all backlinks in org-directory to the current org-file."
 ;; TODO: add unlinked references below backlinks!
   (interactive)
   (orgrr-get-meta)
@@ -110,7 +110,7 @@
 (clrhash orgrr-filename-title))
 
 (defun orgrr-get-meta ()
-  "Get value for #+TITLE:/#+title for all org-files."
+  "Gets the value for #+TITLE:/#+title, #+roam_alias and #+roam_tags for all org-files and adds them to hashtables."
   (setq current-entry "")
   (setq orgrr-title-filename (make-hash-table :test 'equal))
   (setq orgrr-filename-title (make-hash-table :test 'equal))
@@ -168,7 +168,7 @@
     (setq selection (replace-regexp-in-string "\(.*?\) " "" selection))))
 
 (defun orgrr-find ()
-  "Find org-file in org-directory via mini-buffer completion. If file does not exist, create a new one."
+  "Finds org-file in org-directory via mini-buffer completion. If the selected file name does not exist, a new one is created."
   (interactive)
   (orgrr-selection)
   (if (member selection titles)
@@ -184,7 +184,7 @@
 (clrhash orgrr-filename-tags))
 
 (defun orgrr-insert ()
-  "Find org-file in org-directory via mini-buffer completion. If file does not exist, create a new one."
+  "Links to org-file in org-directory via mini-buffer completion. If the selected file name does not exist, a new one is created."
   (interactive)
   (setq path-of-current-note
       (if (buffer-file-name)
@@ -205,4 +205,13 @@
 (clrhash orgrr-filename-title)
 (clrhash orgrr-filename-tags))
 
-
+(defun orgrr-rename ()
+  "Renames current file and changes all backlinks. Don't change directories!"
+  (interactive)
+  (let ((old-filename (if (equal major-mode 'dired-mode)
+                        default-directory
+                      (buffer-file-name))))
+    (let ((new-filename (read-from-minibuffer "Filename to change: " old-filename)))      
+	      (rename-file old-filename new-filename)
+	      (set-visited-file-name new-filename)
+	      (shell-command-to-string (concat "rg -e '" (file-name-nondirectory old-filename) "' " org-directory "-r " (file-name-nondirectory new-filename))))))
