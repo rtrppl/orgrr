@@ -2,17 +2,17 @@
 
 ![orgrr-show-backlinks](/orgrr-show-backlinks.png)
 
-Orgrr is an almost feature-complete replica of the core functioniality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built around [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize `#+roam_alias` and `#+roam_tags` and only works with [org-files](https://orgmode.org) (i.e. files ending in .org).
+Orgrr is an almost feature-complete replica of the core functioniality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. Orgrr currently only works with [org-files](https://orgmode.org) (i.e. files ending in .org).
 
-Orgrr provides these primary functions:
+These are the primary functions orgrr provides:
 
-- **orgrr-find** will find a `.org` note file in the `org-directory` ([see here](#orgrr-find)). If there is no note of this name, a new one is created. 
+- **orgrr-find** will find a note, i.e. a `.org` file with a #+title, in the `org-directory` ([see here](#orgrr-find)). If there is no note of this name, a new one is created. 
 
 - **orgrr-insert** will insert a like to another note in the `org-directory` ([see here](#orgrr-insert)). If there is no note of this name, a new one is created. 
 
 - **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a side-window  ([see here](#orgrr-show-backlinks)).
 
-If you are interested in a less minimalist and more comprehensive note taking experience you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). 
+This is a very basic package to address my needs. If you are interested in a less minimalist and more comprehensive note taking experience you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). 
 
 ------------------------------
 
@@ -91,7 +91,7 @@ In total, orgrr therefore recognizes these three lines of meta-data in an org-fi
 
 ### On the use of databases
 
-A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about the org-files and their meta-data. I have about 3000 notes and the speed between org-roam and orgrr is comparable. 
+A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about org-files and their meta-data. I have about 3000 notes and the speed between org-roam and orgrr is comparable. 
 
 ## Functions
 
@@ -109,11 +109,11 @@ If the note does not exist, then a new one with the same title will be created i
 
 ### orgrr-show-backlinks
 
-This will show all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by pressing "n" and "p". The link takes you to the line of the snippet in the source document. 
+This will show all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the line of the snippet in the source document. 
 
 ### orgrr-rename
 
-Orgrr uses file names as unique indentifiers. Therefore changing them lightly will break the connection between notes - but changing the #+title of a note (or any other meta-data about a note) will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming convetions and the need to change filename arises.
+Orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the #+title of a note (or any other meta-data about a note) will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
 
 This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in the org-directory. Use it carefully.
 
@@ -131,12 +131,12 @@ True and that is what I did for a long time. But every time I (re-)installed my 
 
 - Is that all?
 
-No. I also wanted to learn more elisp. Executing a small project like this seemed to be a good way to do so. 
+No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. 
 
 - What does orgrr stand for?
 
 Orgrr is an acronmy for "org-roam ripgrep" or "org-roam replica", as org-roam calls itself a [roam-research](https://roamresearch.com) replica. 
 
-- Is this subtile critizism on the org-roam approach?
+- Is this a subtile critizism on the org-roam approach?
 
-Not at all! The project was born out of the admiration of the pioneering work done by Jethro Kuan and others. You should check out the real org-roan. 
+Not at all! The project was born out of the admiration of the pioneering work done by Jethro Kuan and others. You should check out the real org-roam. 
