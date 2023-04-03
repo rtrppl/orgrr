@@ -8,7 +8,7 @@ These are the primary functions orgrr provides:
 
 - **orgrr-find** will find a note, i.e. a `.org` file with a #+title, in the `org-directory` ([see here](#orgrr-find)). If there is no note of this name, a new one is created. 
 
-- **orgrr-insert** will insert a like to another note in the `org-directory` ([see here](#orgrr-insert)). If there is no note of this name, a new one is created. 
+- **orgrr-insert** will insert a link to another note in the `org-directory` ([see here](#orgrr-insert)). If there is no note of this name, a new one is created. 
 
 - **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a side-window  ([see here](#orgrr-show-backlinks)).
 
@@ -119,7 +119,7 @@ This function allows to change the name of the file/note the current buffer visi
 
 ## FAQ
 
-- Isn't this a rediciulous waste of time? Why bother?
+- Isn't this a ridiciulous waste of time? Why bother?
 
 Certainly. Newer versions of org-roam are far more advanced that this system. And if one does not like org-roam for one reason or another, there still are Denote or ZK to try out.
 
