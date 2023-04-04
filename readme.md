@@ -6,7 +6,7 @@ Orgrr is a minimalist but complete note-taking system for Emacs. Its intended pu
 
 These are the primary functions orgrr provides:
 
-- **orgrr-find** will find a note, i.e. a `.org` file with a #+title, in the `org-directory` ([see here](#orgrr-find)). If the title (or alias) entered does not exist, a new note is created. 
+- **orgrr-find** will find and open a note, i.e. a `.org` file with a #+title, in the `org-directory` ([see here](#orgrr-find)). If the title (or alias) entered does not exist, a new note is created. 
 
 - **orgrr-insert** will insert a link to another note in the `org-directory` ([see here](#orgrr-insert)). If the title (or alias) entered does not exist, a new note is created.
 
