@@ -2,17 +2,16 @@
 
 ![orgrr-show-backlinks](/orgrr-show-backlinks.png)
 
-Orgrr is an almost feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. Orgrr currently only works with [org-files](https://orgmode.org) (i.e. files ending in .org).
+Orgrr is a minimalist but complete note-taking system for Emacs. Its intended purpose is the creation and management of a [Zettelkasten-like system](https://www.youtube.com/watch?v=qRSCKSPMuDc), e.g. many small notes that can easily be linked together. 
 
 These are the primary functions orgrr provides:
 
-- **orgrr-find** will find a note, i.e. a `.org` file with a #+title, in the `org-directory` ([see here](#orgrr-find)). If there is no note of this name, a new one is created. 
+- **orgrr-find** will find a note, i.e. a `.org` file with a #+title, in the `org-directory` ([see here](#orgrr-find)). If the title (or alias) entered does not exist, a new note is created. 
 
-- **orgrr-insert** will insert a link to another note in the `org-directory` ([see here](#orgrr-insert)). If there is no note of this name, a new one is created. 
+- **orgrr-insert** will insert a link to another note in the `org-directory` ([see here](#orgrr-insert)). If the title (or alias) entered does not exist, a new note is created.
 
-- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a side-window  ([see here](#orgrr-show-backlinks)).
+- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a side-window ([see here](#orgrr-show-backlinks)).
 
-This is a very basic package to address my needs. If you are interested in a less minimalist and more comprehensive note taking experience you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). 
 
 ------------------------------
 
@@ -20,6 +19,7 @@ This is a very basic package to address my needs. If you are interested in a les
 
 - [Installation](#installation)
 - [Orgrr's way of dealing with notes](#orgrr's-way-of-dealing-with-notes)
+  - [Origin story](#origin-story)
   - [Basic design of a note](#basic-design-of-a-note)
   - [On the use of databases](#on-the-use-of-databases)
 - [Functions](#functions)
@@ -47,7 +47,7 @@ If you don't already have done so, you also have to set an org-directory.
 (setq org-directory "~/path/to/org-directory")
 ```
 
-In order to use Orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine. The easiest way to do so might be homebrew, i.e. `brew install rg`.
+In order to use Orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine. The easiest way to do so might be [homebrew](https://brew.sh), i.e. `brew install rg`.
 
 Finally, you may also want to set keybindings for the three main functions:
 
@@ -58,6 +58,12 @@ Finally, you may also want to set keybindings for the three main functions:
 ```
 
 ## Orgrr's way of dealing with notes
+
+### Origin story
+
+Orgrr is an almost feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. Orgrr currently only works with [org-files](https://orgmode.org) (i.e. files ending in .org).
+
+This is a very basic package to address my needs. If you are interested in a less minimalist and more comprehensive note taking experience you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). 
 
 ### Basic design of a note
 
@@ -99,7 +105,7 @@ A crucial difference between org-roam and orgrr is the use of databases. Orgrr o
 
 This will search the org-directory (and all its subdirectories) for a note. I use [Helm](https://github.com/emacs-helm/helm) for completion and this works smooth. You can search for a combination of tags and title (or alias). A marked region is recognized to narrow search.
 
-If the note does not exist, then a new one with the same title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. In other words, you should use orgrr-find and orgrr-insert to create new notes.
+If the note does not exist, then a new one with the chosen title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. In other words, you should use orgrr-find and orgrr-insert to create new notes.
 
 ### orgrr-insert
 
@@ -121,7 +127,7 @@ This function allows to change the name of the file/note the current buffer visi
 
 - Isn't this a ridiciulous waste of time? Why bother?
 
-Certainly. Newer versions of org-roam are far more advanced that this system. And if one does not like org-roam for one reason or another, there still are Denote or ZK to try out.
+Certainly. The newest version of org-roam is far more advanced that this system. And if one does not like org-roam, for one reason or another, there still are Denote or ZK to try out.
 
 Personally, the way how org-roam v1 operated really clicked for me. I liked the idea that my notes would be a collection of many small text files. The mandatory use of org-id in org-roam v2 made it difficult to know where links in the notes would be directing to. A potential conversion to Markdown or something else would also be much harder - in short (and I might be incorrect about this) the changes between v1 and v2 seemed to make org-roam less future-proof, while offering little additional benefit for my personal use-case.
 
