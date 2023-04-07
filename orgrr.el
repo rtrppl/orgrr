@@ -215,3 +215,14 @@
 	      (rename-file old-filename new-filename)
 	      (set-visited-file-name new-filename)
 	      (shell-command-to-string (concat "rg -e '" (file-name-nondirectory old-filename) "' " org-directory "-r " (file-name-nondirectory new-filename))))))
+
+(defun orgrr-delete ()
+  "Deletes the current note and shows the previous buffer."
+  (interactive)
+  (if (buffer-file-name)
+      (if (yes-or-no-p (format "Are you sure you want to delete the note %s? " (buffer-file-name)))
+	  (progn
+	    (delete-file (buffer-file-name))
+	    (message "Note deleted!")
+	    (kill-current-buffer)))
+  (message "This is not a note!")))

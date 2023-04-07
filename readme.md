@@ -27,6 +27,7 @@ These are the primary functions orgrr provides:
   - [orgrr-insert](#orgrr-insert)
   - [orgrr-show-backlinks](#orgrr-show-backlinks)
   - [orgrr-rename](#orgrr-rename)
+  - [orgrr-delete](#orgrr-delete)
 - [FAQ](#faq)
 
 ## Installation
@@ -107,11 +108,13 @@ This will search the org-directory (and all its subdirectories) for a note. I us
 
 If the note does not exist, then a new one with the chosen title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. In other words, you should use orgrr-find and orgrr-insert to create new notes.
 
+I have decided against the use of org-capture to create new notes as this adds a lot of complexity for very little gain. If you want to abort the creation process you should invoke `kill-current-buffer`.
+
 ### orgrr-insert
 
 This will search the org-directory (and all its subdirectories) for a note and then insert a link to this note at point. You can search for a combination of tags and title (or alias). A marked region is recognized to narrow search.
 
-If the note does not exist, then a new one with the same title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. The link to the new note will also be added at point. As above mentioned, you should use orgrr-find and orgrr-insert to create new notes.
+If the note does not exist, then a new one with the same title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. The link to the new note will also be added at point. As above mentioned, you should use orgrr-find and orgrr-insert to create new notes and should use `kill-current-buffer` to abort.
 
 ### orgrr-show-backlinks
 
@@ -122,6 +125,10 @@ This will show all backlinks for the note in the current buffer in a side-window
 Orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the #+title of a note (or any other meta-data about a note) will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
 
 This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in the org-directory. Use it carefully.
+
+### orgrr-delete
+
+This function deletes the current note and shows the previous buffer. Links are not changed.
 
 ## FAQ
 
