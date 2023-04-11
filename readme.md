@@ -124,7 +124,7 @@ This will show all backlinks for the note in the current buffer in a side-window
 
 Orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the #+title of a note (or any other meta-data about a note) will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
 
-This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in the org-directory. Use it carefully.
+This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in the org-directory. Use it with caution.
 
 ### orgrr-delete
 
