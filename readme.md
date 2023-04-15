@@ -12,6 +12,7 @@ These are the primary functions orgrr provides:
 
 - **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a side-window ([see here](#orgrr-show-backlinks)).
 
+- **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
 ------------------------------
 
@@ -21,7 +22,7 @@ These are the primary functions orgrr provides:
 - [Orgrr's way of dealing with notes](#orgrr's-way-of-dealing-with-notes)
   - [Origin story](#origin-story)
   - [Basic design of a note](#basic-design-of-a-note)
-  - [On the use of databases](#on-the-use-of-databases)
+  - [Orgrr-projects](#orgrr-projects)
 - [Functions](#functions)
   - [orgrr-find](#orgrr-find)
   - [orgrr-insert](#orgrr-insert)
@@ -50,12 +51,15 @@ If you don't already have done so, you also have to set an org-directory.
 
 In order to use Orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine. The easiest way to do so might be [homebrew](https://brew.sh), i.e. `brew install rg`.
 
-Finally, you may also want to set keybindings for the three main functions:
+Finally, you may also want to set keybindings for the main functions:
 
 ```org
 (global-set-key (kbd "M-s-f") 'orgrr-find)
 (global-set-key (kbd "M-s-i") 'orgrr-insert)
 (global-set-key (kbd "M-s-l") 'orgrr-show-backlinks)
+(global-set-key (kbd "M-s-a") 'orgrr-add-to-project)
+(global-set-key (kbd "M-s-p") 'orgrr-open-project)
+
 ```
 
 ## Orgrr's way of dealing with notes
@@ -63,6 +67,8 @@ Finally, you may also want to set keybindings for the three main functions:
 ### Origin story
 
 Orgrr is an almost feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. Orgrr currently only works with [org-files](https://orgmode.org) (i.e. files ending in .org).
+
+A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about org-files and their meta-data. I have about 3000 notes and the speed between org-roam and orgrr is comparable. 
 
 This is a very basic package to address my needs. If you are interested in a less minimalist and more comprehensive note taking experience you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). 
 
@@ -96,9 +102,20 @@ In total, orgrr therefore recognizes these three lines of meta-data in an org-fi
 #+roam_tags:   tag1 tag2 tag3
 ```
 
-### On the use of databases
+### orgrr-projects
 
-A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about org-files and their meta-data. I have about 3000 notes and the speed between org-roam and orgrr is comparable. 
+One feature that felt missing in orgrr (and org-roam) was a way to bring together a collection of notes and snippets from backlinks and many other places to create a "desktop" of notes. In the imagery of the Zettelkasten this would be a place to look at several "Zettel" / notes at the same time. Orgrr-projects is an approach to deal with this problem. 
+
+On the most basic level, an orgrr-project is any note that has the tag `orgrr-project':
+
+```org
+#+title:     title of the note/collection
+#+roam_tags: orgrr-collection
+```
+
+The function [orgrr-add-to-project](#orgrr-add-to-project) takes the current line visited at point (the cursor) and appends it to the chosen project. A source-link is added, to allow for follow-up. If the project name does not yet exist, a new orgrr-project is created in the org-directory (similar to the way orgrr-find and orgrr-insert operate).
+
+Orgrr-projects provide rapid access to a set of current notes and are the main holding area for work in progress in orgrr. 
 
 ## Functions
 
@@ -129,6 +146,12 @@ This function allows to change the name of the file/note the current buffer visi
 ### orgrr-delete
 
 This function deletes the current note and shows the previous buffer. Links are not changed.
+
+### orgrr-add-to-project and orgrr-open-project
+
+`Orgrr-add-to-project` appends the current line to an orgrr-project and includes a source-link to allow for follow up. All links within this snippet are corrected to work in the new location. This function should work for all org-files and in the `orgrr-backlinks` buffer.
+
+`orgrr-open-project` provides quick access to all orgrr-projects.
 
 ## FAQ
 
