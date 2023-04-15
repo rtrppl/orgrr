@@ -110,7 +110,7 @@ On the most basic level, an orgrr-project is any note that has the tag `orgrr-pr
 
 ```org
 #+title:     title of the note/collection
-#+roam_tags: orgrr-collection
+#+roam_tags: orgrr-project
 ```
 
 The function [orgrr-add-to-project](#orgrr-add-to-project) takes the current line visited at point (the cursor) and appends it to the chosen project. A source-link is added, to allow for follow-up. If the project name does not yet exist, a new orgrr-project is created in the org-directory (similar to the way orgrr-find and orgrr-insert operate).
