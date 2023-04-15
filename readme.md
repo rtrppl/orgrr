@@ -106,7 +106,7 @@ In total, orgrr therefore recognizes these three lines of meta-data in an org-fi
 
 One feature that felt missing in orgrr (and org-roam) was a way to bring together a collection of notes and snippets from backlinks and many other places to create a "desktop" of notes. In the imagery of the Zettelkasten this would be a place to look at several "Zettel" / notes at the same time. Orgrr-projects is an approach to deal with this problem. 
 
-On the most basic level, an orgrr-project is any note that has the tag `orgrr-project':
+On the most basic level, an orgrr-project is any note that has the tag `orgrr-project`:
 
 ```org
 #+title:     title of the note/collection
