@@ -29,6 +29,7 @@ These are the primary functions orgrr provides:
   - [orgrr-show-backlinks](#orgrr-show-backlinks)
   - [orgrr-rename](#orgrr-rename)
   - [orgrr-delete](#orgrr-delete)
+  - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
 - [FAQ](#faq)
 
 ## Installation
