@@ -285,7 +285,7 @@
         default-directory))
    (goto-char (point-max))
    (setq footnote-link (file-relative-name (replace-regexp-in-string "^file:" "" footnote-link) path-of-current-note))
-   (insert (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source \[\[file:" footnote-link "\]\[" footnote-description "\]\]" ")"))
+   (insert (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" footnote-link "\]\[" footnote-description "\]\]" ")"))
    (save-buffer))
 (clrhash orgrr-filename-title)
 (clrhash orgrr-project_filename-title))

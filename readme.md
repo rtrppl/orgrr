@@ -172,8 +172,8 @@ No. I also wanted to learn more elisp. A small project like this seemed to be a 
 
 - What does orgrr stand for?
 
-Orgrr is an acronmy for "org-roam ripgrep" or "org-roam replica", as org-roam calls itself a [roam-research](https://roamresearch.com) replica. 
+Orgrr is an acronym for "org-roam ripgrep" or "org-roam replica", as org-roam calls itself a [roam-research](https://roamresearch.com) replica. 
 
-- Is this a subtile critizism on the org-roam approach?
+- Is this a subtile criticism on the org-roam approach?
 
 Not at all! The project was born out of the admiration of the pioneering work done by Jethro Kuan and others. You should check out the real org-roam. 
