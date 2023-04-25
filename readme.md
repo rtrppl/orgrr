@@ -150,7 +150,7 @@ This function deletes the current note and shows the previous buffer. Links are 
 
 ### orgrr-add-to-project and orgrr-open-project
 
-`Orgrr-add-to-project` appends the current line to an orgrr-project and includes a source-link to allow for follow up. All links within this snippet are corrected to work in the new location. This function should work for all org-files and in the `orgrr-backlinks` buffer.
+`Orgrr-add-to-project` appends the current line to an orgrr-project and includes a source-link to allow for follow up. All links within this snippet are corrected to work in the new location. This function works for all org-files in `org-directory` and in the `orgrr-backlinks` buffer.
 
 `orgrr-open-project` provides quick access to all orgrr-projects.
 
@@ -158,7 +158,7 @@ This function deletes the current note and shows the previous buffer. Links are 
 
 - Isn't this a ridiciulous waste of time? Why bother?
 
-Certainly. The newest version of org-roam is far more advanced that this system. And if one does not like org-roam, for one reason or another, there still are Denote or ZK to try out.
+Certainly. The newest version of org-roam is far more advanced that this system. And if one does not like org-roam, for one reason or another, there still are Denote or ZK to try out. There is even one project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam) (which I only learned after I wrote orgrr). 
 
 Personally, the way how org-roam v1 operated really clicked for me. I liked the idea that my notes would be a collection of many small text files. The mandatory use of org-id in org-roam v2 made it difficult to know where links in the notes would be directing to. A potential conversion to Markdown or something else would also be much harder - in short (and I might be incorrect about this) the changes between v1 and v2 seemed to make org-roam less future-proof, while offering little additional benefit for my personal use-case.
 

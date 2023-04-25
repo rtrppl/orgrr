@@ -118,7 +118,7 @@
 	     (setq title (car (cdr (cdr line))))
 	     (puthash title filename orgrr-title-filename)
 	     (puthash (concat "\\" filename) title orgrr-filename-title)))
-;; The following checks if this is a #+roam_alias line and if so, adds all alias + filename to orgrr-alias-filename.
+;; The following checks if this is a #+roam_alias line and if so, adds all alias to orgrr-title-filename.
 	    (if (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
 	     (progn
 	       (setq line (split-string current-entry "\\(: \\|:\\)" t))
@@ -166,7 +166,7 @@
       (setq filename (gethash selection orgrr-title-filename))
       (org-open-file filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s]" "_" selection))))
+         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s]" "_" selection))))
 	 (find-file-other-window (concat filename ".org"))
 	 (insert (concat "#+title: " selection "\n\n"))))
 (clrhash orgrr-title-filename)
@@ -189,7 +189,7 @@
 	  (kill-region (region-beginning) (region-end)))
       (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat time "-" (replace-regexp-in-string "[\"'\\\s]" "_" selection))))
+         (filename (concat time "-" (replace-regexp-in-string "[\"':;\\\s]" "_" selection))))
       (if (region-active-p)
 	  (kill-region (region-beginning) (region-end)))
       (insert (concat "\[\[file:" filename ".org" "\]\[" selection "\]\]"))
@@ -336,5 +336,13 @@
 	    (new-filename (string-trim (shell-command-to-string (concat "rg -g \"" filename "\" --files " org-directory)))))
 	(replace-match (concat "file:" (file-relative-name new-filename current-buffer-directory)))))
     (buffer-string)))
-
+    
+(defun orgrr-info ()
+ "This function shows the amount of titles considered by orgrr."
+ (interactive)
+ (let ((result (benchmark-run-compiled 1
+                 (progn
+                   (orgrr-get-meta)
+                   (setq titles (hash-table-keys orgrr-title-filename))))))
+   (message "Orgrr considers %d titles (this includes titles and alias). Collecting all titles took %s seconds to complete." (length titles) (format "%.5f" (car result)))))
     
