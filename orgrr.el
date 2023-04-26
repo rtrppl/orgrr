@@ -93,6 +93,7 @@
  (let ((window (get-buffer-window "*Orgrr Backlinks*")))
   (when window
     (select-window window)
+    (setq default-directory org-directory)
     (beginning-of-buffer)
     (next-line 4)))
 (clrhash orgrr-counter-quote)
@@ -113,29 +114,30 @@
 ;; The following checks if this is a #+title line and is so, adds the title + filename to orgrr-title-filename and filename + title to orgrr-filename-title.
 	    (if (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
 	     (progn
-	     (setq line (split-string current-entry "\\(: \\|:\\)" t))
-	     (setq filename (car line))
-	     (setq title (car (cdr (cdr line))))
-	     (puthash title filename orgrr-title-filename)
-	     (puthash (concat "\\" filename) title orgrr-filename-title)))
+	       (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
+		      (filename (car line)))
+		 (let* ((line (split-string current-entry "^.+\\(#\\+title:\\|:#+TITLE:\\)\\s-*" t))  
+			(title (car line)))
+		   (puthash title filename orgrr-title-filename)
+		   (puthash (concat "\\" filename) title orgrr-filename-title)))))
 ;; The following checks if this is a #+roam_alias line and if so, adds all alias to orgrr-title-filename.
 	    (if (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
-	     (progn
-	       (setq line (split-string current-entry "\\(: \\|:\\)" t))
-	     (setq filename (car line))
-	       (with-temp-buffer
-		 (setq alias "")
-		 (insert current-entry)
-		 (goto-char (point-min))
-		 (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
-		   (puthash (match-string 1) filename orgrr-title-filename)))))
+		(progn
+		  (setq line (split-string current-entry "\\(: \\|:\\)" t))
+		  (setq filename (car line))
+		  (with-temp-buffer
+		    (setq alias "")
+		    (insert current-entry)
+		    (goto-char (point-min))
+		    (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
+		      (puthash (match-string 1) filename orgrr-title-filename)))))
 ;; The following checks if the line is about tags and if so copies the tags to orgrr-tags-filename.
 	     (if (string-match "\\(#\\+roam_tags:\\|#+ROAM_TAGS:\\)\\s-*\\(.+\\)" current-entry)
 	     (progn
-	     (setq line (split-string current-entry "\\(: \\|:\\)" t))
-	     (setq filename (car line))
-	     (setq tags (car (cdr (cdr line))))
-	     (puthash (concat "\\" filename) tags orgrr-filename-tags)))
+	     (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
+		    (filename (car line))
+		    (tags (car (cdr (cdr line)))))
+	       (puthash (concat "\\" filename) tags orgrr-filename-tags))))
 (forward-line))))
 
 (defun orgrr-selection ()
