@@ -61,9 +61,7 @@
 	  (setq orgrr-counter-filename (make-hash-table :test 'equal))
 	  (with-temp-buffer
 	    (insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\"")))
-	    (let ((result '())
-		  (current-entry "")
-		  (lines (split-string (buffer-string) "\n" t)))
+	    (let ((lines (split-string (buffer-string) "\n" t)))
 	      (dolist (line lines)
 		(if (string-match "^\\(.*?\\):\\(.*\\)$" line)
 		    (progn
