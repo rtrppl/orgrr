@@ -12,7 +12,7 @@ These are the primary functions orgrr provides:
 
 - **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a side-window ([see here](#orgrr-show-backlinks)). This what you see in the image above.
 
-- **orgrr-show-related-notes** will show all related notes in a side-window ([see here](#orgrr-show-related-notes)). For the applied concept of "relationship", [orgrr-related-notes](#orgrr-related-notes). 
+- **orgrr-show-related-notes** will show all related notes in a side-window ([see here](#orgrr-show-related-notes)). For the applied concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
