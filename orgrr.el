@@ -32,7 +32,8 @@
 ;;
 ;;
 ;;; News
-;;
+;;  Version 0.3.0
+;;  Added: orgrr-related-notes.
 ;;  Version 0.2.1
 ;;  Added: the buffer *Orgrr Backlinks* closes, when orgrr-show-backlinks 
 ;;  is invoked while *Orgrr Backlinks* is the active buffer. Fixed handling
@@ -353,3 +354,137 @@
                    (setq titles (hash-table-keys orgrr-title-filename))))))
    (message "Orgrr considers %d titles (this includes titles and alias). Collecting all titles took %s seconds to complete." (length titles) (format "%.5f" (car result)))))
     
+
+(defun orgrr-show-related-notes ()
+  "Shows all related notes in org-directory to the current org-file. Related means here notes linking to this note and the notes that link to them as well as notes linked by the current note and the links from these notes. It is assumed that the more times a note in environment is mentioned, the more important it is. Notes of higher importance are listed at the top. Parents and grandparents as well as children and grandchildren."
+  (interactive)
+  (if (not (equal (buffer-name (current-buffer)) "*Orgrr Related Notes*"))
+      (progn
+	(setq related-notes 0)
+	(setq counter 0)
+	(setq orgrr-filename-mentions (make-hash-table :test 'equal))
+	(orgrr-get-meta)
+	(orgrr-backlinks-first-and-second-order)
+	(orgrr-forwardlinks-first-and-second-order)
+	(with-current-buffer (get-buffer-create "*Orgrr Related Notes*")
+	  (erase-buffer)
+	  (display-buffer-in-side-window
+             (current-buffer)
+             '((side . right)
+               (slot . -1)
+               (window-width . 60)))
+	      (org-mode)
+	  (insert (concat "* " (number-to-string related-notes) " connections for *" title "*\n\n"))
+	  (setq sorted-values '())
+	  (maphash (lambda (key value)
+		     (push (cons value key) sorted-values)) 
+		   orgrr-filename-mentions)
+	  (setq sorted-values (sort sorted-values (lambda (a b) (> (car a) (car b)))))
+	  (dolist (entry sorted-values)	  	
+	    (insert (concat "** " "\[\[file:" (substring (cdr entry) 1) "\]\[" (gethash (cdr entry) orgrr-filename-title) "\]\]: " (number-to-string (car entry)) "\n")))
+	(let ((win (get-buffer-window "*Orgrr Related Notes*")))
+	  (select-window win)))
+	(clrhash orgrr-title-filename)
+	(clrhash orgrr-filename-title)
+	(clrhash orgrr-filename-tags)
+	(clrhash orgrr-filename-mentions))
+  (delete-window)))
+  
+
+(defun orgrr-backlinks-first-and-second-order ()
+  "Gets backlinks first and second order."
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+		    (buffer-file-name))))
+    (pcase (org-collect-keywords '("TITLE"))
+      (`(("TITLE" . ,val))
+       (setq title (car val))))
+    (setq original-filename filename)
+    ;; get all backlinks first order
+    (with-temp-buffer
+      (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\"")))
+      (let ((lines (split-string (buffer-string) "\n" t)))
+	(dolist (line lines)
+	  (if (string-match "\\.org$" line)
+	      (progn
+		(if (not (equal original-filename line))
+		    (progn
+		      (if (not (member (concat "\\" line) (hash-table-keys orgrr-filename-mentions)))
+			  (progn
+			    (puthash (concat "\\" line) 1 orgrr-filename-mentions)
+			    (setq related-notes (+ related-notes 1)))
+			(progn
+			  (setq counter (gethash (concat "\\" line) orgrr-filename-mentions))
+			  (setq counter (+ counter 1))
+			  (setq related-notes (+ related-notes 1))
+			  (puthash (concat "\\" line) counter orgrr-filename-mentions)))))))))))
+  ;; get all backlinks second order
+  (setq entry "")
+  (dolist (entry (hash-table-keys orgrr-filename-mentions))
+    (setq filename (substring entry 1))
+    (with-temp-buffer
+      (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\"")))
+      (let ((lines (split-string (buffer-string) "\n" t)))
+	(dolist (line lines)
+	  (if (string-match "\\.org$" line)
+	      (progn
+		(if (not (equal original-filename line))
+		    (progn
+		      (if (not (member (concat "\\" line) (hash-table-keys orgrr-filename-mentions)))
+			  (progn
+			    (puthash (concat "\\" line) 1 orgrr-filename-mentions)
+			    (setq related-notes (+ related-notes 1)))
+			(progn
+			  (setq counter (gethash (concat "\\" line) orgrr-filename-mentions))
+			  (setq counter (+ counter 1))
+			  (setq related-notes (+ related-notes 1))
+			  (puthash (concat "\\" line) counter orgrr-filename-mentions))))))))))))
+
+(defun orgrr-forwardlinks-first-and-second-order ()
+  "Gets backlinks first and second order."
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+		    (buffer-file-name))))
+    (pcase (org-collect-keywords '("TITLE"))
+      (`(("TITLE" . ,val))
+       (setq title (car val))))
+    (setq original-filename filename))
+    (setq lines '())
+    (setq contents (with-current-buffer (buffer-name)
+                     (buffer-substring-no-properties (point-min) (point-max))))
+;; find all foward links first order
+    (with-temp-buffer
+      (insert contents)
+      (goto-char (point-min))
+      (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
+	 (let* ((filename (file-name-nondirectory (match-string 1)))
+		(new-filename (string-trim (shell-command-to-string (concat "rg -g \"" filename "\" --files " org-directory)))))
+	   (if (not (equal original-filename new-filename))
+		 (progn
+		   (if (not (member (concat "\\" new-filename) (hash-table-keys orgrr-filename-mentions)))
+		     (progn
+		       (puthash (concat "\\" new-filename) 1 orgrr-filename-mentions)
+		       (setq related-notes (+ related-notes 1)))
+		   (progn
+		     (setq counter (gethash (concat "\\" new-filename) orgrr-filename-mentions))
+		     (setq counter (+ counter 1))
+		     (setq related-notes (+ related-notes 1))
+		     (puthash (concat "\\" new-filename) counter orgrr-filename-mentions)))))
+;; add links second order
+	       (with-temp-buffer
+		 (insert-file-contents new-filename)
+		 (goto-char (point-min))
+		 (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
+		   (let* ((2nd-filename (file-name-nondirectory (match-string 1)))
+			  (2nd-new-filename (string-trim (shell-command-to-string (concat "rg -g \"" 2nd-filename "\" --files " org-directory)))))
+		      (if (not (equal original-filename 2nd-new-filename))
+			  (if (not (member (concat "\\" 2nd-new-filename) (hash-table-keys orgrr-filename-mentions)))
+			      (progn
+				(puthash (concat "\\" 2nd-new-filename) 1 orgrr-filename-mentions)
+				(setq related-notes (+ related-notes 1)))
+			    (progn
+			      (setq counter (gethash (concat "\\" 2nd-new-filename) orgrr-filename-mentions))
+			      (setq counter (+ counter 1))
+			      (setq related-notes (+ related-notes 1))
+			      (puthash (concat "\\" 2nd-new-filename) counter orgrr-filename-mentions)))))))))))

@@ -1,8 +1,8 @@
-# orgrr 
+# orgrr - org-roam-ripgrep
 
 ![orgrr-show-backlinks](/orgrr-show-backlinks.png)
 
-Orgrr is a minimalist but complete note-taking system for Emacs. Its intended purpose is the creation and management of a [Zettelkasten-like system](https://www.youtube.com/watch?v=qRSCKSPMuDc), e.g. many small notes that can easily be linked together. 
+Orgrr is a minimalist but complete note-taking system for Emacs. Its intended purpose is the creation and management of a [Zettelkasten-like system](https://www.youtube.com/watch?v=qRSCKSPMuDc). 
 
 These are the primary functions orgrr provides:
 
@@ -10,7 +10,9 @@ These are the primary functions orgrr provides:
 
 - **orgrr-insert** will insert a link to another note in the `org-directory` ([see here](#orgrr-insert)). If the title (or alias) entered does not exist, a new note is created.
 
-- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a side-window ([see here](#orgrr-show-backlinks)).
+- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a side-window ([see here](#orgrr-show-backlinks)). This what you see in the image above.
+
+- **orgrr-show-related-notes** will show all related notes in a side-window ([see here](#orgrr-show-related-notes)). For the applied concept of "relationship", [orgrr-related-notes](#orgrr-related-notes). 
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
@@ -22,7 +24,8 @@ These are the primary functions orgrr provides:
 - [Orgrr's way of dealing with notes](#orgrr's-way-of-dealing-with-notes)
   - [Origin story](#origin-story)
   - [Basic design of a note](#basic-design-of-a-note)
-  - [Orgrr-projects](#orgrr-projects)
+  - [orgrr-projects](#orgrr-projects)
+  - [orgrr-related-notes](#orgrr-related-notes)
 - [Functions](#functions)
   - [orgrr-find](#orgrr-find)
   - [orgrr-insert](#orgrr-insert)
@@ -60,7 +63,7 @@ Finally, you may also want to set keybindings for the main functions:
 (global-set-key (kbd "M-s-l") 'orgrr-show-backlinks)
 (global-set-key (kbd "M-s-a") 'orgrr-add-to-project)
 (global-set-key (kbd "M-s-p") 'orgrr-open-project)
-
+(global-set-key (kbd "M-s-r") 'orgrr-show-related-notes)
 ```
 
 ## Orgrr's way of dealing with notes
@@ -118,6 +121,12 @@ The function [orgrr-add-to-project](#orgrr-add-to-project) takes the current lin
 
 Orgrr-projects provide rapid access to a set of current notes and are the main holding area for work in progress in orgrr. 
 
+### orgrr-related-notes
+
+There are many different attempts to surface related notes in relation to note-taking in Emacs (and outside of it). Most of these attempts draw of some variation of text-analysis and algorithmic determination of proximity. I always felt that the links I personally add to notes represent an underused asset for determining proximity. This function collects all notes related (via links) to the current note to the second degree - it collects the backlinks for the backlinks and the outgoing links mentioned by outgoing links. To use the image of a family, it considers all parents and grandparents as well as all children and grandchildren of a note. All links to a specific note are counted and the resulting list is ranked by frequency. This is much quicker (about 10 times) than the excellent [org-similarity](https://github.com/brunoarine/org-similarity) and still produces very interesting results. See the example below:
+
+![orgrr-show-related-notes](/orgrr-show-related-notes.png)
+
 ## Functions
 
 ### orgrr-find
@@ -136,7 +145,11 @@ If the note does not exist, then a new one with the same title will be created i
 
 ### orgrr-show-backlinks
 
-This will show all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the line of the snippet in the source document. 
+This will show all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the line of the snippet in the source document. You can invoking the command again to close the side-window (while visiting this buffer).
+
+### orgrr-show-related-links
+
+This will show all related notes for the note in the current buffer in a side-window (see also [orgrr-related-notes](#orgrr-related-notes)). The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the the source document. You can invoking the command again to close the side-window (while visiting this buffer).
 
 ### orgrr-rename
 
@@ -174,6 +187,6 @@ No. I also wanted to learn more elisp. A small project like this seemed to be a 
 
 Orgrr is an acronym for "org-roam ripgrep" or "org-roam replica", as org-roam calls itself a [roam-research](https://roamresearch.com) replica. 
 
-- Is this a subtile criticism on the org-roam approach?
+- Is this a subtile criticism direct at the org-roam approach?
 
 Not at all! The project was born out of the admiration of the pioneering work done by Jethro Kuan and others. You should check out the real org-roam. 
