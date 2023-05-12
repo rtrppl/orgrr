@@ -147,9 +147,9 @@ If the note does not exist, then a new one with the same title will be created i
 
 This will show all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the line of the snippet in the source document. You can invoking the command again to close the side-window (while visiting this buffer).
 
-### orgrr-show-related-links
+### orgrr-show-related-notes
 
-This will show all related notes for the note in the current buffer in a side-window (see also [orgrr-related-notes](#orgrr-related-notes)). The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the the source document. You can invoking the command again to close the side-window (while visiting this buffer).
+This will show all related notes for the note in the current buffer in a side-window (see also [orgrr-related-notes](#orgrr-related-notes)). The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the source document. You can invoking the command again to close the side-window (while visiting this buffer).
 
 ### orgrr-rename
 
