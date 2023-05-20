@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: 
-;; Version: 0.3.1
+;; Version: 0.3.2
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes 
 
@@ -32,6 +32,8 @@
 ;;
 ;;
 ;;; News
+;;  Version 0.3.2
+;;  - fixed a missing call to (orgrr-get-meta)
 ;;  Version 0.3.1
 ;;  - fixed links in orgrr-show-backlinks for notes in subdirectories
 ;;
@@ -277,6 +279,7 @@
 (defun orgrr-add-to-project ()
   "Adds the current paragraph in orgrr-backlinks or buffer to a project."
   (interactive)
+  (orgrr-get-meta)
   (orgrr-collect-project-snippet)
   (orgrr-format-project-snippet snippet)
   (orgrr-pick-project)
@@ -318,10 +321,7 @@
 	    (setq orgrr-selection-list (cons title orgrr-selection-list)))))
        (setq selection (completing-read "" orgrr-selection-list))
        (if (string-match "^\(" selection)
-	   (setq selection (replace-regexp-in-string "\(.*?\) " "" selection))))
-(clrhash orgrr-project_filename-title)
-(clrhash orgrr-short_filename-filename)
-(clrhash orgrr-filename-title))
+	   (setq selection (replace-regexp-in-string "\(.*?\) " "" selection)))))
 
 (defun orgrr-format-project-snippet (snippet)
   "Formats an orgrr-project snippet."
