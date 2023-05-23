@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: 
-;; Version: 0.3.2
+;; Version: 0.3.3
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes 
 
@@ -32,10 +32,9 @@
 ;;
 ;;
 ;;; News
-;;  Version 0.3.2
-;;  - fixed a missing call to (orgrr-get-meta)
-;;  Version 0.3.1
-;;  - fixed links in orgrr-show-backlinks for notes in subdirectories
+;;  Version 0.3.3
+;;  - fixed source links for orgrr-add-to-project when snippets are 
+;;  collected from subdirectories
 ;;
 ;;; Code:
 
@@ -297,9 +296,11 @@
       (if (buffer-file-name)
           (file-name-directory (buffer-file-name))
         default-directory))
-   (goto-char (point-max))
-   (setq footnote-link (file-relative-name (replace-regexp-in-string "^file:" "" footnote-link) path-of-current-note))
-   (insert (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" footnote-link "\]\[" footnote-description "\]\]" ")"))
+  (setq footnote (car (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))
+  (setq footnote (file-relative-name footnote default-directory))
+  (setq footnote-line (string-to-number (car (cdr (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))))
+  (goto-char (point-max))
+   (insert (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")"))
    (save-buffer))
 (clrhash orgrr-filename-title)
 (clrhash orgrr-short_filename-filename)
@@ -340,15 +341,18 @@
 	 
 (defun orgrr-adjust-links (string)
   "Adjusts/corrects all links of copied text relative to the position of the note"
-  ;(setq ((current-buffer-directory (file-name-directory (buffer-file-name))))
-  (setq default-directory org-directory)
+  (setq path-of-current-note
+      (if (buffer-file-name)
+          (file-name-directory (buffer-file-name))
+        default-directory))
+  (setq default-directory path-of-current-note)
   (with-temp-buffer
     (insert string)
     (goto-char (point-min))
     (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
       (let* ((filename (file-name-nondirectory (match-string 1)))
 	    (new-filename (gethash (concat "\\" filename) orgrr-short_filename-filename)))
-	(replace-match (concat "file:" (file-relative-name new-filename org-directory)))))
+	(replace-match (concat "file:" (file-relative-name new-filename path-of-current-note)))))
     (buffer-string)))
     
 (defun orgrr-info ()
@@ -495,3 +499,6 @@
 			      (setq counter (+ counter 1))
 			      (setq related-notes (+ related-notes 1))
 			      (puthash (concat "\\" 2nd-new-filename) counter orgrr-filename-mentions)))))))))))
+
+
+;; orgrr.el ends here
