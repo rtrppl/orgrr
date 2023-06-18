@@ -183,7 +183,7 @@ This function deletes the current note and shows the previous buffer. Links are 
 
 ### orgrr-container-commands
 
-`orgrr-create-container` offers to select or create a directory to be used as a container, adds this container to the container list switches to it. `orgrr-remove-container` removes a specific container from the list and switches back to "main". `orgrr-change-container` allows to switch between the containers. 
+`orgrr-create-container` offers to select or create a directory to be used as a container, adds this container to the container list and switches to it. `orgrr-remove-container` removes a specific container from the list and switches back to "main". `orgrr-change-container` allows to switch between the containers. 
 
 ## FAQ
 
