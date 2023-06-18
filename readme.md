@@ -34,6 +34,7 @@ These are the primary functions orgrr provides:
   - [orgrr-rename](#orgrr-rename)
   - [orgrr-delete](#orgrr-delete)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
+  - [orgrr-container-commands](#orgrr-container-commands)
 - [FAQ](#faq)
 
 ## Installation
@@ -136,7 +137,7 @@ There are many different attempts to surface related notes in note-takings syste
 
 Another feature that felt missing in orgrr (and org-roam v1) was the option to keep several different sets of data. [Obsidian](https://obsidian.md)'s [vaults](https://help.obsidian.md/Getting+started/Create+a+vault) is an example of this idea and has been the inspiration for orgrr-containers. Each orgrr-container is a folder containing org-files (that may have sub-folders with org-files of their own). 
 
-Please note that this works by changing the "org-directory" through `orgrr-change-container`. The file `~/orgrr-container-list` contains a list of all containers (to which you can add and remove containers by using `orgrr-create-container` and `orgrr-remove-container`, see also [orgrr-container-commands](#orgrr-change-container,-orgrr-create-container-and-orgrr-remove-container)). If your setup is anything like mine, this also will affect your org-agenda (for me this is a feature). 
+Please note that this works by changing the "org-directory" through `orgrr-change-container`. The file `~/orgrr-container-list` contains a list of all containers (to which you can add and remove containers by using `orgrr-create-container` and `orgrr-remove-container`, see also [orgrr-container-commands](#orgrr-container-commands)). If your setup is anything like mine, this also will affect your org-agenda (for me this is a feature). 
 
 If you have set a org-directory in your .emacs, this will always be the starting point for orgrr after a restart of emacs.
 
@@ -180,7 +181,7 @@ This function deletes the current note and shows the previous buffer. Links are 
 
 `orgrr-open-project` provides quick access to all orgrr-projects.
 
-### orgrr-change-container, orgrr-create-container and orgrr-remove-container
+### orgrr-container-commands
 
 `orgrr-create-container` offers to select or create a directory to be used as a container, adds this container to the container list switches to it. `orgrr-remove-container` removes a specific container from the list and switches back to "main". `orgrr-change-container` allows to switch between the containers. 
 
