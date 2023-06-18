@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: 
-;; Version: 0.3.3
+;; Version: 0.4.0
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes 
 
@@ -32,6 +32,8 @@
 ;;
 ;;
 ;;; News
+;;  Version 0.4.0
+;;  - introduces orgrr-containers
 ;;  Version 0.3.3
 ;;  - fixed source links for orgrr-add-to-project when snippets are 
 ;;  collected from subdirectories
@@ -500,5 +502,89 @@
 			      (setq related-notes (+ related-notes 1))
 			      (puthash (concat "\\" 2nd-new-filename) counter orgrr-filename-mentions)))))))))))
 
+(defun orgrr-change-container ()
+  "Allows to switch between a list of containers stored in ~/.orgrr-container-list."
+  (interactive)
+  (setq orgrr-name-container (make-hash-table :test 'equal))
+  (if (not (file-exists-p "~/.orgrr-container-list"))
+      (progn
+	(puthash "main" org-directory orgrr-name-container)
+	(with-temp-buffer
+	  (setq json-data (json-encode orgrr-name-container))
+	  (insert json-data)
+	  (write-file "~/.orgrr-container-list"))))
+  (with-temp-buffer
+    (insert-file-contents "~/.orgrr-container-list")
+    (if (fboundp 'json-parse-buffer)
+	(setq orgrr-name-container (json-parse-buffer))))
+  (setq containers (hash-table-keys orgrr-name-container))
+  (setq selection (completing-read "" containers))
+  (if (member selection containers)
+      (progn
+	(setq org-directory (gethash selection orgrr-name-container)))
+    (message "Container does not exist."))
+  (clrhash orgrr-name-container))
+
+(defun orgrr-create-container ()
+  "Creates or adds a directory as a container and switches to that container."
+  (interactive)
+  (setq orgrr-name-container (make-hash-table :test 'equal))
+  (if (not (file-exists-p "~/.orgrr-container-list"))
+      (progn
+	(puthash "main" org-directory orgrr-name-container)
+	(with-temp-buffer
+	  (setq json-data (json-encode orgrr-name-container))
+	  (insert json-data)
+	  (write-file "~/.orgrr-container-list"))))
+  (with-temp-buffer
+    (insert-file-contents "~/.orgrr-container-list")
+    (if (fboundp 'json-parse-buffer)
+	(setq orgrr-name-container (json-parse-buffer)))
+  (setq new-container (read-directory-name "Enter a directory name: ")))
+  (if (yes-or-no-p (format "Are you sure you want to create the directory %s as a container? " new-container))
+	(progn
+	   (unless (file-exists-p new-container)
+	     (make-directory new-container))
+	   (setq name (read-from-minibuffer "Please provide a name for the new container: "))
+	   (puthash name new-container		       orgrr-name-container)
+	   (with-temp-buffer
+	     (setq json-data (json-encode orgrr-name-container))
+	     (insert json-data)
+	     (write-file "~/.orgrr-container-list")))
+    (message "%s was not created!" new-container))
+  (setq org-directory new-container)
+  (clrhash orgrr-name-container))
+
+
+(defun orgrr-remove-container ()
+  "Allows to remove a container for the list of containers."
+  (interactive)
+  (setq orgrr-name-container (make-hash-table :test 'equal))
+  (if (not (file-exists-p "~/.orgrr-container-list"))
+      (progn
+	(puthash "main" org-directory orgrr-name-container)
+	(with-temp-buffer
+	  (setq json-data (json-encode orgrr-name-container))
+	  (insert json-data)
+	  (write-file "~/.orgrr-container-list"))))
+  (with-temp-buffer
+    (insert-file-contents "~/.orgrr-container-list")
+    (if (fboundp 'json-parse-buffer)
+	(setq orgrr-name-container (json-parse-buffer))))
+  (setq containers (hash-table-keys orgrr-name-container))
+  (setq selection (completing-read "Which container should be removed? " containers))
+  (if (not (member selection containers))
+      (message "Container does not exist.")
+    (if (string-equal selection "main")
+	(message "The container \"main\" cannot be removed!")
+      (if (yes-or-no-p (format "Are you sure you want to remove %s as a container? " (gethash selection orgrr-name-container)))
+	  (progn
+	    (remhash selection orgrr-name-container)
+	    (with-temp-buffer
+	      (setq json-data (json-encode orgrr-name-container))
+	      (insert json-data)
+	      (write-file "~/.orgrr-container-list"))
+	    (setq org-directory (gethash "main" orgrr-name-container))))))
+  (clrhash orgrr-name-container))
 
 ;; orgrr.el ends here

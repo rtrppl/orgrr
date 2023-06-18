@@ -26,6 +26,7 @@ These are the primary functions orgrr provides:
   - [Basic design of a note](#basic-design-of-a-note)
   - [orgrr-projects](#orgrr-projects)
   - [orgrr-related-notes](#orgrr-related-notes)
+  - [orgrr-containers](#orgrr-containers)
 - [Functions](#functions)
   - [orgrr-find](#orgrr-find)
   - [orgrr-insert](#orgrr-insert)
@@ -127,9 +128,17 @@ Orgrr-projects provide rapid access to a set of current notes and are the main h
 
 ### orgrr-related-notes
 
-There are many different attempts to surface related notes in relation to note-taking in Emacs (and outside of it). Most of these attempts draw of some variation of text-analysis and algorithmic determination of proximity. I always felt that the links I personally add to notes represent an underused asset for determining proximity. This function collects all notes related (via links) to the current note to the second degree - it collects the backlinks for the backlinks and the outgoing links mentioned by outgoing links. To use the image of a family, it considers all parents and grandparents as well as all children and grandchildren of a note. All links to a specific note are counted and the resulting list is ranked by frequency. This is much quicker (about 10 times) than the excellent [org-similarity](https://github.com/brunoarine/org-similarity) and still produces very interesting results. See the example below:
+There are many different attempts to surface related notes in note-takings systems in Emacs (and outside of it). Most of them draw on some variation of text-analysis and algorithmic determination of proximity. I always felt that the links I personally add to notes represent an underused asset for determining proximity. This function collects all notes related (via links) to the current note to the second degree - it collects the backlinks for the backlinks and the outgoing links mentioned by outgoing links. To use the image of a family, it considers all parents and grandparents as well as all children and grandchildren of a note. All links to a specific note are counted and the resulting list is ranked by frequency. This is much quicker (about 10 times) than the excellent [org-similarity](https://github.com/brunoarine/org-similarity) and still produces very interesting results. See the example below:
 
 ![orgrr-show-related-notes](/orgrr-show-related-notes.png)
+
+### orgrr-containers
+
+Another feature that felt missing in orgrr (and org-roam v1) was the option to keep several different sets of data. [Obsidian](https://obsidian.md)'s [vaults](https://help.obsidian.md/Getting+started/Create+a+vault) is an example of this idea and has been the inspiration for orgrr-containers. Each orgrr-container is a folder containing org-files (that may have sub-folders with org-files of their own). 
+
+Please note that this works by changing the "org-directory" through `orgrr-change-container`. The file `~/orgrr-container-list` contains a list of all containers (to which you can add and remove containers by using `orgrr-create-container` and `orgrr-remove-container`, see also [orgrr-container-commands](#orgrr-change-container,-orgrr-create-container-and-orgrr-remove-container)). If your setup is anything like mine, this also will affect your org-agenda (for me this is a feature). 
+
+If you have set a org-directory in your .emacs, this will always be the starting point for orgrr after a restart of emacs.
 
 ## Functions
 
@@ -170,6 +179,10 @@ This function deletes the current note and shows the previous buffer. Links are 
 `Orgrr-add-to-project` appends the current line to an orgrr-project and includes a source-link to allow follow-up. All links within this snippet are corrected to work in the new location. This function works for all org-files in `org-directory` and in the `orgrr-backlinks` buffer.
 
 `orgrr-open-project` provides quick access to all orgrr-projects.
+
+### orgrr-change-container, orgrr-create-container and orgrr-remove-container
+
+`orgrr-create-container` offers to select or create a directory to be used as a container, adds this container to the container list switches to it. `orgrr-remove-container` removes a specific container from the list and switches back to "main". `orgrr-change-container` allows to switch between the containers. 
 
 ## FAQ
 
