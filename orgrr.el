@@ -544,9 +544,9 @@
   (if (yes-or-no-p (format "Are you sure you want to create the directory %s as a container? " new-container))
 	(progn
 	   (unless (file-exists-p new-container)
-	     (make-directory new-container))
+	     (make-directory new-container t))
 	   (setq name (read-from-minibuffer "Please provide a name for the new container: "))
-	   (puthash name new-container		       orgrr-name-container)
+	   (puthash name new-container orgrr-name-container)
 	   (with-temp-buffer
 	     (setq json-data (json-encode orgrr-name-container))
 	     (insert json-data)
