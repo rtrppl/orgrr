@@ -146,7 +146,7 @@ If you have set a org-directory in your .emacs, this will always be the starting
 
 ### orgrr-find
 
-This will search the org-directory (and all its subdirectories) for a note. I use [Helm](https://github.com/emacs-helm/helm) for completion and this works smoothly. You can search for a combination of tags and title (or alias). A marked region is recognized to narrow search.
+This will search the org-directory (and all its subdirectories) for a note. The function should work with all [completing-read frameworks](https://www.emacswiki.org/emacs/CategoryCompletion). You can search for any combination of tags and title (or alias). A [marked region](https://www.gnu.org/software/emacs/manual/html_node/emacs/Mark.html) is recognized to narrow search.
 
 If the note does not exist, then a new one with the chosen title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. In other words, you should use orgrr-find and orgrr-insert to create new notes.
 

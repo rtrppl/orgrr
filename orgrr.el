@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: 
-;; Version: 0.5.0
+;; Version: 0.5.1
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes 
 
