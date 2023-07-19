@@ -35,6 +35,7 @@ These are the primary functions orgrr provides:
   - [orgrr-delete](#orgrr-delete)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
   - [orgrr-container-commands](#orgrr-container-commands)
+  - [orgrr-show-findlike](#orgrr-show-findlike)
 - [FAQ](#faq)
 
 ## Installation
@@ -72,11 +73,11 @@ Finally, you may also want to set keybindings for the main functions:
 
 ### Origin story
 
-Orgrr is an almost feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. Orgrr currently only works with [org-files](https://orgmode.org) (i.e. files ending in .org).
+Orgrr is an almost feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. Orgrr currently only works with [org-files](https://orgmode.org) (i.e. in a technical sense files ending in .org).
 
-A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about org-files and their meta-data. I have about 3000 notes and the speed between org-roam and orgrr is comparable. 
+**A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about org-files and their meta-data. The aim is to have as little dependencies as possible. Orgrr uses plain org-links.** 
 
-This is a very basic package to address my needs. If you are interested in a less minimalist and more comprehensive note taking experience you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). 
+This is a package to address my needs. I have about 3000 notes and the speed between org-roam and orgrr is comparable. If you are interested in a less minimalist and more comprehensive note taking experience you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). 
 
 ### Basic design of a note
 
@@ -159,11 +160,11 @@ If the note does not exist, a new one with the same title will be created in the
 
 ### orgrr-show-backlinks
 
-This will show all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the line of the snippet in the source document. You can invoking the command again to close the side-window (while visiting this buffer).
+This will show all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the line of the snippet in the source document. Invoke the command again to close the side-window (while visiting this buffer).
 
 ### orgrr-show-related-notes
 
-This will show all related notes for the note in the current buffer in a side-window (see also [orgrr-related-notes](#orgrr-related-notes)). The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the source document. You can invoking the command again to close the side-window (while visiting this buffer).
+This will show all related notes for the note in the current buffer in a side-window (see also [orgrr-related-notes](#orgrr-related-notes)). The buffer here is temporary. You can navigate this just as a regular org document and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the source document. Invoke the command again to close the side-window (while visiting this buffer).
 
 ### orgrr-rename
 
@@ -184,6 +185,10 @@ This function deletes the current note and shows the previous buffer. Links are 
 ### orgrr-container-commands
 
 `orgrr-create-container` offers to select or create a directory to be used as a container, adds this container to the container list and switches to it. `orgrr-remove-container` removes a specific container from the list and switches back to "main". `orgrr-change-container` allows to switch between the containers. 
+
+### orgrr-show-findlike
+
+This function uses the command line tool [findlike](https://github.com/brunoarine/findlike) by [Bruno Arine](@brunoarine@hachyderm.io) to create a list of ten related notes in a side-window. Invoke the command again to close the side-window (while visiting this buffer).
 
 ## FAQ
 
