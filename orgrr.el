@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: 
-;; Version: 0.5.1
+;; Version: 0.5.2
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes 
 
@@ -32,8 +32,9 @@
 ;;
 ;;
 ;;; News
-;;  Version 0.5.0
-;; - introduces orgrr-show-like + update readme.md 
+;;
+;; Version 0.5.2
+;; - adds fix for titles with backslash 
 ;;; Code:
 
 (defun orgrr-show-backlinks ()
@@ -173,7 +174,7 @@
       (setq filename (gethash selection orgrr-title-filename))
       (org-open-file filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s]" "_" selection))))
+         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s\/]" "_" selection))))
 	 (find-file-other-window (concat filename ".org"))
 	 (insert (concat "#+title: " selection "\n\n"))))
 (clrhash orgrr-title-filename)
@@ -197,7 +198,7 @@
 	  (kill-region (region-beginning) (region-end)))
       (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s]" "_" selection))))
+         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s\/]" "_" selection))))
       (if (region-active-p)
 	  (kill-region (region-beginning) (region-end)))
       (insert (concat "\[\[file:" (file-relative-name filename path-of-current-note) ".org" "\]\[" selection "\]\]"))
@@ -240,7 +241,7 @@
       (setq filename (gethash selection orgrr-title-filename))
       (org-open-file filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S")))
-         (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s]" "_" selection) ".org")))
+         (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org")))
 	 (with-current-buffer (find-file-other-window filename)
 	 (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n"))))
 (clrhash orgrr-counter-filename)
@@ -286,7 +287,7 @@
       (setq filename (gethash selection orgrr-title-filename))
       (find-file-noselect filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S")))
-         (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s]" "_" selection) ".org")))
+         (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org")))
 	 (with-current-buffer (find-file-noselect filename)
 	 (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n"))))
     (with-current-buffer (find-file-noselect filename)
