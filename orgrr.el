@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: 
-;; Version: 0.5.2
+;; Version: 0.6
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes 
 
@@ -33,7 +33,9 @@
 ;;
 ;;; News
 ;;
-;; Version 0.5.2
+;; 0.6.
+;; - introduces orgrr-extensions; moves orgrr-show-findlike to orgrr-extensions.el
+;; 0.5.2
 ;; - adds fix for titles with backslash 
 ;;; Code:
 
@@ -583,61 +585,5 @@
 	      (write-file "~/.orgrr-container-list"))
 	    (setq org-directory (gethash "main" orgrr-name-container))))))
   (clrhash orgrr-name-container))
-
-(defun orgrr-show-findlike ()
-  "Shows all related notes in org-directory using findlike."
-  (interactive)
-  (if (findlike-installed-p)
-      (progn
-	(if (not (equal (buffer-name (current-buffer)) "*Orgrr findlike*"))
-	    (progn
-	      (orgrr-get-meta)
-	      (let ((filename (if (equal major-mode 'dired-mode)
-				  default-directory
-				(buffer-file-name))))
-		(pcase (org-collect-keywords '("TITLE"))
-		  (`(("TITLE" . ,val))
-		   (setq title (car val))))
-		(setq findlikelinks 0)
-		(setq orgrr-counter-filename (make-hash-table :test 'equal))
-		(with-temp-buffer
-		  (insert (shell-command-to-string (concat "findlike -R -d " org-directory " " filename)))
-		  (let ((lines (split-string (buffer-string) "\n" t)))
-		    (dolist (line lines)
-		      (progn
- 			(setq findlikelinks (+ findlikelinks 1))
-			(puthash findlikelinks line orgrr-counter-filename)))))
-		(with-current-buffer (get-buffer-create "*Orgrr findlike*")
-		  (let ((inhibit-read-only t))
-		    (erase-buffer)
-		    (insert (concat "\*\[\[file:" filename "\]\[" title "\]\]\*\n\n"))
-		    ;; Going through the findlike findings
-		    (dolist (counter (reverse (hash-table-keys orgrr-counter-filename)))
-		      (setq entry (gethash counter orgrr-counter-filename))
-                      (when (stringp entry)
-			(let ((result (gethash (concat "\\" entry) orgrr-filename-title)))
-			  (insert (concat "\*\* \[\[file:" entry "\]" "\[" result "\]\]\n\n"))))))
-		  (display-buffer-in-side-window
-		   (current-buffer)
-		   '((side . right)
-		     (slot . -1)
-		     (window-width . 60)))
-		  (with-current-buffer "*Orgrr findlike*"
-		    (org-mode))))
-	      (let ((window (get-buffer-window "*Orgrr findlike*")))
-		(when window
-		  (select-window window)
-		  (setq default-directory org-directory)
-		  (beginning-of-buffer)
-		  (next-line 2)))
-	      (clrhash orgrr-counter-filename)
-	      (clrhash orgrr-filename-title))
-	  (delete-window)))
-    (message "findlike is not installed. See https://github.com/brunoarine/findlike for instructions.")))
-
-(defun findlike-installed-p ()
-  "Check whether exa is installed in the system path."
-  (let ((findlike-exe (executable-find "findlike")))
-    (and findlike-exe (file-executable-p findlike-exe))))
 
 ;; orgrr.el ends here

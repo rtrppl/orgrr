@@ -35,6 +35,8 @@ These are the primary functions orgrr provides:
   - [orgrr-delete](#orgrr-delete)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
   - [orgrr-container-commands](#orgrr-container-commands)
+- [Orgrr extensions](#orgrr-extensions)
+  - [orgrr-save-website](#orgrr-save-website)
   - [orgrr-show-findlike](#orgrr-show-findlike)
 - [FAQ](#faq)
 
@@ -186,6 +188,18 @@ This function deletes the current note and shows the previous buffer. Links are 
 
 `orgrr-create-container` offers to select or create a directory to be used as a container, adds this container to the container list and switches to it. `orgrr-remove-container` removes a specific container from the list and switches back to "main". `orgrr-change-container` allows to switch between the containers. 
 
+## Orgrr extensions
+
+Orgrr extensions are additions to the core functionality of orgrr that may introduce new dependencies to other packages or external software. Orgrr will always run fine without them and if you want a minimalist setup, you don't need these. In order to use the extensions you have to add this file to your load-path:
+
+```org
+(load "/path/to/orgrr/orgrr-extension.el") 
+```
+
+### orgrr-save-website
+
+This function saves a website as an org-file in the current org-directory (remember that the [orgrr-container-commands](#orgrr-container-commands) allow you to easily change the org-directory). It uses [org-web-tools](https://github.com/alphapapa/org-web-tools) and [Pandoc](https://pandoc.org/) to create these org-files. I use this to store primary source material (=websites) for later analysis. It saves the website at point if there is a URL or an org-link. If no such link is provided, it will prompt for an URL.
+
 ### orgrr-show-findlike
 
 This function uses the command line tool [findlike](https://github.com/brunoarine/findlike) by [Bruno Arine](@brunoarine@hachyderm.io) to create a list of ten related notes in a side-window. Invoke the command again to close the side-window (while visiting this buffer).
@@ -194,13 +208,13 @@ This function uses the command line tool [findlike](https://github.com/brunoarin
 
 - Isn't this a ridiciulous waste of time? Why bother?
 
-Certainly. The newest version of org-roam is far more advanced that this system. And if one does not like org-roam, for one reason or another, there still are Denote or ZK to try out. There is at leasr one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only learned about after orgrr was done. 
+Certainly. The newest version of org-roam is far more advanced than this package. And if one does not like org-roam, for one reason or another, there still are Denote or ZK to try out. There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only learned about after orgrr was done. 
 
 Personally, the way how org-roam v1 operated really clicked for me. I liked the idea that my notes would be a collection of many small text files. The mandatory use of org-id in org-roam v2 made it difficult to know where links in the notes would be directing to. A potential conversion to Markdown or something else would also be much harder - in short (and I might be incorrect about this) the changes between v1 and v2 seemed to make org-roam less future-proof, while offering little additional benefit for my personal use-case.
 
 - But you could have continued to use org-roam v1!
 
-True and that is what I did for a long time. But every time I (re-)installed my setup, e.g. installing org-roam v1 on a new machine or upgrading Emacs itself, I encountered some obscure issues with my time-frozen setup of org-roam v1. In particular in Emacs 29 I had issues with emacsql and everything database related.
+This is what I did for a long time. But every time I (re-)installed my setup, e.g. installing org-roam v1 on a new machine or upgrading Emacs itself, I encountered some obscure issues with my time-frozen setup of org-roam v1. In particular in Emacs 29 I had issues with emacsql and everything database related. Emacs 29.1 finally broke org-roam v1 beyond repair.
 
 - Is that all?
 
