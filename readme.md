@@ -190,7 +190,7 @@ This function deletes the current note and shows the previous buffer. Links are 
 
 ## Orgrr extensions
 
-Orgrr extensions are additions to the core functionality of orgrr that may introduce new dependencies to other packages or external software. Orgrr will always run fine without them and if you want a minimalist setup, you don't need these. In order to use the extensions you have to add this file to your load-path:
+Orgrr extensions are additions to the core functionality of orgrr that may introduce new dependencies to other packages or external software. Orgrr will always run fine without them and if you want a minimalist setup, you don't need these. In order to use the extensions you will have to add this file to your load-path:
 
 ```org
 (load "/path/to/orgrr/orgrr-extension.el") 
@@ -198,11 +198,11 @@ Orgrr extensions are additions to the core functionality of orgrr that may intro
 
 ### orgrr-save-website
 
-This function saves a website as an org-file in the current org-directory (remember that the [orgrr-container-commands](#orgrr-container-commands) allow you to easily change the org-directory). It uses [org-web-tools](https://github.com/alphapapa/org-web-tools) and [Pandoc](https://pandoc.org/) to create these org-files. I use this to store primary source material (=websites) for later analysis. It saves the website at point if there is a URL or an org-link. If no such link is provided, it will prompt for an URL.
+This function saves a website as an org-file in the current org-directory (remember that the [orgrr-container-commands](#orgrr-container-commands) allow you to easily change the org-directory). It uses [org-web-tools](https://github.com/alphapapa/org-web-tools) and [Pandoc](https://pandoc.org/) to create these org-files. I use this to store primary source material (=websites) for later analysis. The function saves the website at point - if there is a URL or an org-link. If no such link is provided, it will prompt for an URL.
 
 ### orgrr-show-findlike
 
-This function uses the command line tool [findlike](https://github.com/brunoarine/findlike) by [Bruno Arine](@brunoarine@hachyderm.io) to create a list of ten related notes in a side-window. Invoke the command again to close the side-window (while visiting this buffer).
+This function uses the command line tool [findlike](https://github.com/brunoarine/findlike) by [Bruno Arine](@brunoarine@hachyderm.io) to create a list of ten related notes in a side-window. Invoke the command again to close the side-window (while visiting the "Orgrr findlike" buffer).
 
 ## FAQ
 
