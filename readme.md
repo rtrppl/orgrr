@@ -208,7 +208,7 @@ This function uses the command line tool [findlike](https://github.com/brunoarin
 
 - Isn't this a ridiciulous waste of time? Why bother?
 
-Certainly. The newest version of org-roam is far more advanced than this package. And if one does not like org-roam, for one reason or another, there still are Denote or ZK to try out. There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only learned about after orgrr was done. 
+Certainly. The newest version of org-roam is far more advanced than this package. And if one does not like org-roam, for one reason or another, there still are Denote or ZK to try out. There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only learned about after orgrr was done. [minaduki](https://github.com/kisaragi-hiu/minaduki) is a seemingly well maintained fork of org-roam v1, if that is what you are looking for.
 
 Personally, the way how org-roam v1 operated really clicked for me. I liked the idea that my notes would be a collection of many small text files. The mandatory use of org-id in org-roam v2 made it difficult to know where links in the notes would be directing to. A potential conversion to Markdown or something else would also be much harder - in short (and I might be incorrect about this) the changes between v1 and v2 seemed to make org-roam less future-proof, while offering little additional benefit for my personal use-case.
 
