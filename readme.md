@@ -77,9 +77,9 @@ Finally, you may also want to set keybindings for the main functions:
 
 Orgrr is an almost feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. Orgrr currently only works with [org-files](https://orgmode.org) (i.e. in a technical sense files ending in .org).
 
-**A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about org-files and their meta-data. The aim is to have as little dependencies as possible. Orgrr uses plain org-links.** 
+**A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about org-files and their meta-data. The aim is to have as little dependencies as possible. A second difference is that orgrr sticks to the ideal of every note being a single file. The final difference is relative minimalism - orgrr should have all features that are necessary but draws a lot on org-mode for everything else.**
 
-This is a package to address my needs. I have about 3000 notes and the speed between org-roam and orgrr is comparable. If you are interested in a less minimalist and more comprehensive note taking experience you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). 
+This is a package to address my needs. I have about 3000 notes and the speed between org-roam and orgrr is comparable. If you are interested in a less minimalist and more comprehensive note taking experience you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). Also,  [minaduki](https://github.com/kisaragi-hiu/minaduki) is a seemingly well maintained fork of org-roam v1, if that is what you are looking for.
 
 ### Basic design of a note
 
@@ -97,9 +97,9 @@ One of the unique strengths of org-roam v1 was the inclusion of `alias` for the 
 #+roam_alias:  "alias 1" "alias 2"
 ```
 
-Orgrr also recognizes tags in the same way as org-roam v1 did, separate from regular org-tags. This has changed in org-roam v2, when org-roam began to use org-tags. I still prefer the approach of v1.
+Orgrr also recognizes tags in the same way as org-roam v1 did, separate from regular [org-tags](https://orgmode.org/manual/Tags.html). In v2, org-roam began to use org-tags. I still prefer the approach of v1.
 
-Tags can be very useful to add a very limited set of meta-data to your notes (type of source, date reading the source, status of processing the info). There is no auto-completion for tags, so stick to a few you remember.
+Tags can be very useful to add a limited set of meta-data to your notes. There is no auto-completion for tags, so stick to a few that you can remember.
 
 Tags are added without quotation marks, separated by space.
 
@@ -208,7 +208,7 @@ This function uses the command line tool [findlike](https://github.com/brunoarin
 
 - Isn't this a ridiciulous waste of time? Why bother?
 
-Certainly. The newest version of org-roam is far more advanced than this package. And if one does not like org-roam, for one reason or another, there still are Denote or ZK to try out. There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only learned about after orgrr was done. [minaduki](https://github.com/kisaragi-hiu/minaduki) is a seemingly well maintained fork of org-roam v1, if that is what you are looking for.
+Certainly. The newest version of org-roam is far more advanced than this package. And if one does not like org-roam, for one reason or another, there still are Denote or ZK to try out. There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only learned about after orgrr was done.
 
 Personally, the way how org-roam v1 operated really clicked for me. I liked the idea that my notes would be a collection of many small text files. The mandatory use of org-id in org-roam v2 made it difficult to know where links in the notes would be directing to. A potential conversion to Markdown or something else would also be much harder - in short (and I might be incorrect about this) the changes between v1 and v2 seemed to make org-roam less future-proof, while offering little additional benefit for my personal use-case.
 

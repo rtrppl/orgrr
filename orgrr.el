@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: 
-;; Version: 0.6
+;; Version: 0.6.1
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes 
 
@@ -33,11 +33,16 @@
 ;;
 ;;; News
 ;;
-;; 0.6.
+;; 0.6.1
+;; - introduces a fix macOS handling of some (but not all) unicode characters
+;;   
+;; 0.6.0
 ;; - introduces orgrr-extensions; moves orgrr-show-findlike to orgrr-extensions.el
-;; 0.5.2
-;; - adds fix for titles with backslash 
 ;;; Code:
+
+(defun on-macos-p ()
+  "Check if Emacs is running on macOS. This became necessary due to some normalization issues with filenames that contain non-ascii characters and require NCD-formating."
+  (eq system-type 'darwin))
 
 (defun orgrr-show-backlinks ()
   "Shows all backlinks in org-directory to the current org-file."
@@ -56,7 +61,9 @@
 	  (setq orgrr-counter-quote (make-hash-table :test 'equal))
 	  (setq orgrr-counter-filename (make-hash-table :test 'equal))
 	  (with-temp-buffer
-	    (insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\"")))
+	    (if (on-macos-p)
+	    (insert (shell-command-to-string (concat "rg -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' " org-directory " -n -g \"*.org\"")))
+	    (insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\""))))
 	    (let ((lines (split-string (buffer-string) "\n" t)))
 	      (dolist (line lines)
 		(if (string-match "^\\(.*?\\):\\(.*\\)$" line)
@@ -220,7 +227,9 @@
     (let ((new-filename (read-from-minibuffer "Filename to change: " old-filename)))      
 	      (rename-file old-filename new-filename)
 	      (set-visited-file-name new-filename)
-	      (shell-command-to-string (concat "rg -e '" (file-name-nondirectory old-filename) "' " org-directory "-r " (file-name-nondirectory new-filename))))))
+	       (if (on-macos-p)
+		   (shell-command-to-string (concat "rg -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory old-filename)) "' " org-directory "-r " (ucs-normalize-HFS-NFD-string (file-name-nondirectory new-filename))))
+		 (shell-command-to-string (concat "rg -e '" (file-name-nondirectory old-filename) "' " org-directory "-r " (file-name-nondirectory new-filename)))))))
 
 (defun orgrr-delete ()
   "Deletes the current note and shows the previous buffer."
@@ -414,7 +423,9 @@
     (setq original-filename filename)
     ;; get all backlinks first order
     (with-temp-buffer
-      (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\"")))
+       (if (on-macos-p)
+	   (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' " org-directory " -n -g \"*.org\"")))
+	 (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\""))))
       (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (line lines)
 	  (if (string-match "\\.org$" line)
@@ -435,7 +446,9 @@
   (dolist (entry (hash-table-keys orgrr-filename-mentions))
     (setq filename (substring entry 1))
     (with-temp-buffer
-      (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\"")))
+       (if (on-macos-p)
+	   (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' " org-directory " -n -g \"*.org\"")))
+	 (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\""))))
       (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (line lines)
 	  (if (string-match "\\.org$" line)
@@ -471,7 +484,10 @@
       (goto-char (point-min))
       (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
 	 (let* ((filename (file-name-nondirectory (match-string 1)))
-		(new-filename (string-trim (shell-command-to-string (concat "rg -g \"" filename "\" --files " org-directory)))))
+		(new-filename 
+		  (if (on-macos-p)
+		      (string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string filename) "\" --files " org-directory)))
+		(string-trim (shell-command-to-string (concat "rg -g \"" filename "\" --files " org-directory))))))
 	   (if (not (equal original-filename new-filename))
 		 (progn
 		   (if (not (member (concat "\\" new-filename) (hash-table-keys orgrr-filename-mentions)))
@@ -489,7 +505,10 @@
 		 (goto-char (point-min))
 		 (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
 		   (let* ((2nd-filename (file-name-nondirectory (match-string 1)))
-			  (2nd-new-filename (string-trim (shell-command-to-string (concat "rg -g \"" 2nd-filename "\" --files " org-directory)))))
+			  (2nd-new-filename 
+			    (if (on-macos-p)
+				(string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string 2nd-filename) "\" --files " org-directory)))
+			      (string-trim (shell-command-to-string (concat "rg -g \"" 2nd-filename "\" --files " org-directory))))))
 		      (if (not (equal original-filename 2nd-new-filename))
 			  (if (not (member (concat "\\" 2nd-new-filename) (hash-table-keys orgrr-filename-mentions)))
 			      (progn

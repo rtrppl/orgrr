@@ -23,7 +23,7 @@
               (time (format-time-string "%Y%m%d%H%M%S"))
               (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\s\\\/]" "_" title))))
         (find-file-other-window (concat filename ".org"))
-          (insert (concat "#+title: " time "-" title "\n"))
+          (insert (concat "#+title: " time "-" (replace-regexp-in-string "[\(\)]" "-" title) "\n"))
           (insert (concat "#+roam_tags: " save-website-tags "\n"))
           (insert (concat "#+roam_key: " url "\n\n"))
           (insert converted))
