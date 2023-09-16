@@ -4,9 +4,9 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: 
-;; Version: 0.6.1
+;; Version: 0.6.2
 ;; Package-Requires: emacs "26", rg
-;; Keywords: org-roam notes 
+;; Keywords: org-roam notes zettelkasten
 
 ;; This file is not part of GNU Emacs.
 
@@ -33,11 +33,9 @@
 ;;
 ;;; News
 ;;
-;; 0.6.1
-;; - introduces a fix macOS handling of some (but not all) unicode characters
-;;   
-;; 0.6.0
-;; - introduces orgrr-extensions; moves orgrr-show-findlike to orgrr-extensions.el
+;; 0.6.2
+;; - small improvements to sorting order for orgrr-find and minor naming changes
+;;
 ;;; Code:
 
 (defun on-macos-p ()
@@ -62,8 +60,8 @@
 	  (setq orgrr-counter-filename (make-hash-table :test 'equal))
 	  (with-temp-buffer
 	    (if (on-macos-p)
-	    (insert (shell-command-to-string (concat "rg -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' " org-directory " -n -g \"*.org\"")))
-	    (insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\""))))
+	    (insert (shell-command-to-string (concat "rg -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' " org-directory " -n --sort accessed -g \"*.org\"")))
+	    (insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " org-directory " -n --sort accessed -g \"*.org\""))))
 	    (let ((lines (split-string (buffer-string) "\n" t)))
 	      (dolist (line lines)
 		(if (string-match "^\\(.*?\\):\\(.*\\)$" line)
@@ -119,7 +117,7 @@
   (setq orgrr-filename-tags (make-hash-table :test 'equal))
   (setq orgrr-short_filename-filename (make-hash-table :test 'equal))
   (with-temp-buffer
-    (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)\" " org-directory " -g \"*.org\"")))
+    (insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)\" " org-directory " -g \"*.org\"")))
     (goto-char (point-min))
     (while (not (eobp))
       (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
@@ -152,8 +150,6 @@
 		    (tags (car (cdr (cdr line)))))
 	       (puthash (concat "\\" filename) tags orgrr-filename-tags))))
 (forward-line))))
-
-
 
 (defun orgrr-selection ()
   "This function prepares the variable orgrr-selection for completing-read and sends the result in selection to orgrr-find and orgrr-insert. It prepends tags in front of title and alias."
@@ -350,7 +346,7 @@
     (setq project-snippet (buffer-string))))
 	 
 (defun orgrr-adjust-links (string)
-  "Adjusts/corrects all links of copied text relative to the position of the note"
+  "Adjusts/corrects all links of copied text relative to the position of the note."
   (setq path-of-current-note
       (if (buffer-file-name)
           (file-name-directory (buffer-file-name))

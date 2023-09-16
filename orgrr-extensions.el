@@ -6,7 +6,7 @@
 ;;
 
 ;; change the following to your liking
-(defvar save-website-tags "website orgrr-project")
+(defvar orgrr-save-website-tags "website orgrr-project")
 
 (cl-defun orgrr-save-website ()
   "Adds a website as an org-file to the current org-directory. Works on links, org-links or via entry of an URL."
@@ -24,7 +24,7 @@
               (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\s\\\/]" "_" title))))
         (find-file-other-window (concat filename ".org"))
           (insert (concat "#+title: " time "-" (replace-regexp-in-string "[\(\)]" "-" title) "\n"))
-          (insert (concat "#+roam_tags: " save-website-tags "\n"))
+          (insert (concat "#+roam_tags: " orgrr-save-website-tags "\n"))
           (insert (concat "#+roam_key: " url "\n\n"))
           (insert converted))
       (goto-char (point-min)))))       
