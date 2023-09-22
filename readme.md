@@ -35,6 +35,7 @@ These are the primary functions orgrr provides:
   - [orgrr-delete](#orgrr-delete)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
   - [orgrr-container-commands](#orgrr-container-commands)
+  - [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)
 - [Orgrr extensions](#orgrr-extensions)
   - [orgrr-save-website](#orgrr-save-website)
   - [orgrr-show-findlike](#orgrr-show-findlike)
@@ -70,6 +71,7 @@ Finally, you may also want to set keybindings for the main functions:
 (global-set-key (kbd "M-s-p") 'orgrr-open-project)
 (global-set-key (kbd "M-s-r") 'orgrr-show-related-notes)
 ```
+
 
 ## Orgrr's way of dealing with notes
 
@@ -187,6 +189,15 @@ This function deletes the current note and shows the previous buffer. Links are 
 ### orgrr-container-commands
 
 `orgrr-create-container` offers to select or create a directory to be used as a container, adds this container to the container list and switches to it. `orgrr-remove-container` removes a specific container from the list and switches back to "main". `orgrr-change-container` allows to switch between the containers. 
+
+### orgrr-toggle-single-window-mode
+
+This function activates `single-window-mode`, in which all links as well as the buffers for backlinks and related notes are opened in the current window. Intended for devices with small displays, it might also be helpful for distraction-free writing. If you want to start-up in this mode, you should add this to your init file:
+
+```org
+(setq orgrr-window-management "normal")
+(setq org-link-frame-setup '((file . find-file)))
+```
 
 ## Orgrr extensions
 

@@ -33,10 +33,32 @@
 ;;
 ;;; News
 ;;
-;; 0.6.2
-;; - small improvements to sorting order for orgrr-find and minor naming changes
+;; 0.6.3
+;; - introducing single-window-mode
 ;;
 ;;; Code:
+
+(defvar orgrr-window-management "normal")
+
+(defun orgrr-open-file (filename)
+  "A wrapper for find-file and find-file-other-window."
+  (if (equal orgrr-window-management "normal")
+      (find-file-other-window filename)
+    (if (equal orgrr-window-management "single-window")
+        (find-file filename)
+      (find-file-other-window filename))))
+
+(defun orgrr-toggle-single-window-mode ()
+  "Switches between single-window-mode and normal mode (which uses other-window and side-buffers)."
+  (interactive)
+  (if (equal orgrr-window-management "normal")
+      (progn
+	(setq old-org-link-frame-setup org-link-frame-setup)
+	(setq orgrr-window-management "single-window")
+	(setq org-link-frame-setup '((file . find-file))))
+    (progn
+      (setq orgrr-window-management "normal")
+      (setq org-link-frame-setup old-org-link-frame-setup))))
 
 (defun on-macos-p ()
   "Check if Emacs is running on macOS. This became necessary due to some normalization issues with filenames that contain non-ascii characters and require NCD-formating."
@@ -89,13 +111,18 @@
 			(string-match "^\\(.*?\\):\\(.*\\)$" value)
 			(let* ((line-number (match-string 1 value))
 			       (snippet (match-string 2 value))
-			       (snippet (orgrr-adjust-links snippet)))
+			       (snippet (orgrr-adjust-links snippet))
+			       (snippet (string-trim-left (string-trim-left snippet "*"))))
 			(insert (concat "\*\* \[\[file:" key "::" line-number "\]" "\[" result "\]\]:\n\n"  snippet "\n\n")))))))))
-            (display-buffer-in-side-window
-             (current-buffer)
-             '((side . right)
-               (slot . -1)
-               (window-width . 60)))
+            (if (equal orgrr-window-management "normal")
+		(progn
+		  (display-buffer-in-side-window
+		   (current-buffer)
+		   '((side . right)
+		     (slot . -1)
+		     (window-width . 60)))))
+	    (if (equal orgrr-window-management "single-window")
+		  (switch-to-buffer "*Orgrr Backlinks*"))
 	    (with-current-buffer "*Orgrr Backlinks*"
 	      (org-mode))))
 	(let ((window (get-buffer-window "*Orgrr Backlinks*")))
@@ -103,11 +130,15 @@
 	    (select-window window)
 	    (setq default-directory org-directory)
 	    (beginning-of-buffer)
-	    (next-line 4)))
+	    (org-next-visible-heading 2)
+	    (deactivate-mark)))
 	(clrhash orgrr-counter-quote)
 	(clrhash orgrr-counter-filename)
 	(clrhash orgrr-filename-title))
-    (delete-window)))
+     (if (equal orgrr-window-management "normal")
+	 (delete-window))
+     (if (equal orgrr-window-management "single-window")
+	 (previous-buffer))))
 
 (defun orgrr-get-meta ()
   "Gets the value for #+TITLE:/#+title, #+roam_alias and #+roam_tags for all org-files and adds them to hashtables."
@@ -177,10 +208,10 @@
   (if (member selection titles)
     (progn
       (setq filename (gethash selection orgrr-title-filename))
-      (org-open-file filename))
+      (orgrr-open-file filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
          (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s\/]" "_" selection))))
-	 (find-file-other-window (concat filename ".org"))
+	 (orgrr-open-file (concat filename ".org"))
 	 (insert (concat "#+title: " selection "\n\n"))))
 (clrhash orgrr-title-filename)
 (clrhash orgrr-filename-title)
@@ -207,7 +238,7 @@
       (if (region-active-p)
 	  (kill-region (region-beginning) (region-end)))
       (insert (concat "\[\[file:" (file-relative-name filename path-of-current-note) ".org" "\]\[" selection "\]\]"))
-      (find-file-other-window (concat filename ".org"))
+      (orgrr-open-file (concat filename ".org"))
       (insert (concat "#+title: " selection "\n\n"))))
 (clrhash orgrr-title-filename)
 (clrhash orgrr-filename-title)
@@ -249,7 +280,7 @@
       (org-open-file filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S")))
          (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org")))
-	 (with-current-buffer (find-file-other-window filename)
+	 (with-current-buffer (orgrr-open-file filename)
 	 (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n"))))
 (clrhash orgrr-counter-filename)
 (clrhash orgrr-filename-title)
@@ -384,12 +415,16 @@
 	(orgrr-forwardlinks-first-and-second-order)
 	(with-current-buffer (get-buffer-create "*Orgrr Related Notes*")
 	  (erase-buffer)
-	  (display-buffer-in-side-window
-             (current-buffer)
-             '((side . right)
-               (slot . -1)
-               (window-width . 60)))
-	      (org-mode)
+	  (if (equal orgrr-window-management "normal")
+	      (progn 
+		(display-buffer-in-side-window
+		 (current-buffer)
+		 '((side . right)
+		   (slot . -1)
+		   (window-width . 60)))))
+	  (if (equal orgrr-window-management "single-window")
+	      (switch-to-buffer "*Orgrr Related Notes*"))
+	  (org-mode)
 	  (insert (concat "* " (number-to-string related-notes) " connections for *" title "*\n\n"))
 	  (setq sorted-values '())
 	  (maphash (lambda (key value)
@@ -399,13 +434,19 @@
 	  (dolist (entry sorted-values)	  	
 	    (insert (concat "** " "\[\[file:" (substring (cdr entry) 1) "\]\[" (gethash (cdr entry) orgrr-filename-title) "\]\]: " (number-to-string (car entry)) "\n")))
 	(let ((win (get-buffer-window "*Orgrr Related Notes*")))
-	  (select-window win)))
+	  (select-window win)
+	  (beginning-of-buffer)
+	  (org-next-visible-heading 1)
+	  (deactivate-mark)))
 	(clrhash orgrr-title-filename)
 	(clrhash orgrr-filename-title)
 	(clrhash orgrr-filename-tags)
 	(clrhash orgrr-short_filename-filename)
 	(clrhash orgrr-filename-mentions))
-  (delete-window)))
+    (if (equal orgrr-window-management "normal")
+	(delete-window))
+    (if (equal orgrr-window-management "single-window")
+	(previous-buffer))))
   
 
 (defun orgrr-backlinks-first-and-second-order ()
