@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: 
-;; Version: 0.6.2
+;; Version: 0.6.4
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,31 +33,31 @@
 ;;
 ;;; News
 ;;
-;; 0.6.3
-;; - introducing single-window-mode
+;; 0.6.4
+;; - changing window naming convention
 ;;
 ;;; Code:
 
-(defvar orgrr-window-management "normal")
+(defvar orgrr-window-management "multi-window")
 
 (defun orgrr-open-file (filename)
   "A wrapper for find-file and find-file-other-window."
-  (if (equal orgrr-window-management "normal")
+  (if (equal orgrr-window-management "multi-window")
       (find-file-other-window filename)
     (if (equal orgrr-window-management "single-window")
         (find-file filename)
       (find-file-other-window filename))))
 
 (defun orgrr-toggle-single-window-mode ()
-  "Switches between single-window-mode and normal mode (which uses other-window and side-buffers)."
+  "Switches between single-window-mode and multi-window mode (which uses side-buffers)."
   (interactive)
-  (if (equal orgrr-window-management "normal")
+  (if (equal orgrr-window-management "multi-window")
       (progn
 	(setq old-org-link-frame-setup org-link-frame-setup)
 	(setq orgrr-window-management "single-window")
 	(setq org-link-frame-setup '((file . find-file))))
     (progn
-      (setq orgrr-window-management "normal")
+      (setq orgrr-window-management "multi-window")
       (setq org-link-frame-setup old-org-link-frame-setup))))
 
 (defun on-macos-p ()
@@ -114,7 +114,7 @@
 			       (snippet (orgrr-adjust-links snippet))
 			       (snippet (string-trim-left (string-trim-left snippet "*"))))
 			(insert (concat "\*\* \[\[file:" key "::" line-number "\]" "\[" result "\]\]:\n\n"  snippet "\n\n")))))))))
-            (if (equal orgrr-window-management "normal")
+            (if (equal orgrr-window-management "multi-window")
 		(progn
 		  (display-buffer-in-side-window
 		   (current-buffer)
@@ -135,7 +135,7 @@
 	(clrhash orgrr-counter-quote)
 	(clrhash orgrr-counter-filename)
 	(clrhash orgrr-filename-title))
-     (if (equal orgrr-window-management "normal")
+     (if (equal orgrr-window-management "multi-window")
 	 (delete-window))
      (if (equal orgrr-window-management "single-window")
 	 (previous-buffer))))
@@ -415,7 +415,7 @@
 	(orgrr-forwardlinks-first-and-second-order)
 	(with-current-buffer (get-buffer-create "*Orgrr Related Notes*")
 	  (erase-buffer)
-	  (if (equal orgrr-window-management "normal")
+	  (if (equal orgrr-window-management "multi-window")
 	      (progn 
 		(display-buffer-in-side-window
 		 (current-buffer)
@@ -443,7 +443,7 @@
 	(clrhash orgrr-filename-tags)
 	(clrhash orgrr-short_filename-filename)
 	(clrhash orgrr-filename-mentions))
-    (if (equal orgrr-window-management "normal")
+    (if (equal orgrr-window-management "multi-window")
 	(delete-window))
     (if (equal orgrr-window-management "single-window")
 	(previous-buffer))))

@@ -195,8 +195,7 @@ This function deletes the current note and shows the previous buffer. Links are 
 This function activates `single-window-mode`, in which all links as well as the buffers for backlinks and related notes are opened in the current window. Intended for devices with small displays, it might also be helpful for distraction-free writing. If you want to start-up in this mode, you should add this to your init file:
 
 ```org
-(setq orgrr-window-management "normal")
-(setq org-link-frame-setup '((file . find-file)))
+(orgrr-toggle-single-window-mode)
 ```
 
 ## Orgrr extensions
