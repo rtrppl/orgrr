@@ -1,4 +1,4 @@
-# orgrr - org-roam-ripgrep
+# orgrr
 
 ![orgrr-show-backlinks](/orgrr-show-backlinks.png)
 
@@ -77,11 +77,11 @@ Finally, you may also want to set keybindings for the main functions:
 
 ### Origin story
 
-Orgrr is an almost feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. Orgrr currently only works with [org-files](https://orgmode.org) (i.e. in a technical sense files ending in .org).
+Orgrr is an almost feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. Orgrr currently only works with [org-files](https://orgmode.org) (i.e. in a technical sense: files ending in .org).
 
-**A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about org-files and their meta-data. The aim is to have as little dependencies as possible. A second difference is that orgrr sticks to the ideal of every note being a single file. The final difference is relative minimalism - orgrr should have all features that are necessary but draws a lot on org-mode for everything else.**
+**A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about org-files and their meta-data. The aim is to have as little dependencies as possible. A second difference is that orgrr sticks to the ideal of every note being a single file. The final difference is relative minimalism - orgrr should have all the features that are necessary and draw on org-mode/Emacs for everything else.**
 
-This is a package to address my needs. I have about 3000 notes and the speed between org-roam and orgrr is comparable. If you are interested in a less minimalist and more comprehensive note taking experience you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). Also,  [minaduki](https://github.com/kisaragi-hiu/minaduki) is a seemingly well maintained fork of org-roam v1, if that is what you are looking for.
+This is a package to address my needs and I have been using orgrr almost every day for more than six months now (September 2023). My main container has about 3700 notes and the speed between org-roam and orgrr is comparable. 
 
 ### Basic design of a note
 
@@ -134,7 +134,7 @@ Orgrr-projects provide rapid access to a set of current notes and are the main h
 
 ### orgrr-related-notes
 
-There are many different attempts to surface related notes in note-takings systems in Emacs (and outside of it). Most of them draw on some variation of text-analysis and algorithmic determination of proximity. I always felt that the links I personally add to notes represent an underused asset for determining proximity. This function collects all notes related (via links) to the current note to the second degree - it collects the backlinks for the backlinks and the outgoing links mentioned by outgoing links. To use the image of a family, it considers all parents and grandparents as well as all children and grandchildren of a note. All links to a specific note are counted and the resulting list is ranked by frequency. This is much quicker (about 10 times) than the excellent [org-similarity](https://github.com/brunoarine/org-similarity) and still produces very interesting results. See the example below:
+There are many different attempts to surface related notes in note-takings systems in Emacs (and outside of it). Most of them draw on some variation of text-analysis and algorithmic determination of proximity. I always felt that the links one personally adds to notes are an underused asset for determining the proximity between notes. This function collects all notes related (via links) to the current note to the second degree - it collects the backlinks for the backlinks and the outgoing links mentioned by outgoing links. To use the image of a family, it considers all parents and grandparents as well as all children and grandchildren of a note. All links to a specific note are counted and the resulting list is ranked by frequency. This is much quicker (about 10 times) than the excellent [org-similarity](https://github.com/brunoarine/org-similarity) and still produces very interesting results. See the example below:
 
 ![orgrr-show-related-notes](/orgrr-show-related-notes.png)
 
@@ -220,7 +220,9 @@ This function uses the command line tool [findlike](https://github.com/brunoarin
 
 Certainly. The newest version of org-roam is far more advanced than this package. And if one does not like org-roam, for one reason or another, there still are Denote or ZK to try out. There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only learned about after orgrr was done.
 
-Personally, the way how org-roam v1 operated really clicked for me. I liked the idea that my notes would be a collection of many small text files. The mandatory use of org-id in org-roam v2 made it difficult to know where links in the notes would be directing to. A potential conversion to Markdown or something else would also be much harder - in short (and I might be incorrect about this) the changes between v1 and v2 seemed to make org-roam less future-proof, while offering little additional benefit for my personal use-case.
+If you don't like orgrr but are interested in similar note-taking systems, you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). Also,  [minaduki](https://github.com/kisaragi-hiu/minaduki) is a seemingly well-maintained real (fork) of org-roam v1, if that is what you are looking for.
+
+Personally, the way how org-roam v1 operated really clicked for me. I liked the idea that my notes would be a collection of many small text files. The mandatory use of org-id in org-roam v2 made it difficult to know where links in the notes would be ulitmately directing to. A potential conversion to Markdown or something else would also be much harder - in short (and I might be incorrect about this) the changes between v1 and v2 seemed to make org-roam less future-proof, while offering little additional benefit for my personal use-case.
 
 - But you could have continued to use org-roam v1!
 
@@ -228,11 +230,11 @@ This is what I did for a long time. But every time I (re-)installed my setup, e.
 
 - Is that all?
 
-No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. 
+No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only about 650 lines of code are necessary to write a note-taking system that is not too far off from Denote or org-roam.
 
 - What does orgrr stand for?
 
-Orgrr is an acronym for "org-roam ripgrep" or "org-roam replica", as org-roam calls itself a [roam-research](https://roamresearch.com) replica. 
+Orgrr started as an acronym for "org-roam ripgrep" or "org-roam replica", as org-roam calls itself a [roam-research](https://roamresearch.com) replica. After many months of very slow but steady additions, the differences between orgrr and its source of inspiration are growing.
 
 - Is this a subtile criticism direct at the org-roam approach?
 

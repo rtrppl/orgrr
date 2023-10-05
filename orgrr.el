@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: 
-;; Version: 0.6.4
+;; Version: 0.6.5
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,8 +33,9 @@
 ;;
 ;;; News
 ;;
-;; 0.6.4
-;; - changing window naming convention
+;; 0.6.5
+;; - Multiple backlinks and related-notes windows are now possible
+;;   (just not for the same note)
 ;;
 ;;; Code:
 
@@ -68,7 +69,7 @@
   "Shows all backlinks in org-directory to the current org-file."
 ;; TODO: add unlinked references below backlinks!
   (interactive)
-  (if (not (equal (buffer-name (current-buffer)) "*Orgrr Backlinks*"))
+  (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
       (progn
 	(orgrr-get-meta)
 	(let ((filename (if (equal major-mode 'dired-mode)
@@ -77,6 +78,7 @@
 	  (pcase (org-collect-keywords '("TITLE"))
 	    (`(("TITLE" . ,val))
              (setq title (car val))))
+	  (setq backlink-buffer (concat "backlinks for *" title "*"))
 	  (setq backlinks 0)
 	  (setq orgrr-counter-quote (make-hash-table :test 'equal))
 	  (setq orgrr-counter-filename (make-hash-table :test 'equal))
@@ -92,7 +94,7 @@
 		      (puthash backlinks (match-string 1 line) orgrr-counter-filename)
 		      (puthash backlinks (match-string 2 line) orgrr-counter-quote))))))
 	  ;; match-string 2 includes the line number!
-	  (with-current-buffer (get-buffer-create "*Orgrr Backlinks*")
+	  (with-current-buffer (get-buffer-create backlink-buffer)
             (let ((inhibit-read-only t))
               (erase-buffer)
               (insert (concat "\*\[\[file:" filename "\]\[" title "\]\]\*\n\n"))
@@ -122,10 +124,10 @@
 		     (slot . -1)
 		     (window-width . 60)))))
 	    (if (equal orgrr-window-management "single-window")
-		  (switch-to-buffer "*Orgrr Backlinks*"))
-	    (with-current-buffer "*Orgrr Backlinks*"
+		  (switch-to-buffer backlink-buffer))
+	    (with-current-buffer backlink-buffer
 	      (org-mode))))
-	(let ((window (get-buffer-window "*Orgrr Backlinks*")))
+	(let ((window (get-buffer-window backlink-buffer)))
 	  (when window
 	    (select-window window)
 	    (setq default-directory org-directory)
@@ -399,21 +401,22 @@
                  (progn
                    (orgrr-get-meta)
                    (setq titles (hash-table-keys orgrr-title-filename))))))
-   (message "Orgrr considers %d titles (this includes titles and alias). Collecting all titles took %s seconds to complete." (length titles) (format "%.5f" (car result)))))
+   (message "Orgrr considers %d titles in this container (this includes titles and alias). Collecting all titles took %s seconds to complete." (length titles) (format "%.5f" (car result)))))
     
 
 (defun orgrr-show-related-notes ()
   "Shows all related notes in org-directory to the current org-file. Related means here notes linking to this note and the notes that link to them as well as notes linked by the current note and the links from these notes. It is assumed that the more times a note in environment is mentioned, the more important it is. Notes of higher importance are listed at the top. Parents and grandparents as well as children and grandchildren."
   (interactive)
-  (if (not (equal (buffer-name (current-buffer)) "*Orgrr Related Notes*"))
+  (if (not (string-match-p "related notes for *" (buffer-name (current-buffer))))
       (progn
 	(setq related-notes 0)
 	(setq counter 0)
 	(setq orgrr-filename-mentions (make-hash-table :test 'equal))
 	(orgrr-get-meta)
 	(orgrr-backlinks-first-and-second-order)
+	(setq relatednotes-buffer (concat "related notes for *" title "*"))
 	(orgrr-forwardlinks-first-and-second-order)
-	(with-current-buffer (get-buffer-create "*Orgrr Related Notes*")
+	(with-current-buffer (get-buffer-create relatednotes-buffer)
 	  (erase-buffer)
 	  (if (equal orgrr-window-management "multi-window")
 	      (progn 
@@ -423,7 +426,7 @@
 		   (slot . -1)
 		   (window-width . 60)))))
 	  (if (equal orgrr-window-management "single-window")
-	      (switch-to-buffer "*Orgrr Related Notes*"))
+	      (switch-to-buffer relatednotes-buffer))
 	  (org-mode)
 	  (insert (concat "* " (number-to-string related-notes) " connections for *" title "*\n\n"))
 	  (setq sorted-values '())
@@ -433,7 +436,7 @@
 	  (setq sorted-values (sort sorted-values (lambda (a b) (> (car a) (car b)))))
 	  (dolist (entry sorted-values)	  	
 	    (insert (concat "** " "\[\[file:" (substring (cdr entry) 1) "\]\[" (gethash (cdr entry) orgrr-filename-title) "\]\]: " (number-to-string (car entry)) "\n")))
-	(let ((win (get-buffer-window "*Orgrr Related Notes*")))
+	(let ((win (get-buffer-window relatednotes-buffer)))
 	  (select-window win)
 	  (beginning-of-buffer)
 	  (org-next-visible-heading 1)
