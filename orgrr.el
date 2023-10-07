@@ -3,7 +3,7 @@
 ;; Copyright (C) 2023 Free Software Foundation, Inc.
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
-;; URL: 
+;; URL:
 ;; Version: 0.6.5
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
@@ -27,7 +27,7 @@
 
 ;; Orgrr is a minimalist but complete note-taking system for Emacs. Its
 ;; intended purpose is the creation and management of a Zettelkasten-like,
-;; e.g. many small notes that can easily be linked together. 
+;; e.g. many small notes that can easily be linked together.
 ;;
 ;;
 ;;
@@ -42,7 +42,7 @@
 (defvar orgrr-window-management "multi-window")
 
 (defun orgrr-open-file (filename)
-  "A wrapper for find-file and find-file-other-window."
+  "A wrapper to open FILENAME either with find-file or find-file-other-window."
   (if (equal orgrr-window-management "multi-window")
       (find-file-other-window filename)
     (if (equal orgrr-window-management "single-window")
@@ -50,7 +50,7 @@
       (find-file-other-window filename))))
 
 (defun orgrr-toggle-single-window-mode ()
-  "Switches between single-window-mode and multi-window mode (which uses side-buffers)."
+  "Switch between single-window-mode and multi-window mode (which uses side-buffers)."
   (interactive)
   (if (equal orgrr-window-management "multi-window")
       (progn
@@ -66,7 +66,7 @@
   (eq system-type 'darwin))
 
 (defun orgrr-show-backlinks ()
-  "Shows all backlinks in org-directory to the current org-file."
+  "Show all backlinks in `org-directory' to the current org-file."
 ;; TODO: add unlinked references below backlinks!
   (interactive)
   (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
@@ -99,7 +99,7 @@
               (erase-buffer)
               (insert (concat "\*\[\[file:" filename "\]\[" title "\]\]\*\n\n"))
               (if (= backlinks 1)
-		  (insert "* 1 Backlink\n\n")      
+		  (insert "* 1 Backlink\n\n")
 		(insert (concat "* " (number-to-string backlinks) " Backlinks\n\n")))
 	      ;; Going through the backlinks
               (dolist (counter (hash-table-keys orgrr-counter-filename))
@@ -159,7 +159,7 @@
 	  (progn
 	    (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
 		   (filename (car line)))
-	      (let* ((line (split-string current-entry "^.+\\(#\\+title:\\|:#+TITLE:\\)\\s-*" t))  
+	      (let* ((line (split-string current-entry "^.+\\(#\\+title:\\|:#+TITLE:\\)\\s-*" t))
 		     (title (car line)))
 		(puthash title filename orgrr-title-filename)
 		(puthash (concat "\\" filename) title orgrr-filename-title)
@@ -175,7 +175,7 @@
 		    (goto-char (point-min))
 		    (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
 		      (puthash (match-string 1) filename orgrr-title-filename)))))
-;; The following checks if the line is about tags and if so copies the tags to orgrr-tags-filename.
+;; The following checks if the line contains tags and if so copies the tags to orgrr-tags-filename.
 	     (if (string-match "\\(#\\+roam_tags:\\|#+ROAM_TAGS:\\)\\s-*\\(.+\\)" current-entry)
 	     (progn
 	     (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
@@ -185,15 +185,15 @@
 (forward-line))))
 
 (defun orgrr-selection ()
-  "This function prepares the variable orgrr-selection for completing-read and sends the result in selection to orgrr-find and orgrr-insert. It prepends tags in front of title and alias."
+  "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Prepends tags in front of title and alias."
   (setq orgrr-selection-list ())
   (orgrr-get-meta)
   (setq titles (hash-table-keys orgrr-title-filename))
   (setq filenames-for-titles (hash-table-values orgrr-title-filename))
   (setq filenames-for-tags (hash-table-keys orgrr-filename-tags))
   (dolist (title titles)
-    (setq filename (gethash title orgrr-title-filename)) 
-    (if (member (concat "\\" filename) filenames-for-tags) 
+    (setq filename (gethash title orgrr-title-filename))
+    (if (member (concat "\\" filename) filenames-for-tags)
 	(setq orgrr-selection-list (cons (concat "(" (gethash (concat "\\" filename) orgrr-filename-tags) ")" " " title) orgrr-selection-list))
       (setq orgrr-selection-list (cons title orgrr-selection-list))))
   (setq orgrr-selection-list (reverse orgrr-selection-list))
@@ -204,7 +204,7 @@
       (setq selection (replace-regexp-in-string "\(.*?\) " "" selection))))
 
 (defun orgrr-find ()
-  "Finds org-file in org-directory via mini-buffer completion. If the selected file name does not exist, a new one is created."
+  "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
   (interactive)
   (orgrr-selection)
   (if (member selection titles)
@@ -221,7 +221,7 @@
 (clrhash orgrr-filename-tags))
 
 (defun orgrr-insert ()
-  "Links to org-file in org-directory via mini-buffer completion. If the selected file name does not exist, a new one is created."
+  "Links to org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
   (interactive)
   (setq path-of-current-note
       (if (buffer-file-name)
@@ -248,12 +248,12 @@
 (clrhash orgrr-filename-tags))
 
 (defun orgrr-rename ()
-  "Renames current file and changes all backlinks. Don't change directories!"
+  "Rename current file and change all backlinks. Does not work across directories."
   (interactive)
   (let ((old-filename (if (equal major-mode 'dired-mode)
                         default-directory
                       (buffer-file-name))))
-    (let ((new-filename (read-from-minibuffer "Filename to change: " old-filename)))      
+    (let ((new-filename (read-from-minibuffer "Filename to change: " old-filename)))
 	      (rename-file old-filename new-filename)
 	      (set-visited-file-name new-filename)
 	       (if (on-macos-p)
@@ -261,7 +261,7 @@
 		 (shell-command-to-string (concat "rg -e '" (file-name-nondirectory old-filename) "' " org-directory "-r " (file-name-nondirectory new-filename)))))))
 
 (defun orgrr-delete ()
-  "Deletes the current note and shows the previous buffer."
+  "Delete current note and show the previous buffer."
   (interactive)
   (if (buffer-file-name)
       (if (yes-or-no-p (format "Are you sure you want to delete the note %s? " (buffer-file-name)))
@@ -272,7 +272,7 @@
   (message "This is not a note!")))
 
 (defun orgrr-open-project ()
-  "Finds or creates new project."
+  "Find existing project or create a new one."
   (interactive)
   (orgrr-pick-project)
   (setq titles (hash-table-keys orgrr-title-filename))
@@ -290,7 +290,7 @@
 (clrhash orgrr-project_filename-title))
 
 (defun orgrr-collect-project-snippet ()
-  "Adds the current line in orgrr-backlinks or buffer to a project."
+  "Prepare snippet for `orgrr-add-to-project'."
   (if (not (string= (buffer-name) "*Orgrr Backlinks*"))
     (progn
       (save-excursion
@@ -315,7 +315,7 @@
     (setq snippet (buffer-substring-no-properties start end))))))
 
 (defun orgrr-add-to-project ()
-  "Adds the current paragraph in orgrr-backlinks or buffer to a project."
+  "Add the current line in the buffer (including orgrr-backlinks buffer) to an existing project."
   (interactive)
   (orgrr-get-meta)
   (orgrr-collect-project-snippet)
@@ -364,7 +364,7 @@
 	   (setq selection (replace-regexp-in-string "\(.*?\) " "" selection)))))
 
 (defun orgrr-format-project-snippet (snippet)
-  "Formats an orgrr-project snippet."
+  "Formats an orgrr-project SNIPPET."
   (with-temp-buffer
     (insert snippet)
     (goto-char (point-min))
@@ -379,7 +379,7 @@
     (setq project-snippet (buffer-string))))
 	 
 (defun orgrr-adjust-links (string)
-  "Adjusts/corrects all links of copied text relative to the position of the note."
+  "Adjusts/corrects all links of STRING relative to the position of the note."
   (setq path-of-current-note
       (if (buffer-file-name)
           (file-name-directory (buffer-file-name))
@@ -395,7 +395,7 @@
     (buffer-string)))
     
 (defun orgrr-info ()
- "This function shows the amount of titles considered by orgrr."
+ "Show the amount of titles considered by orgrr."
  (interactive)
  (let ((result (benchmark-run-compiled 1
                  (progn
@@ -405,7 +405,7 @@
     
 
 (defun orgrr-show-related-notes ()
-  "Shows all related notes in org-directory to the current org-file. Related means here notes linking to this note and the notes that link to them as well as notes linked by the current note and the links from these notes. It is assumed that the more times a note in environment is mentioned, the more important it is. Notes of higher importance are listed at the top. Parents and grandparents as well as children and grandchildren."
+  "Show all related notes in `org-directory' to the current org-file. Related means here notes linking to this note and the notes that link to them as well as notes linked by the current note and the links from these notes. It is assumed that the more times a note in environment is mentioned, the more important it is. Notes of higher importance are listed at the top. Parents and grandparents as well as children and grandchildren."
   (interactive)
   (if (not (string-match-p "related notes for *" (buffer-name (current-buffer))))
       (progn
@@ -419,7 +419,7 @@
 	(with-current-buffer (get-buffer-create relatednotes-buffer)
 	  (erase-buffer)
 	  (if (equal orgrr-window-management "multi-window")
-	      (progn 
+	      (progn
 		(display-buffer-in-side-window
 		 (current-buffer)
 		 '((side . right)
@@ -431,10 +431,10 @@
 	  (insert (concat "* " (number-to-string related-notes) " connections for *" title "*\n\n"))
 	  (setq sorted-values '())
 	  (maphash (lambda (key value)
-		     (push (cons value key) sorted-values)) 
+		     (push (cons value key) sorted-values))
 		   orgrr-filename-mentions)
 	  (setq sorted-values (sort sorted-values (lambda (a b) (> (car a) (car b)))))
-	  (dolist (entry sorted-values)	  	
+	  (dolist (entry sorted-values)
 	    (insert (concat "** " "\[\[file:" (substring (cdr entry) 1) "\]\[" (gethash (cdr entry) orgrr-filename-title) "\]\]: " (number-to-string (car entry)) "\n")))
 	(let ((win (get-buffer-window relatednotes-buffer)))
 	  (select-window win)
@@ -524,7 +524,7 @@
       (goto-char (point-min))
       (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
 	 (let* ((filename (file-name-nondirectory (match-string 1)))
-		(new-filename 
+		(new-filename
 		  (if (on-macos-p)
 		      (string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string filename) "\" --files " org-directory)))
 		(string-trim (shell-command-to-string (concat "rg -g \"" filename "\" --files " org-directory))))))
@@ -545,7 +545,7 @@
 		 (goto-char (point-min))
 		 (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
 		   (let* ((2nd-filename (file-name-nondirectory (match-string 1)))
-			  (2nd-new-filename 
+			  (2nd-new-filename
 			    (if (on-macos-p)
 				(string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string 2nd-filename) "\" --files " org-directory)))
 			      (string-trim (shell-command-to-string (concat "rg -g \"" 2nd-filename "\" --files " org-directory))))))
@@ -561,7 +561,7 @@
 			      (puthash (concat "\\" 2nd-new-filename) counter orgrr-filename-mentions)))))))))))
 
 (defun orgrr-change-container ()
-  "Allows to switch between a list of containers stored in ~/.orgrr-container-list."
+  "Switch between a list of containers stored in ~/.orgrr-container-list."
   (interactive)
   (setq orgrr-name-container (make-hash-table :test 'equal))
   (if (not (file-exists-p "~/.orgrr-container-list"))
@@ -584,7 +584,7 @@
   (clrhash orgrr-name-container))
 
 (defun orgrr-create-container ()
-  "Creates or adds a directory as a container and switches to that container."
+  "Create or add a directory as a container and switch to that container."
   (interactive)
   (setq orgrr-name-container (make-hash-table :test 'equal))
   (if (not (file-exists-p "~/.orgrr-container-list"))
@@ -615,7 +615,7 @@
 
 
 (defun orgrr-remove-container ()
-  "Allows to remove a container for the list of containers."
+  "Allow to remove a container for the list of containers."
   (interactive)
   (setq orgrr-name-container (make-hash-table :test 'equal))
   (if (not (file-exists-p "~/.orgrr-container-list"))
@@ -645,4 +645,6 @@
 	    (setq org-directory (gethash "main" orgrr-name-container))))))
   (clrhash orgrr-name-container))
 
-;; orgrr.el ends here
+(provide 'orgrr)
+
+;;; orgrr.el ends here
