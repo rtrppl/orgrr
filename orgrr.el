@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.6.5
+;; Version: 0.6.6
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,9 +33,8 @@
 ;;
 ;;; News
 ;;
-;; 0.6.5
-;; - Multiple backlinks and related-notes windows are now possible
-;;   (just not for the same note)
+;; 0.6.6
+;; - buffer
 ;;
 ;;; Code:
 
@@ -291,7 +290,7 @@
 
 (defun orgrr-collect-project-snippet ()
   "Prepare snippet for `orgrr-add-to-project'."
-  (if (not (string= (buffer-name) "*Orgrr Backlinks*"))
+  (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
     (progn
       (save-excursion
       (setq line-number (line-number-at-pos))
