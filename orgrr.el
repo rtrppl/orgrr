@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.6.6
+;; Version: 0.6.7
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,8 +33,8 @@
 ;;
 ;;; News
 ;;
-;; 0.6.6
-;; - buffer
+;; 0.6.7
+;; - more fixes for normalization and new notes
 ;;
 ;;; Code:
 
@@ -212,8 +212,8 @@
       (orgrr-open-file filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
          (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s\/]" "_" selection))))
-	 (orgrr-open-file (concat filename ".org"))
-	 (insert (concat "#+title: " selection "\n\n"))))
+      (orgrr-open-file (concat filename ".org")))
+    (insert (concat "#+title: " selection "\n")))
 (clrhash orgrr-title-filename)
 (clrhash orgrr-filename-title)
 (clrhash orgrr-short_filename-filename)
@@ -236,11 +236,13 @@
       (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
          (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s\/]" "_" selection))))
+      (if (on-macos-p)
+	  (setq filename (ucs-normalize-HFS-NFD-string filename)))
       (if (region-active-p)
 	  (kill-region (region-beginning) (region-end)))
       (insert (concat "\[\[file:" (file-relative-name filename path-of-current-note) ".org" "\]\[" selection "\]\]"))
       (orgrr-open-file (concat filename ".org"))
-      (insert (concat "#+title: " selection "\n\n"))))
+      (insert (concat "#+title: " selection "\n"))))
 (clrhash orgrr-title-filename)
 (clrhash orgrr-filename-title)
 (clrhash orgrr-short_filename-filename)
