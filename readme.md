@@ -33,6 +33,7 @@ These are the primary functions orgrr provides:
   - [orgrr-show-backlinks](#orgrr-show-backlinks)
   - [orgrr-rename](#orgrr-rename)
   - [orgrr-delete](#orgrr-delete)
+  - [orgrr-move-note](#orgrr-move-note)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
   - [orgrr-container-commands](#orgrr-container-commands)
   - [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)
@@ -178,7 +179,11 @@ This function allows to change the name of the file/note the current buffer visi
 
 ### orgrr-delete
 
-This function deletes the current note and shows the previous buffer. Links are not changed.
+This function deletes the current note and shows the previous buffer. 
+
+### orgrr-move-note
+
+This function allows to move the current note to one of the other containers. 
 
 ### orgrr-add-to-project and orgrr-open-project
 

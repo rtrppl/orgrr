@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.6.7
+;; Version: 0.6.8
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,8 +33,8 @@
 ;;
 ;;; News
 ;;
-;; 0.6.7
-;; - more fixes for normalization and new notes
+;; 0.6.8
+;; - added orgrr-move-note
 ;;
 ;;; Code:
 
@@ -271,6 +271,29 @@
 	    (message "Note deleted!")
 	    (kill-current-buffer)))
   (message "This is not a note!")))
+
+(defun orgrr-move-note ()
+  "Move current note to one of the other containers."
+  (interactive)
+  (setq orgrr-name-container (make-hash-table :test 'equal))
+  (if (buffer-file-name)
+      (setq filename (buffer-file-name)))
+  (with-temp-buffer
+    (insert-file-contents "~/.orgrr-container-list")
+    (if (fboundp 'json-parse-buffer)
+	(setq orgrr-name-container (json-parse-buffer))))
+  (setq containers (hash-table-keys orgrr-name-container))
+  (setq selection (completing-read "Move note to which countainer?" containers))
+  (if (member selection containers)
+      (progn
+	(setq new-container (gethash selection orgrr-name-container))
+	(if (yes-or-no-p (format "Are you sure you want to move the note %s? " (buffer-file-name)))
+	    (progn
+	    (rename-file filename (concat new-container "/" (file-name-nondirectory filename)))
+	    (message "Note has been moved!"))
+	  (message "Note not moved!")))
+    (message "Container does not exist."))
+  (clrhash orgrr-name-container))
 
 (defun orgrr-open-project ()
   "Find existing project or create a new one."
