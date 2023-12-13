@@ -60,7 +60,7 @@ If you don't already have done so, you also have to set an org-directory.
 (setq org-directory "~/path/to/org-directory")
 ```
 
-In order to use Orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine. The easiest way to do so might be [homebrew](https://brew.sh), i.e. `brew install rg`.
+**In order to use Orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine.** The easiest way to do so might be [homebrew](https://brew.sh), i.e. `brew install rg`.
 
 Finally, you may also want to set keybindings for the main functions:
 
@@ -78,11 +78,13 @@ Finally, you may also want to set keybindings for the main functions:
 
 ### Origin story
 
-Orgrr is an almost feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1) built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. Orgrr currently only works with [org-files](https://orgmode.org) (i.e. in a technical sense: files ending in .org).
+Orgrr began as an almost feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1), built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. Orgrr currently only works with [org-files](https://orgmode.org) (i.e. in a technical sense: files ending in .org).
 
 **A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about org-files and their meta-data. The aim is to have as little dependencies as possible. A second difference is that orgrr sticks to the ideal of every note being a single file. The final difference is relative minimalism - orgrr should have all the features that are necessary and draw on org-mode/Emacs for everything else.**
 
-This is a package to address my needs and I have been using orgrr almost every day for more than six months now (September 2023). My main container has about 3700 notes and the speed between org-roam and orgrr is comparable. 
+This is a package to address my needs and I have been using orgrr almost every day for more than nine months now (December 2023). My main container has now close to 4000 notes and the speed between org-roam and orgrr is comparable. Even on a Rasberry Pi 5 rg needs less than a second to extract all of the meta-data (see below)!
+
+**As there is no database involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions.** 
 
 ### Basic design of a note
 
@@ -129,9 +131,9 @@ On the most basic level, an orgrr-project is any note that has the tag `orgrr-pr
 #+roam_tags: orgrr-project
 ```
 
-The function [orgrr-add-to-project](#orgrr-add-to-project) takes the current line visited at point (the cursor) and appends it to the chosen project. A source-link is added, to allow for follow-up. If the project name does not yet exist, a new orgrr-project is created in the org-directory (similar to the way orgrr-find and orgrr-insert operate).
+The function [orgrr-add-to-project](#orgrr-add-to-project) takes the current paragraph visited at point (the cursor) in an org-file (in the org-directory or its sub-directories) or in orgrr-backlinks and appends it to a chosen project. A source-link is added, to allow for follow-up. If the project name does not yet exist, a new orgrr-project is created in the org-directory (similar to the way orgrr-find and orgrr-insert operate).
 
-Orgrr-projects provide rapid access to a set of current notes and are the main holding area for work in progress in orgrr. 
+Orgrr-projects thereby facilitate rapid access to a set of paragraphs and are the main holding area for work in progress in orgrr. 
 
 ### orgrr-related-notes
 
@@ -223,11 +225,9 @@ This function uses the command line tool [findlike](https://github.com/brunoarin
 
 - Isn't this a ridiciulous waste of time? Why bother?
 
-Certainly. The newest version of org-roam is far more advanced than this package. And if one does not like org-roam, for one reason or another, there still are Denote or ZK to try out. There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only learned about after orgrr was done.
-
-If you don't like orgrr but are interested in similar note-taking systems, you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). Also,  [minaduki](https://github.com/kisaragi-hiu/minaduki) is a seemingly well-maintained real (fork) of org-roam v1, if that is what you are looking for.
-
 Personally, the way how org-roam v1 operated really clicked for me. I liked the idea that my notes would be a collection of many small text files. The mandatory use of org-id in org-roam v2 made it difficult to know where links in the notes would be ulitmately directing to. A potential conversion to Markdown or something else would also be much harder - in short (and I might be incorrect about this) the changes between v1 and v2 seemed to make org-roam less future-proof, while offering little additional benefit for my personal use-case.
+
+If you don't like orgrr but are interested in similar note-taking systems, you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). Also,  [minaduki](https://github.com/kisaragi-hiu/minaduki) is a seemingly well-maintained real (fork) of org-roam v1, if that is what you are looking for.  There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only learned about after orgrr was done.
 
 - But you could have continued to use org-roam v1!
 
