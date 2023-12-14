@@ -34,6 +34,7 @@ These are the primary functions orgrr provides:
   - [orgrr-rename](#orgrr-rename)
   - [orgrr-delete](#orgrr-delete)
   - [orgrr-move-note](#orgrr-move-note)
+  - [orgrr-random-note](#orgrr-random-note)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
   - [orgrr-container-commands](#orgrr-container-commands)
   - [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)
@@ -186,6 +187,10 @@ This function deletes the current note and shows the previous buffer.
 ### orgrr-move-note
 
 This function allows to move the current note to one of the other containers. 
+
+### orgrr-random-note
+
+This function opens a random note in the current container (org-directory). 
 
 ### orgrr-add-to-project and orgrr-open-project
 

@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.6.8
+;; Version: 0.6.9
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,8 +33,8 @@
 ;;
 ;;; News
 ;;
-;; 0.6.8
-;; - added orgrr-move-note
+;; 0.6.9
+;; - added orgrr-random-note
 ;;
 ;;; Code:
 
@@ -188,7 +188,6 @@
   (setq orgrr-selection-list ())
   (orgrr-get-meta)
   (setq titles (hash-table-keys orgrr-title-filename))
-  (setq filenames-for-titles (hash-table-values orgrr-title-filename))
   (setq filenames-for-tags (hash-table-keys orgrr-filename-tags))
   (dolist (title titles)
     (setq filename (gethash title orgrr-title-filename))
@@ -243,6 +242,20 @@
       (insert (concat "\[\[file:" (file-relative-name filename path-of-current-note) ".org" "\]\[" selection "\]\]"))
       (orgrr-open-file (concat filename ".org"))
       (insert (concat "#+title: " selection "\n"))))
+(clrhash orgrr-title-filename)
+(clrhash orgrr-filename-title)
+(clrhash orgrr-short_filename-filename)
+(clrhash orgrr-filename-tags))
+
+(defun orgrr-random-note ()
+  "Opens random org-file in `org-directory'."
+  (interactive)
+  (orgrr-get-meta)
+  (let* ((titles (hash-table-keys orgrr-title-filename))
+	 (filenames-for-titles (hash-table-values orgrr-title-filename))
+	 (random-title (elt titles (random (length titles))))
+         (filename (gethash random-title orgrr-title-filename)))
+    (orgrr-open-file filename))
 (clrhash orgrr-title-filename)
 (clrhash orgrr-filename-title)
 (clrhash orgrr-short_filename-filename)
@@ -531,7 +544,6 @@
 
 (defun orgrr-forwardlinks-first-and-second-order ()
   "Gets backlinks first and second order."
-  (interactive)
   (let ((filename (if (equal major-mode 'dired-mode)
                       default-directory
 		    (buffer-file-name))))
