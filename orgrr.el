@@ -596,8 +596,8 @@
 			      (setq related-notes (+ related-notes 1))
 			      (puthash (concat "\\" 2nd-new-filename) counter orgrr-filename-mentions)))))))))))
 
-(defun orgrr-change-container ()
-  "Switch between a list of containers stored in ~/.orgrr-container-list."
+(defun orgrr-change-container (&optional container)
+  "Switch between a list of containers stored in ~/.orgrr-container-list. orgrr-change-container can be called with a specific container."
   (interactive)
   (setq orgrr-name-container (make-hash-table :test 'equal))
   (if (not (file-exists-p "~/.orgrr-container-list"))
@@ -612,7 +612,9 @@
     (if (fboundp 'json-parse-buffer)
 	(setq orgrr-name-container (json-parse-buffer))))
   (setq containers (nreverse (hash-table-keys orgrr-name-container)))
-  (setq selection (completing-read "" containers))
+  (if (stringp container)
+      (setq selection container)
+    (setq selection (completing-read "" containers)))
   (if (member selection containers)
       (progn
 	(setq org-directory (gethash selection orgrr-name-container)))
