@@ -195,7 +195,8 @@
 (forward-line))))
 
 (defun orgrr-selection ()
-  "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front of title and alias."
+  "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front of title and alias. Old version."
+  (interactive)
   (setq orgrr-selection-list ())
   (orgrr-get-meta)
   (setq pre-title "")
@@ -203,7 +204,6 @@
   (setq filenames-for-tags (hash-table-keys orgrr-filename-tags))
   (setq filenames-for-zettel (hash-table-keys orgrr-filename-zettel))
   (dolist (title titles)
-    (print title)
     (setq filename (gethash title orgrr-title-filename))
     (if (member (concat "\\" filename) filenames-for-tags)
 	(setq pre-title (concat "(" (gethash (concat "\\" filename) orgrr-filename-tags) ")"))) 
@@ -220,7 +220,40 @@
   (if (string-match "^\\[" selection)
     (setq selection (replace-regexp-in-string "\\[.*?\\]  " "" selection)))  
 (if (string-match "^\(" selection)
-    (setq selection (replace-regexp-in-string "\(.*?\) " "" selection))))
+    (setq selection (replace-regexp-in-string "\(.*?\) " "" selection)))
+(print selection))
+
+(defun orgrr-selection ()
+  "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front of title and alias. New version."
+  (interactive)
+  (orgrr-get-meta)
+  (let* ((orgrr-selection-list ())
+	(pre-title "")
+	(titles (hash-table-keys orgrr-title-filename))
+	(filenames-for-tags (hash-table-keys orgrr-filename-tags))
+	(filenames-for-zettel (hash-table-keys orgrr-filename-zettel)))
+    (dolist (title titles)
+      (let* ((filename (gethash title orgrr-title-filename))
+	     (tags (if (member (concat "\\" filename) filenames-for-tags)(concat "(" (gethash (concat "\\" filename) orgrr-filename-tags) ")") nil)))
+	(let* ((zettel (if (member (concat "\\" filename) filenames-for-tags)(concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]") nil)))
+	(print (concat title "+" zettel "+" tags))
+	(if zettel
+	    (progn
+	    (if tags
+		(setq orgrr-selection-list (cons (concat zettel " " tags " " title) orgrr-selection-list)))
+	    (setq orgrr-selection-list (cons (concat zettel " " title) orgrr-selection-list)))
+	  (setq orgrr-selection-list (cons title orgrr-selection-list))))))
+	(if (region-active-p)
+	    (setq selection (completing-read "" orgrr-selection-list nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
+	  (setq selection (completing-read "" orgrr-selection-list)))
+	(if (string-match "^\\[" selection)
+	    (setq selection (replace-regexp-in-string "\\[.*?\\] " "" selection)))  
+	(if (string-match "^\(" selection)
+	    (setq selection (replace-regexp-in-string "\(.*?\)." "" selection)))))
+	
+
+
+
 
 (defun orgrr-find ()
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
