@@ -414,6 +414,29 @@
 	  (kill-whole-line 1))
 	(forward-line)))
     (setq project-snippet (buffer-string))))
+
+(defun orgrr-get-all-filenames ()
+  "Collects the name all of org-files across all containers and adds them to hashtables. This is needed to correct the links of a snippet created in one container for use in another via orgrr-add-to-project. 
+
+A use case could be to add snippets to a writing project, which is located in a different container than the main database."
+  (setq current-entry "")
+  (setq orgrr-short_filename-filename (make-hash-table :test 'equal))
+  (with-temp-buffer
+    (insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)\" " org-directory " -g \"*.org\"")))
+    (goto-char (point-min))
+    (while (not (eobp))
+      (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
+      ;; The following checks if this is a #+title line and is so, adds the title + filename to orgrr-title-filename and filename + title to orgrr-filename-title.
+      (if (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
+	  (progn
+	    (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
+		   (filename (car line)))
+	      (let* ((line (split-string current-entry "^.+\\(#\\+title:\\|:#+TITLE:\\)\\s-*" t))
+		     (title (car line)))
+		(puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)))))
+(forward-line))))
+
+
 	 
 (defun orgrr-adjust-links (string)
   "Adjusts/corrects all links of STRING relative to the position of the note."
