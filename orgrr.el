@@ -421,27 +421,24 @@
 A use case could be to add snippets to a writing project, which is located in a different container than the main database."
   (orgrr-check-for-container-file)
   (ogrr-get-list-of-containers)
-  (setq current-entry "")
   (setq orgrr-short_filename-filename (make-hash-table :test 'equal))
-  (with-temp-buffer
-    (insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)\" " org-directory " -g \"*.org\"")))
-    (goto-char (point-min))
-    (while (not (eobp))
-      (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
-      ;; The following checks if this is a #+title line and is so, adds the title + filename to orgrr-title-filename and filename + title to orgrr-filename-title.
-      (if (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
-	  (progn
-	    (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
-		   (filename (car line)))
-	      (let* ((line (split-string current-entry "^.+\\(#\\+title:\\|:#+TITLE:\\)\\s-*" t))
-		     (title (car line)))
-		(puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)))))
-(forward-line))))
-
-
+  (let* ((containers (nreverse (hash-table-values orgrr-name-container))))
+    (dolist (container containers) 
+      (with-temp-buffer
+	(insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)\" " container " -g \"*.org\"")))
+	(goto-char (point-min))
+	(while (not (eobp))
+	  (let* ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
+	    (if (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
+		(progn
+		  (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
+		       (filename (car line)))
+		    (puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)))))
+(forward-line))))))
 	 
 (defun orgrr-adjust-links (string)
   "Adjusts/corrects all links of STRING relative to the position of the note."
+  (orgrr-get-all-filenames)
   (setq path-of-current-note
       (if (buffer-file-name)
           (file-name-directory (buffer-file-name))
@@ -451,9 +448,11 @@ A use case could be to add snippets to a writing project, which is located in a 
     (insert string)
     (goto-char (point-min))
     (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
-      (let* ((filename (file-name-nondirectory (match-string 1)))
-	    (new-filename (gethash (concat "\\" filename) orgrr-short_filename-filename)))
-	(replace-match (concat "file:" (file-relative-name new-filename path-of-current-note)))))
+      (let* ((filename (file-name-nondirectory (match-string 1))))
+	     (if (member (concat "\\" filename) (hash-table-keys orgrr-short_filename-filename))
+		 (progn 
+		   (let* ((new-filename (gethash (concat "\\" filename) orgrr-short_filename-filename)))
+		     (replace-match (concat "file:" (file-relative-name new-filename path-of-current-note))))))))
     (buffer-string)))
     
 (defun orgrr-info ()
@@ -465,7 +464,6 @@ A use case could be to add snippets to a writing project, which is located in a 
                    (setq titles (hash-table-keys orgrr-title-filename))))))
    (message "Orgrr considers %d titles in this container (this includes titles and alias). Collecting all titles took %s seconds to complete." (length titles) (format "%.5f" (car result)))))
     
-
 (defun orgrr-show-related-notes ()
   "Show all related notes in `org-directory' to the current org-file. Related means here notes linking to this note and the notes that link to them as well as notes linked by the current note and the links from these notes. It is assumed that the more times a note in environment is mentioned, the more important it is. Notes of higher importance are listed at the top. Parents and grandparents as well as children and grandchildren."
   (interactive)
