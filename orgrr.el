@@ -289,6 +289,9 @@
 (defun orgrr-move-note ()
   "Move current note to one of the other containers."
   (interactive)
+  
+
+
   (setq orgrr-name-container (make-hash-table :test 'equal))
   (if (buffer-file-name)
       (setq filename (buffer-file-name)))
@@ -305,6 +308,7 @@
 	    (progn
 	    (rename-file filename (concat new-container "/" (file-name-nondirectory filename)))
 	    (message "Note has been moved!"))
+	  
 	  (message "Note not moved!")))
     (message "Container does not exist."))
   (clrhash orgrr-name-container))
@@ -625,8 +629,10 @@ A use case could be to add snippets to a writing project, which is located in a 
   (interactive)
   (orgrr-check-for-container-file)
   (ogrr-get-list-of-containers)
-  (let* ((containers (nreverse (hash-table-keys orgrr-name-container)))
-	 (selection (completing-read "" containers)))
+  (let* ((containers (nreverse (hash-table-keys orgrr-name-container))))
+    (if container
+	(setq selection container)
+      (setq selection (completing-read "" containers)))
     (if (member selection containers)
 	(setq org-directory (gethash selection orgrr-name-container))
       (message "Container does not exist.")))
