@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.6.9
+;; Version: 0.7.0
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,8 +33,8 @@
 ;;
 ;;; News
 ;;
-;; 0.6.9
-;; - added orgrr-random-note
+;; 0.7.0
+;; - orgrr-add-to-project now works across containers
 ;;
 ;;; Code:
 
