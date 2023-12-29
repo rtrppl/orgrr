@@ -68,6 +68,7 @@
   "Show all backlinks in `org-directory' to the current org-file."
 ;; TODO: add unlinked references below backlinks!
   (interactive)
+  (orgrr-get-all-filenames)
   (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
       (progn
 	(orgrr-get-meta)
@@ -358,6 +359,7 @@
   (orgrr-collect-project-snippet)
   (orgrr-format-project-snippet snippet)
   (orgrr-pick-project)
+  (orgrr-get-all-filenames)
   (setq titles (hash-table-keys orgrr-title-filename))
   (if (member selection titles)
     (progn
@@ -438,7 +440,6 @@ A use case could be to add snippets to a writing project, which is located in a 
 	 
 (defun orgrr-adjust-links (string)
   "Adjusts/corrects all links of STRING relative to the position of the note."
-  (orgrr-get-all-filenames)
   (setq path-of-current-note
       (if (buffer-file-name)
           (file-name-directory (buffer-file-name))
