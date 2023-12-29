@@ -186,7 +186,7 @@ This function deletes the current note and shows the previous buffer.
 
 ### orgrr-move-note
 
-This function allows to move the current note to one of the other containers. 
+This function allows to move the current note to one of the other containers. All links will be adjusted accordingly.
 
 ### orgrr-random-note
 

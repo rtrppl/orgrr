@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.7.0
+;; Version: 0.7.1
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -26,13 +26,17 @@
 ;;; Commentary:
 
 ;; Orgrr is a minimalist but complete note-taking system for Emacs. Its
-;; intended purpose is the creation and management of a Zettelkasten-like,
+;; intended purpose is the creation and management of a Zettelkasten-like system,
 ;; e.g. many small notes that can easily be linked together.
 ;;
 ;;
 ;;
 ;;; News
-;;
+;; 
+;; 0.7.1
+;; - When moving notes between containers, links are now adjusted.
+;;   The function orgrr-fix-all-links-buffer may be used to fix links,
+;;   if a file is manually moved between containers.
 ;; 0.7.0
 ;; - orgrr-add-to-project now works across containers
 ;;
@@ -289,9 +293,6 @@
 (defun orgrr-move-note ()
   "Move current note to one of the other containers."
   (interactive)
-  
-
-
   (setq orgrr-name-container (make-hash-table :test 'equal))
   (if (buffer-file-name)
       (setq filename (buffer-file-name)))
@@ -306,9 +307,12 @@
 	(setq new-container (gethash selection orgrr-name-container))
 	(if (yes-or-no-p (format "Are you sure you want to move the note %s? " (buffer-file-name)))
 	    (progn
-	    (rename-file filename (concat new-container "/" (file-name-nondirectory filename)))
-	    (message "Note has been moved!"))
-	  
+	      (kill-buffer)
+	      (rename-file filename (concat new-container "/" (file-name-nondirectory filename)))
+	      (setq org-directory new-container)
+	      (orgrr-open-file (concat new-container "/" (file-name-nondirectory filename))) 
+	      (orgrr-fix-all-links-buffer)
+	    (message "Note has been moved and links have been adjusted!"))
 	  (message "Note not moved!")))
     (message "Container does not exist."))
   (clrhash orgrr-name-container))
@@ -707,6 +711,147 @@ A use case could be to add snippets to a writing project, which is located in a 
 	      (write-file "~/.orgrr-container-list"))
 	    (setq org-directory (gethash "main" orgrr-name-container))))))
   (clrhash orgrr-name-container))
+
+(defun orgrr-fix-all-links-buffer ()
+  "This runs the function orgrr-adjust-links on the current buffer."
+ (interactive)
+(setq contents (with-current-buffer (buffer-name)
+                     (buffer-substring-no-properties (point-min) (point-max))))
+;; find all foward links first order
+    (with-temp-buffer
+      (insert contents)
+      (goto-char (point-min))
+      (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
+	 (let* ((filename (file-name-nondirectory (match-string 1)))
+		(new-filename
+		  (if (on-macos-p)
+		      (string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string filename) "\" --files " org-directory)))
+		(string-trim (shell-command-to-string (concat "rg -g \"" filename "\" --files " org-directory))))))
+	   (if (not (equal original-filename new-filename))
+		 (progn
+		   (if (not (member (concat "\\" new-filename) (hash-table-keys orgrr-filename-mentions)))
+		     (progn
+		       (puthash (concat "\\" new-filename) 1 orgrr-filename-mentions)
+		       (setq related-notes (+ related-notes 1)))
+		   (progn
+		     (setq counter (gethash (concat "\\" new-filename) orgrr-filename-mentions))
+		     (setq counter (+ counter 1))
+		     (setq related-notes (+ related-notes 1))
+		     (puthash (concat "\\" new-filename) counter orgrr-filename-mentions)))))
+;; add links second order
+	       (with-temp-buffer
+		 (insert-file-contents new-filename)
+		 (goto-char (point-min))
+		 (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
+		   (let* ((2nd-filename (file-name-nondirectory (match-string 1)))
+			  (2nd-new-filename
+			    (if (on-macos-p)
+				(string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string 2nd-filename) "\" --files " org-directory)))
+			      (string-trim (shell-command-to-string (concat "rg -g \"" 2nd-filename "\" --files " org-directory))))))
+		      (if (not (equal original-filename 2nd-new-filename))
+			  (if (not (member (concat "\\" 2nd-new-filename) (hash-table-keys orgrr-filename-mentions)))
+			      (progn
+				(puthash (concat "\\" 2nd-new-filename) 1 orgrr-filename-mentions)
+				(setq related-notes (+ related-notes 1)))
+			    (progn
+			      (setq counter (gethash (concat "\\" 2nd-new-filename) orgrr-filename-mentions))
+			      (setq counter (+ counter 1))
+			      (setq related-notes (+ related-notes 1))
+			      (puthash (concat "\\" 2nd-new-filename) counter orgrr-filename-mentions)))))))))))
+
+(defun orgrr-change-container (&optional container)
+  "Switch between a list of containers stored in ~/.orgrr-container-list. orgrr-change-container can be called with a specific container."
+  (interactive)
+  (orgrr-check-for-container-file)
+  (ogrr-get-list-of-containers)
+  (let* ((containers (nreverse (hash-table-keys orgrr-name-container))))
+    (if container
+	(setq selection container)
+      (setq selection (completing-read "" containers)))
+    (if (member selection containers)
+	(setq org-directory (gethash selection orgrr-name-container))
+      (message "Container does not exist.")))
+  (clrhash orgrr-name-container))
+
+(defun orgrr-check-for-container-file ()
+ "Creates a container file in ~/.orgrr-container-list in case one does not yet exist."
+ (if (not (file-exists-p "~/.orgrr-container-list"))
+      (progn
+	(puthash "main" org-directory orgrr-name-container)
+	(with-temp-buffer
+	  (let ((json-data (json-encode orgrr-name-container)))
+	    (insert json-data)
+	    (write-file "~/.orgrr-container-list"))))))
+
+(defun ogrr-get-list-of-containers ()
+ "Return orgrr-name-container, a hashtable that includes a list of names and locations of all containers."
+ (setq orgrr-name-container (make-hash-table :test 'equal))
+ (with-temp-buffer
+   (insert-file-contents "~/.orgrr-container-list")
+   (if (fboundp 'json-parse-buffer)
+       (setq orgrr-name-container (json-parse-buffer)))))
+
+(defun orgrr-create-container ()
+  "Create or add a directory as a container and switch to that container."
+  (interactive)
+  (orgrr-check-for-container-file)
+  (ogrr-get-list-of-containers)
+  (let* ((new-container (read-directory-name "Enter a directory name: ")))
+    (if (yes-or-no-p (format "Are you sure you want to create the directory %s as a container? " new-container))
+	(progn
+	  (unless (file-exists-p new-container)
+	    (make-directory new-container t))
+	  (let* ((name (read-from-minibuffer "Please provide a name for the new container: ")))
+	    (puthash name new-container orgrr-name-container)
+	    (with-temp-buffer
+	     (let* ((json-data (json-encode orgrr-name-container)))
+	       (insert json-data)
+	       (write-file "~/.orgrr-container-list")))))
+    (message "%s was not created!" new-container))
+  (setq org-directory new-container)
+  (clrhash orgrr-name-container)))
+
+
+(defun orgrr-remove-container ()
+  "Allow to remove a container for the list of containers."
+  (interactive)
+  (setq orgrr-name-container (make-hash-table :test 'equal))
+  (if (not (file-exists-p "~/.orgrr-container-list"))
+      (progn
+	(puthash "main" org-directory orgrr-name-container)
+	(with-temp-buffer
+	  (setq json-data (json-encode orgrr-name-container))
+	  (insert json-data)
+	  (write-file "~/.orgrr-container-list"))))
+  (with-temp-buffer
+    (insert-file-contents "~/.orgrr-container-list")
+    (if (fboundp 'json-parse-buffer)
+	(setq orgrr-name-container (json-parse-buffer))))
+  (setq containers (hash-table-keys orgrr-name-container))
+  (setq selection (completing-read "Which container should be removed? " containers))
+  (if (not (member selection containers))
+      (message "Container does not exist.")
+    (if (string-equal selection "main")
+	(message "The container \"main\" cannot be removed!")
+      (if (yes-or-no-p (format "Are you sure you want to remove %s as a container? " (gethash selection orgrr-name-container)))
+	  (progn
+	    (remhash selection orgrr-name-container)
+	    (with-temp-buffer
+	      (setq json-data (json-encode orgrr-name-container))
+	      (insert json-data)
+	      (write-file "~/.orgrr-container-list"))
+	    (setq org-directory (gethash "main" orgrr-name-container))))))
+  (clrhash orgrr-name-container))
+
+(defun orgrr-fix-all-links-buffer ()
+  "This runs the function orgrr-adjust-links on the current buffer."
+ (interactive)
+ (orgrr-get-all-filenames)
+ (let ((contents (with-current-buffer (buffer-name)
+                  (buffer-substring-no-properties (point-min) (point-max)))))
+   (erase-buffer)
+   (insert (orgrr-adjust-links contents)))
+ (beginning-of-buffer))
 
 (provide 'orgrr)
 
