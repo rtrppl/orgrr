@@ -309,6 +309,7 @@
 	    (progn
 	      (kill-buffer)
 	      (rename-file filename (concat new-container "/" (file-name-nondirectory filename)))
+	      (orgrr-adjust-backlinks-in-current-container filename)
 	      (setq org-directory new-container)
 	      (orgrr-open-file (concat new-container "/" (file-name-nondirectory filename))) 
 	      (orgrr-fix-all-links-buffer)
@@ -712,53 +713,6 @@ A use case could be to add snippets to a writing project, which is located in a 
 	    (setq org-directory (gethash "main" orgrr-name-container))))))
   (clrhash orgrr-name-container))
 
-(defun orgrr-fix-all-links-buffer ()
-  "This runs the function orgrr-adjust-links on the current buffer."
- (interactive)
-(setq contents (with-current-buffer (buffer-name)
-                     (buffer-substring-no-properties (point-min) (point-max))))
-;; find all foward links first order
-    (with-temp-buffer
-      (insert contents)
-      (goto-char (point-min))
-      (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
-	 (let* ((filename (file-name-nondirectory (match-string 1)))
-		(new-filename
-		  (if (on-macos-p)
-		      (string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string filename) "\" --files " org-directory)))
-		(string-trim (shell-command-to-string (concat "rg -g \"" filename "\" --files " org-directory))))))
-	   (if (not (equal original-filename new-filename))
-		 (progn
-		   (if (not (member (concat "\\" new-filename) (hash-table-keys orgrr-filename-mentions)))
-		     (progn
-		       (puthash (concat "\\" new-filename) 1 orgrr-filename-mentions)
-		       (setq related-notes (+ related-notes 1)))
-		   (progn
-		     (setq counter (gethash (concat "\\" new-filename) orgrr-filename-mentions))
-		     (setq counter (+ counter 1))
-		     (setq related-notes (+ related-notes 1))
-		     (puthash (concat "\\" new-filename) counter orgrr-filename-mentions)))))
-;; add links second order
-	       (with-temp-buffer
-		 (insert-file-contents new-filename)
-		 (goto-char (point-min))
-		 (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
-		   (let* ((2nd-filename (file-name-nondirectory (match-string 1)))
-			  (2nd-new-filename
-			    (if (on-macos-p)
-				(string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string 2nd-filename) "\" --files " org-directory)))
-			      (string-trim (shell-command-to-string (concat "rg -g \"" 2nd-filename "\" --files " org-directory))))))
-		      (if (not (equal original-filename 2nd-new-filename))
-			  (if (not (member (concat "\\" 2nd-new-filename) (hash-table-keys orgrr-filename-mentions)))
-			      (progn
-				(puthash (concat "\\" 2nd-new-filename) 1 orgrr-filename-mentions)
-				(setq related-notes (+ related-notes 1)))
-			    (progn
-			      (setq counter (gethash (concat "\\" 2nd-new-filename) orgrr-filename-mentions))
-			      (setq counter (+ counter 1))
-			      (setq related-notes (+ related-notes 1))
-			      (puthash (concat "\\" 2nd-new-filename) counter orgrr-filename-mentions)))))))))))
-
 (defun orgrr-change-container (&optional container)
   "Switch between a list of containers stored in ~/.orgrr-container-list. orgrr-change-container can be called with a specific container."
   (interactive)
@@ -852,6 +806,31 @@ A use case could be to add snippets to a writing project, which is located in a 
    (erase-buffer)
    (insert (orgrr-adjust-links contents)))
  (beginning-of-buffer))
+
+(defun orgrr-adjust-backlinks-in-current-container (filename)
+  "This is a helper function for orgrr-move-note and will adjust all links in notes in the previous/old container referring to the moving note to its new location.
+
+This one of the very few functions where orgrr is directly changing your data (to fix the links). Be aware of this, but don't be scared."
+  (save-some-buffers t)  ;; necessary, as we are working directly with the files 
+  (let* ((orgrr-backlinks '()) 
+	 (original-filename filename))
+    ;; Add all files that mention filename to the list orgrr-backlinks.
+    (with-temp-buffer
+       (if (on-macos-p)
+	   (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' " org-directory " -n -g \"*.org\"")))
+	 (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\""))))
+       (let ((lines (split-string (buffer-string) "\n" t)))
+	(dolist (line lines)
+	  (if (string-match "\\.org$" line)
+	      (if (not (equal original-filename line))
+		  (push line orgrr-backlinks))))))
+;; This corrects the links. Please be aware that this is an intrusive action and might affect your data. 
+  (dolist (filename orgrr-backlinks)
+    (with-current-buffer (find-file-noselect filename)
+      (orgrr-fix-all-links-buffer)))))
+
+       
+
 
 (provide 'orgrr)
 
