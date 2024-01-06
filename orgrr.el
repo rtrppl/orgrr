@@ -313,6 +313,7 @@
 	      (setq org-directory new-container)
 	      (orgrr-open-file (concat new-container "/" (file-name-nondirectory filename))) 
 	      (orgrr-fix-all-links-buffer)
+	      (save-some-buffers t)
 	    (message "Note has been moved and links have been adjusted!"))
 	  (message "Note not moved!")))
     (message "Container does not exist."))
