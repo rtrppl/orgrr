@@ -132,9 +132,9 @@ On the most basic level, an orgrr-project is any note that has the tag `orgrr-pr
 #+roam_tags: orgrr-project
 ```
 
-The function [orgrr-add-to-project](#orgrr-add-to-project) takes the current paragraph visited at point (the cursor) in an org-file (in the org-directory or its sub-directories) or in orgrr-backlinks and appends it to a chosen project. A source-link is added, to allow for follow-up. If the project name does not yet exist, a new orgrr-project is created in the org-directory (similar to the way orgrr-find and orgrr-insert operate).
+The function [orgrr-add-to-project](#orgrr-add-to-project) takes the current paragraph visited at point (the cursor) in an org-file (in the org-directory or its sub-directories) or in orgrr-backlinks and appends it to a chosen project. A source-link is added, to allow for follow-up. If the project name does not yet exist, a new orgrr-project is created in the org-directory (similar to the way orgrr-find and orgrr-insert operate). This feature works across [orgrr-containers](#orgrr-containers). 
 
-Orgrr-projects thereby facilitate rapid access to a set of paragraphs and are the main holding area for work in progress in orgrr. 
+Orgrr-projects thereby facilitate rapid access to a set of paragraphs and are the main holding area for work in progress in orgrr. It also allows for writing projects in different containers than the location of the original note. 
 
 ### orgrr-related-notes
 
@@ -186,7 +186,7 @@ This function deletes the current note and shows the previous buffer.
 
 ### orgrr-move-note
 
-This function allows to move the current note to one of the other containers. 
+This function allows to move the current note to one of the other containers. All links will be adjusted accordingly.
 
 ### orgrr-random-note
 
