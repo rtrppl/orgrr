@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.7.1
+;; Version: 0.7.2
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -32,13 +32,14 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.7.2
+;; - Adds the function orgrr-fix-all-links-container
 ;; 
 ;; 0.7.1
 ;; - When moving notes between containers, links are now adjusted.
 ;;   The function orgrr-fix-all-links-buffer may be used to fix links,
 ;;   if a file is manually moved between containers.
-;; 0.7.0
-;; - orgrr-add-to-project now works across containers
 ;;
 ;;; Code:
 
@@ -830,8 +831,20 @@ This one of the very few functions where orgrr is directly changing your data (t
     (with-current-buffer (find-file-noselect filename)
       (orgrr-fix-all-links-buffer)))))
 
-       
+(defun orgrr-fix-all-links-container ()
+   "This function can be used to fix all links in a container. This is useful, if you move a whole container/directory to a new location. Make sure to be in the correct container, when running this function."
+  (interactive)
+  (if (yes-or-no-p (format "Are you sure you want to fix all links in this container? "))
+      (progn
+	(dolist (filename (directory-files org-directory t "\\.org$"))
+	  (with-current-buffer (find-file-noselect filename)
+	    (message "Fixing links in '%s'." filename)
+	    (orgrr-fix-all-links-buffer)
+	    (message "Fixing backlinks for '%s'." filename)
+	    (orgrr-adjust-backlinks-in-current-container filename)))
+	(message "All links in this container have been adjusted!"))))
 
+       
 
 (provide 'orgrr)
 
