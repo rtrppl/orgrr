@@ -302,7 +302,7 @@
     (if (fboundp 'json-parse-buffer)
 	(setq orgrr-name-container (json-parse-buffer))))
   (setq containers (hash-table-keys orgrr-name-container))
-  (setq selection (completing-read "Move note to which countainer?" containers))
+  (setq selection (completing-read "Move note to which countainer? " containers))
   (if (member selection containers)
       (progn
 	(setq new-container (gethash selection orgrr-name-container))

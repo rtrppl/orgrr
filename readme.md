@@ -83,7 +83,7 @@ Orgrr began as an almost feature-complete replica of the core functionality of [
 
 **A crucial difference between org-roam and orgrr is the use of databases. Orgrr only relies on rg to update it's data about org-files and their meta-data. The aim is to have as little dependencies as possible. A second difference is that orgrr sticks to the ideal of every note being a single file. The final difference is relative minimalism - orgrr should have all the features that are necessary and draw on org-mode/Emacs for everything else.**
 
-This is a package to address my needs and I have been using orgrr almost every day for more than nine months now (December 2023). My main container has now close to 4000 notes and the speed between org-roam and orgrr is comparable. Even on a Rasberry Pi 5 rg needs less than a second to extract all of the meta-data (see below)!
+This is a package to address my needs and I have been using orgrr almost every day for more than nine months now (December 2023). My main container has close to 4000 notes and the speed between org-roam and orgrr is comparable. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data (see below)!
 
 **As there is no database involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions.** 
 
@@ -123,7 +123,7 @@ In total, orgrr therefore recognizes these three lines of meta-data in an org-fi
 
 ### orgrr-projects
 
-One feature that felt missing in orgrr (and org-roam) was a way to bring together a collection of notes and snippets from backlinks and many other places to create a "desktop" of notes. In the imagery of the Zettelkasten this would be a place to look at several "Zettel" / notes at the same time. Orgrr-projects is an approach to deal with this problem. 
+One feature that felt missing in orgrr (and org-roam) was a way to bring together a collection of notes and snippets from backlinks and many other places to create a "desktop" of notes. In the imagery of the Zettelkasten, this would be a place to look at several "Zettel" / notes at the same time. Orgrr-projects is an approach to deal with this problem. 
 
 On the most basic level, an orgrr-project is any note that has the tag `orgrr-project`:
 
