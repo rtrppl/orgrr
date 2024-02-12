@@ -228,20 +228,19 @@
   (setq orgrr-selection-list ())
   (setq final-title "")
   (let* ((titles (hash-table-keys orgrr-title-filename))
-	(filenames-for-tags (hash-table-keys orgrr-filename-tags))
 	(filenames-for-zettel (hash-table-keys orgrr-filename-zettel)))
     (dolist (title titles)
       (let* ((filename (gethash title orgrr-title-filename)))
 	(if (member (concat "\\" filename) filenames-for-zettel)
 	    (progn 
-	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "] "title))
+	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\t\t" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
     (setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp))
     (if (region-active-p)
 	(setq selection (completing-read "" orgrr-selection-list nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
       (setq selection (completing-read "" orgrr-selection-list)))
     (if (string-match "^\\[" selection)
-	(setq selection (replace-regexp-in-string "\\[.*?\\] " "" selection)))))
+	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))))
 	  
 (defun orgrr-find-zettel ()
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
