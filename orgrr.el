@@ -155,7 +155,7 @@
   (setq orgrr-filename-tags (make-hash-table :test 'equal))
   (setq orgrr-short_filename-filename (make-hash-table :test 'equal))
   (with-temp-buffer
-    (insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)\" " org-directory " -g \"*.org\"")))
+    (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)\" " org-directory " -g \"*.org\"")))
     (goto-char (point-min))
     (while (not (eobp))
       (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
