@@ -152,7 +152,7 @@
   (setq orgrr-zettel-filename (make-hash-table :test 'equal))
   (setq orgrr-filename-zettel (make-hash-table :test 'equal))
   (with-temp-buffer
-    (insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)|(zettel:.*)\" " org-directory " -g \"*.org\"")))
+    (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)|(zettel:.*)\" " org-directory " -g \"*.org\"")))
     (goto-char (point-min))
     (while (not (eobp))
       (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
@@ -239,8 +239,11 @@
     (if (region-active-p)
 	(setq selection (completing-read "" orgrr-selection-list nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
       (setq selection (completing-read "" orgrr-selection-list)))
-    (if (string-match "^\\[" selection)
-	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))))
+    (if (string-match "^\\[\\(.*?\\)\\]" selection)
+	(progn
+	  (setq selection-zettel (match-string 1 selection))
+	  (print selection-zettel)
+	  (setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection))))))
 	  
 (defun orgrr-find-zettel ()
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
@@ -259,34 +262,59 @@
 (clrhash orgrr-short_filename-filename)
 (clrhash orgrr-filename-tags))
 
-(defun orgrr-insert-zettel ()
-  "Links to org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
+	  
+(defun orgrr-show-sequence ()
+  "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
   (interactive)
-  (setq path-of-current-note
-      (if (buffer-file-name)
-          (file-name-directory (buffer-file-name))
-        default-directory))
-  (orgrr-selection-zettel)
-  (if (member selection (hash-table-keys orgrr-title-filename))
-    (progn
-      (setq filename (gethash selection orgrr-title-filename))
-      (setq filename (file-relative-name filename path-of-current-note))
-      (if (region-active-p)
-	  (kill-region (region-beginning) (region-end)))
-      (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
-    (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s\/]" "_" selection))))
-      (if (on-macos-p)
-	  (setq filename (ucs-normalize-HFS-NFD-string filename)))
-      (if (region-active-p)
-	  (kill-region (region-beginning) (region-end)))
-      (insert (concat "\[\[file:" (file-relative-name filename path-of-current-note) ".org" "\]\[" selection "\]\]"))
-      (orgrr-open-file (concat filename ".org"))
-      (insert (concat "#+title: " selection "\n"))))
+  (if (not (string-match-p "sequence for *" (buffer-name (current-buffer))))
+      (progn
+	(orgrr-selection-zettel)
+	(let ((sequence-buffer (concat "sequence for *[" selection-zettel "]*")))
+	  (with-current-buffer (get-buffer-create sequence-buffer)
+	    (let ((inhibit-read-only t))
+              (erase-buffer)
+              (insert (concat "\*\[\[file:" (gethash selection-zettel orgrr-zettel-filename) "\]\[\[" selection-zettel "\]\]\]\*\n\n")))
+	    (setq orgrr-selection-list (nreverse orgrr-selection-list))
+	    (dolist (element orgrr-selection-list) ;; get sorting fixed!
+	      (when (string-match (concat "^\\[" selection-zettel) element)
+		(let* ((matched-zettel (and (string-match "^\\[\\(.*?\\)\\]" element)
+					    (match-string 1 element)))
+		       (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename))
+		       (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
+;		       (already-listed (append already-listed matched-zettel)))
+;		  (if (not (member matched-zettel already-listed))
+		  (insert (concat "** \[" matched-zettel "\]\t" "\[\[" matched-zettel-filename "\]\[" matched-zettel-title "\]\]\n"))))))
+;;Starting here it is only window-management
+	  (if (equal orgrr-window-management "multi-window")
+	      (progn
+		(display-buffer-in-side-window
+		 (current-buffer)
+		 '((side . right)
+		   (slot . -1)
+		   (window-width . 60)))))
+	  (if (equal orgrr-window-management "single-window")
+	      (switch-to-buffer sequence-buffer))
+	  (with-current-buffer sequence-buffer
+	    (org-mode))
+	  (let ((window (get-buffer-window sequence-buffer)))
+	    (when window
+	      (select-window window)
+	      (setq default-directory org-directory)
+	      (beginning-of-buffer)
+	      (org-next-visible-heading 1)
+	      (deactivate-mark)))))
+     (if (equal orgrr-window-management "multi-window")
+	 (delete-window))
+     (if (equal orgrr-window-management "single-window")
+	 (previous-buffer))))
+
+
 (clrhash orgrr-title-filename)
 (clrhash orgrr-filename-title)
 (clrhash orgrr-short_filename-filename)
 (clrhash orgrr-filename-tags))
+
+
 
 (defun orgrr-find ()
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
