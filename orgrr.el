@@ -207,7 +207,7 @@
       (let* ((filename (gethash title orgrr-title-filename)))
 	(if (member (concat "\\" filename) filenames-for-tags)
 	    (if (member (concat "\\" filename) filenames-for-zettel)
-		(setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "] (" (gethash (concat "\\" filename) orgrr-filename-tags) ") "title))
+		(setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]" " (" (gethash (concat "\\" filename) orgrr-filename-tags) ") " title))
 	      (setq final-title (concat "(" (gethash (concat "\\" filename) orgrr-filename-tags) ") "title)))
 	  (if (member (concat "\\" filename) filenames-for-zettel)
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "] " title))
@@ -217,9 +217,9 @@
 	(setq selection (completing-read "" orgrr-selection-list nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
       (setq selection (completing-read "" orgrr-selection-list)))
     (if (string-match "^\\[" selection)
-	(setq selection (replace-regexp-in-string "\\[.*?\\] " "" selection)))  
+	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))  
     (if (string-match "^\(" selection)
-	(setq selection (replace-regexp-in-string "\(.*?\)." "" selection)))))
+	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))))
 
 (defun orgrr-selection-zettel ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find-zettel and orgrr-insert-zettel. Prepends zettel in front of title and alias."
@@ -307,13 +307,6 @@
 	 (delete-window))
      (if (equal orgrr-window-management "single-window")
 	 (previous-buffer))))
-
-
-(clrhash orgrr-title-filename)
-(clrhash orgrr-filename-title)
-(clrhash orgrr-short_filename-filename)
-(clrhash orgrr-filename-tags))
-
 
 
 (defun orgrr-find ()
