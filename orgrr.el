@@ -235,7 +235,9 @@
 	    (progn 
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\t\t" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
-    (setq orgrr-selection-list (sort orgrr-selection-list 'string-collate-lessp))
+    (setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp))
+;; technically sort string-lessp above is not necessary but it may speed-up orgrr-luhmann-sorting
+    (setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))
     (if current-zettel
 	(setq selection (completing-read "" orgrr-selection-list nil nil current-zettel))
       (setq selection (completing-read "" orgrr-selection-list)))
@@ -262,7 +264,6 @@
 (clrhash orgrr-short_filename-filename)
 (clrhash orgrr-filename-tags))
 
-
 (defun orgrr-add-zettel ()
   "Drill down to find a the correct spot for a new zettel and insert a line with #+zettel: zettel-value."
   (interactive)
@@ -281,7 +282,9 @@
 	    (progn 
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\t\t" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
-    (setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp))
+    (setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp)) 
+;; technically sort string-lessp above is not necessary but it may speed-up orgrr-luhmann-sorting
+    (setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))
     (setq selection-zettel (completing-read "Hit enter to narrow down: " orgrr-selection-list))
     (if (string-match "^\\[\\(.*?\\)\\]" selection-zettel)
 	(setq selection-zettel (match-string 1 selection-zettel)))
@@ -291,8 +294,7 @@
 	  (setq selection-zettel (match-string 1 selection-zettel))))
       (insert (concat "#+zettel: " selection-zettel "\n"))))
   (message "This note already has a zettel-number!")))
-	  
-
+	 
 (defun orgrr-read-current-zettel ()
     "Reads out #+zettel for current note."
     (setq current-zettel nil)
@@ -310,10 +312,9 @@
 			(zettel (string-trim-left zettel)))
                    (setq current-zettel zettel))))
         (forward-line)))))
-
-	  
+ 
 (defun orgrr-show-sequence ()
-  "Shows a sequence a sequence of notes for any given zettel value. If run while visiting a buffer that has a value for zettel, this is taken as the starting value for zettel. Results are presented in a different buffer in accordance with orgrr-window-management."
+  "Shows a sequence of notes for any given zettel value. If run while visiting a buffer that has a value for zettel, this is taken as the starting value for zettel. Results are presented in a different buffer in accordance with orgrr-window-management."
   (interactive)
   (if (not (string-match-p "sequence for *" (buffer-name (current-buffer))))
       (progn
@@ -323,18 +324,16 @@
 	  (with-current-buffer (get-buffer-create sequence-buffer)
 	    (let ((inhibit-read-only t))
               (erase-buffer)
-	      
-              (insert (concat "\*\[" selection-zettel "\]\*\t\[\[file:" (gethash selection-zettel orgrr-zettel-filename) "\]\[" (gethash (concat "\\" (gethash selection-zettel orgrr-zettel-filename)) orgrr-filename-title) "\]\]\n\n"))
-;            (setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list	      
-;	    (setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp))
-;	      (setq orgrr-selection-list (sort orgrr-selection-list 'orgrr-luhmann-sorting)) ;;luhmann-sorting!
-	    (dolist (element orgrr-selection-list) ;; get sorting fixed!
+	      (let* ((matched-zettel-filename (gethash selection-zettel orgrr-zettel-filename))
+		     (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
+		(insert (concat "\*\[" selection-zettel "\]\*\t\[\[file:" matched-zettel-filename "\]\[" matched-zettel-title "\]\]\n\n")))
+            (setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))
+	    (dolist (element orgrr-selection-list) 
 	      (when (string-match (concat "^\\[" selection-zettel) element)
 		(let* ((matched-zettel (and (string-match "^\\[\\(.*?\\)\\]" element)
 					    (match-string 1 element)))
 		       (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename))
 		       (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
-;		       (already-listed (append already-listed matched-zettel)))
 		  (if (not (equal matched-zettel selection-zettel))
 		      (insert (concat "** \[" matched-zettel "\]\t" "\[\[" matched-zettel-filename "\]\[" matched-zettel-title "\]\]\n"))))))))
 ;;Starting here it is only window-management
@@ -360,9 +359,6 @@
 	 (delete-window))
      (if (equal orgrr-window-management "single-window")
 	 (previous-buffer))))
-
-;; Function for Luhmann-sorting is still needed.
-
 
 (defun orgrr-luhmann-sorting (list)
   "Function to sort a list of zettel values according to the Luhmann-pattern."
@@ -390,8 +386,8 @@
     (goto-char (point-min))
     (while (not (eobp))
       (setq line (buffer-substring (line-beginning-position) (line-end-position)))
-;      (if (equal line "")
-;	  (delete-line))
+      (if (equal line "")
+	  (delete-line))
       (let* ((matched-zettel line)
 	     (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename))
 	     (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
