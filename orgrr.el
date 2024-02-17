@@ -224,6 +224,17 @@
 (defun orgrr-selection-zettel ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files that have a value for zettel. Prepends zettel value in front of title and alias."
   (interactive)
+  (orgrr-prepare-zettel-selection-list)
+  (if current-zettel
+      (setq selection (completing-read "" orgrr-selection-list nil nil current-zettel))
+      (setq selection (completing-read "" orgrr-selection-list)))
+  (if (string-match "^\\[\\(.*?\\)\\]" selection)
+      (progn
+	(setq selection-zettel (match-string 1 selection))
+	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))))
+
+(defun orgrr-prepare-zettel-selection-list ()
+"A function preparing a list of all zettel for selection and other functions."
   (orgrr-get-meta)
   (setq orgrr-selection-list ())
   (setq final-title "")
@@ -237,14 +248,7 @@
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
     (setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp))
 ;; technically sort string-lessp above is not necessary but it may speed-up orgrr-luhmann-sorting
-    (setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))
-    (if current-zettel
-	(setq selection (completing-read "" orgrr-selection-list nil nil current-zettel))
-      (setq selection (completing-read "" orgrr-selection-list)))
-    (if (string-match "^\\[\\(.*?\\)\\]" selection)
-	(progn
-	  (setq selection-zettel (match-string 1 selection))
-	  (setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection))))))
+    (setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))))
 	  
 (defun orgrr-find-zettel ()
   "Like org-file in `org-directory' via mini-buffer completion, but only considers notes that have a value for zettel. If the selected file name does not exist, a new one is created."
@@ -396,6 +400,41 @@
       (forward-line 1))
   (split-string (buffer-string) "\n")))
 
+(defun orgrr-open-next-zettel ()
+  "Opens the next zettel in accordance with the sorting of orgrr-luhmann-sorting."
+  (interactive)
+  (orgrr-read-current-zettel)
+  (when (not (equal current-zettel ""))
+      (with-temp-buffer
+	(orgrr-prepare-zettel-selection-list)
+	(dolist (item orgrr-selection-list)
+	  (if (string-match "^\\[\\(.*?\\)\\]" (identity item))
+	  (setq item (match-string 1 item)))
+	  (insert (concat item "\n")))
+	(goto-char (point-min))
+	(search-forward current-zettel)
+	(forward-line)
+	(let* ((matched-zettel (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+	      (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
+	  (orgrr-open-file matched-zettel-filename)))))
+
+(defun orgrr-open-previous-zettel ()
+  "Opens the previous zettel in accordance with the sorting of orgrr-luhmann-sorting."
+  (interactive)
+  (orgrr-read-current-zettel)
+  (when (not (equal current-zettel ""))
+      (with-temp-buffer
+	(orgrr-prepare-zettel-selection-list)
+	(dolist (item orgrr-selection-list)
+	  (if (string-match "^\\[\\(.*?\\)\\]" (identity item))
+	  (setq item (match-string 1 item)))
+	  (insert (concat item "\n")))
+	(goto-char (point-min))
+	(search-forward current-zettel)
+	(previous-line)
+	(let* ((matched-zettel (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+	      (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
+	  (orgrr-open-file matched-zettel-filename)))))
 
 (defun orgrr-find ()
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
