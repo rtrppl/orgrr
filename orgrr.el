@@ -235,7 +235,7 @@
 	    (progn 
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\t\t" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
-    (setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp))
+    (setq orgrr-selection-list (sort orgrr-selection-list 'string-collate-lessp))
     (if current-zettel
 	(setq selection (completing-read "" orgrr-selection-list nil nil current-zettel))
       (setq selection (completing-read "" orgrr-selection-list)))
@@ -313,7 +313,7 @@
 
 	  
 (defun orgrr-show-sequence ()
-  "Shows a sequence a sequence of notes for any given zettel value. If started in a buffer that has a value for zettel, this is taken as the starting value for zettel. Results are presented in a different buffer in accordance with orgrr-window-management."
+  "Shows a sequence a sequence of notes for any given zettel value. If run while visiting a buffer that has a value for zettel, this is taken as the starting value for zettel. Results are presented in a different buffer in accordance with orgrr-window-management."
   (interactive)
   (if (not (string-match-p "sequence for *" (buffer-name (current-buffer))))
       (progn
@@ -323,8 +323,11 @@
 	  (with-current-buffer (get-buffer-create sequence-buffer)
 	    (let ((inhibit-read-only t))
               (erase-buffer)
-              (insert (concat "\*\[\[file:" (gethash selection-zettel orgrr-zettel-filename) "\]\[\[" selection-zettel "\]\]\]\*\n\n")))
-;	    (setq orgrr-selection-list (nreverse orgrr-selection-list))
+	      
+              (insert (concat "\*\[" selection-zettel "\]\*\t\[\[file:" (gethash selection-zettel orgrr-zettel-filename) "\]\[" (gethash (concat "\\" (gethash selection-zettel orgrr-zettel-filename)) orgrr-filename-title) "\]\]\n\n"))
+;            (setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list	      
+;	    (setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp))
+;	      (setq orgrr-selection-list (sort orgrr-selection-list 'orgrr-luhmann-sorting)) ;;luhmann-sorting!
 	    (dolist (element orgrr-selection-list) ;; get sorting fixed!
 	      (when (string-match (concat "^\\[" selection-zettel) element)
 		(let* ((matched-zettel (and (string-match "^\\[\\(.*?\\)\\]" element)
@@ -332,8 +335,8 @@
 		       (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename))
 		       (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
 ;		       (already-listed (append already-listed matched-zettel)))
-;		  (if (not (member matched-zettel already-listed))
-		  (insert (concat "** \[" matched-zettel "\]\t" "\[\[" matched-zettel-filename "\]\[" matched-zettel-title "\]\]\n"))))))
+		  (if (not (equal matched-zettel selection-zettel))
+		      (insert (concat "** \[" matched-zettel "\]\t" "\[\[" matched-zettel-filename "\]\[" matched-zettel-title "\]\]\n"))))))))
 ;;Starting here it is only window-management
 	  (if (equal orgrr-window-management "multi-window")
 	      (progn
@@ -359,6 +362,43 @@
 	 (previous-buffer))))
 
 ;; Function for Luhmann-sorting is still needed.
+
+
+(defun orgrr-luhmann-sorting (list)
+  "Function to sort a list of zettel values according to the Luhmann-pattern."
+  (orgrr-get-meta)
+  (with-temp-buffer
+    (dolist (item list)
+      (if (string-match "^\\[\\(.*?\\)\\]" (identity item))
+	  (setq item (match-string 1 item)))
+      (insert (concat item "\n")))
+    (goto-char (point-min))
+    (while (not (eobp))
+      (setq line (buffer-substring (line-beginning-position) (line-end-position)))
+      (forward-line 1)
+      (if (not (eobp))
+	  (setq second-line (buffer-substring (line-beginning-position) (line-end-position))))
+      (if second-line
+	  (progn 
+	    (if (equal second-line line)
+		(delete-line))
+	    (if (and (string-match second-line line)
+		     (not (equal second-line line)))
+		(progn
+		  (transpose-lines 1)
+	          (goto-char (point-min)))))))
+    (goto-char (point-min))
+    (while (not (eobp))
+      (setq line (buffer-substring (line-beginning-position) (line-end-position)))
+;      (if (equal line "")
+;	  (delete-line))
+      (let* ((matched-zettel line)
+	     (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename))
+	     (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
+	(kill-line)
+	(insert (concat "\[" matched-zettel "\]\t\t" matched-zettel-title)))   
+      (forward-line 1))
+  (split-string (buffer-string) "\n")))
 
 
 (defun orgrr-find ()
