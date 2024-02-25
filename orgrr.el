@@ -419,6 +419,8 @@
   (when (not (equal current-zettel ""))
       (with-temp-buffer
 	(orgrr-prepare-zettel-selection-list)
+	(setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp)) 
+	(setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))
 	(dolist (item orgrr-selection-list)
 	  (if (string-match "^\\[\\(.*?\\)\\]" (identity item))
 	  (setq item (match-string 1 item)))
@@ -437,6 +439,8 @@
   (when (not (equal current-zettel ""))
       (with-temp-buffer
 	(orgrr-prepare-zettel-selection-list)
+	(setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp)) 
+	(setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))
 	(dolist (item orgrr-selection-list)
 	  (if (string-match "^\\[\\(.*?\\)\\]" (identity item))
 	  (setq item (match-string 1 item)))
