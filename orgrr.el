@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.7.2
+;; Version: 0.8
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,13 +33,9 @@
 ;;
 ;;; News
 ;;
-;; 0.7.2
-;; - Adds the function orgrr-fix-all-links-container
+;; 0.8
+;; - Adds #+zettel functionality (see readme for more info)
 ;; 
-;; 0.7.1
-;; - When moving notes between containers, links are now adjusted.
-;;   The function orgrr-fix-all-links-buffer may be used to fix links,
-;;   if a file is manually moved between containers.
 ;;
 ;;; Code:
 
@@ -219,6 +215,7 @@
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "] " title))
 	  (setq final-title title)))
 	(setq orgrr-selection-list (cons final-title orgrr-selection-list))))
+    (setq orgrr-selection-list (reverse orgrr-selection-list))
     (if (region-active-p)
 	(setq selection (completing-read "" orgrr-selection-list nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
       (setq selection (completing-read "" orgrr-selection-list)))
@@ -229,7 +226,6 @@
 
 (defun orgrr-selection-zettel ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files that have a value for zettel. Prepends zettel value in front of title and alias."
-  (interactive)
   (orgrr-prepare-zettel-selection-list)
   (if current-zettel
       (setq selection (completing-read "" orgrr-selection-list nil nil current-zettel))
