@@ -425,7 +425,6 @@
                  (setq str (substring str (match-beginning 0)))))))
       (reverse res))))
 
-
 (defun orgrr-improve-sorting (list)
   "Function to sort a list of zettel values according to the Luhmann-pattern."
   (orgrr-get-meta)
@@ -443,7 +442,12 @@
       (if second-line
 	  (progn 
 	    (if (equal second-line line)
-		(delete-line)))))
+		(delete-line))
+	    (if (and (string-match second-line line)
+		     (not (equal second-line line)))
+		(progn
+		  (transpose-lines 1)
+	          (goto-char (point-min)))))))
     (goto-char (point-min))
     (while (not (eobp))
       (setq line (buffer-substring (line-beginning-position) (line-end-position)))
@@ -461,7 +465,7 @@
   "Opens the next zettel in accordance with the sorting of orgrr-luhmann-sorting."
   (interactive)
   (orgrr-read-current-zettel)
-  (when (not (equal current-zettel ""))
+  (when (not (equal current-zettel nil))
       (with-temp-buffer
 	(orgrr-prepare-zettel-selection-list)
 	(setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp)) 
@@ -481,7 +485,7 @@
   "Opens the previous zettel in accordance with the sorting of orgrr-luhmann-sorting."
   (interactive)
   (orgrr-read-current-zettel)
-  (when (not (equal current-zettel ""))
+  (when (not (equal current-zettel nil))
       (with-temp-buffer
 	(orgrr-prepare-zettel-selection-list)
 	(setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp)) 
