@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8
+;; Version: 0.8.1
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,6 +33,8 @@
 ;;
 ;;; News
 ;;
+;; 0.8.1
+;; - Fixing the sorting of zettel.
 ;; 0.8
 ;; - Adds #+zettel functionality (see readme for more info)
 ;; 
@@ -248,9 +250,8 @@
 	    (progn 
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\t\t" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
-    (setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp))
-;; Technically sort string-lessp above is not necessary but it may speed-up orgrr-luhmann-sorting.
-    (setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))))
+	    (sort orgrr-selection-list 'dictionary-lessp)  
+    (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))))
 	  
 (defun orgrr-find-zettel ()
   "Like orgrr-find, but only considers notes that have a value for zettel. If the selected file name does not exist, a new one is created."
@@ -289,9 +290,8 @@
 	    (progn 
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\t\t" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
-    (setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp)) 
-;; Technically sort string-lessp above is not necessary but it may speed-up orgrr-luhmann-sorting.
-    (setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))
+    (sort orgrr-selection-list 'dictionary-lessp)
+    (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
     (setq selection-zettel (completing-read "Hit enter to narrow down: " orgrr-selection-list))
     (if (string-match "^\\[\\(.*?\\)\\]" selection-zettel)
 	(setq selection-zettel (match-string 1 selection-zettel)))
@@ -343,7 +343,8 @@
 	      (let* ((matched-zettel-filename (gethash selection-zettel orgrr-zettel-filename))
 		     (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
 		(insert (concat "\*\[" selection-zettel "\]\*\t\[\[file:" matched-zettel-filename "\]\[" matched-zettel-title "\]\]\n\n")))
-            (setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))
+	    (sort orgrr-selection-list 'dictionary-lessp)
+	    (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
 	    (dolist (element orgrr-selection-list) 
 	      (when (string-match (concat "^\\[" selection-zettel) element)
 		(let* ((matched-zettel (and (string-match "^\\[\\(.*?\\)\\]" element)
@@ -376,7 +377,56 @@
      (if (equal orgrr-window-management "single-window")
 	 (previous-buffer))))
 
-(defun orgrr-luhmann-sorting (list)
+;; The following three functions have been taken from https://stackoverflow.com/questions/1942045/natural-order-sort-for-emacs-lisp. They work really well for dictionary compare.
+
+(defun dictionary-lessp (str1 str2)
+  "Return t if STR1 is < STR2 when doing a dictionary compare
+(splitting the string at numbers and doing numeric compare with them)"
+  (let ((str1-components (dict-split str1))
+        (str2-components (dict-split str2)))
+    (dict-lessp str1-components str2-components)))
+
+(defun dict-lessp (slist1 slist2)
+  "Compare the two lists of strings & numbers"
+  (cond ((null slist1)
+         (not (null slist2)))
+        ((null slist2)
+         nil)
+        ((and (numberp (car slist1))
+              (stringp (car slist2)))
+         t)
+        ((and (numberp (car slist2))
+              (stringp (car slist1)))
+         nil)
+        ((and (numberp (car slist1))
+              (numberp (car slist2)))
+         (or (< (car slist1) (car slist2))
+             (and (= (car slist1) (car slist2))
+                  (dict-lessp (cdr slist1) (cdr slist2)))))
+        (t
+         (or (string-lessp (car slist1) (car slist2))
+             (and (string-equal (car slist1) (car slist2))
+                  (dict-lessp (cdr slist1) (cdr slist2)))))))
+
+(defun dict-split (str)
+  "split a string into a list of number and non-number components"
+  (save-match-data 
+    (let ((res nil))
+      (while (and str (not (string-equal "" str)))
+        (let ((p (string-match "[0-9]*\\.?[0-9]+" str)))
+          (cond ((null p)
+                 (setq res (cons str res))
+                 (setq str nil))
+                ((= p 0)
+                 (setq res (cons (string-to-number (match-string 0 str)) res))
+                 (setq str (substring str (match-end 0))))
+                (t
+                 (setq res (cons (substring str 0 (match-beginning 0)) res))
+                 (setq str (substring str (match-beginning 0)))))))
+      (reverse res))))
+
+
+(defun orgrr-improve-sorting (list)
   "Function to sort a list of zettel values according to the Luhmann-pattern."
   (orgrr-get-meta)
   (with-temp-buffer
@@ -393,12 +443,7 @@
       (if second-line
 	  (progn 
 	    (if (equal second-line line)
-		(delete-line))
-	    (if (and (string-match second-line line)
-		     (not (equal second-line line)))
-		(progn
-		  (transpose-lines 1)
-	          (goto-char (point-min)))))))
+		(delete-line)))))
     (goto-char (point-min))
     (while (not (eobp))
       (setq line (buffer-substring (line-beginning-position) (line-end-position)))
@@ -419,8 +464,8 @@
   (when (not (equal current-zettel ""))
       (with-temp-buffer
 	(orgrr-prepare-zettel-selection-list)
-	(setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp)) 
-	(setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))
+	(setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp)) 
+	(setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
 	(dolist (item orgrr-selection-list)
 	  (if (string-match "^\\[\\(.*?\\)\\]" (identity item))
 	  (setq item (match-string 1 item)))
@@ -439,8 +484,8 @@
   (when (not (equal current-zettel ""))
       (with-temp-buffer
 	(orgrr-prepare-zettel-selection-list)
-	(setq orgrr-selection-list (sort orgrr-selection-list 'string-lessp)) 
-	(setq orgrr-selection-list (orgrr-luhmann-sorting orgrr-selection-list))
+	(setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp)) 
+	(setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
 	(dolist (item orgrr-selection-list)
 	  (if (string-match "^\\[\\(.*?\\)\\]" (identity item))
 	  (setq item (match-string 1 item)))
