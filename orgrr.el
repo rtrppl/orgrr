@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.1
+;; Version: 0.8.2
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,11 +33,8 @@
 ;;
 ;;; News
 ;;
-;; 0.8.1
-;; - Fixing the sorting of zettel.
-;; 0.8
-;; - Adds #+zettel functionality (see readme for more info)
-;; 
+;; 0.8.2
+;; - Even more fixes for zettel sorting.
 ;;
 ;;; Code:
 
@@ -431,20 +428,21 @@
   (with-temp-buffer
     (dolist (item list)
       (if (string-match "^\\[\\(.*?\\)\\]" (identity item))
-	  (setq item (match-string 1 item)))
-      (insert (concat item "\n")))
+	  (progn
+	    (setq item (match-string 1 item))
+	    (insert (concat item "\n")))))
     (goto-char (point-min))
     (while (not (eobp))
       (setq line (buffer-substring (line-beginning-position) (line-end-position)))
-      (forward-line 1)
+      (forward-line)
       (if (not (eobp))
 	  (setq second-line (buffer-substring (line-beginning-position) (line-end-position))))
       (if second-line
 	  (progn 
-	    (if (equal second-line line)
+	    (if (string-equal second-line line)
 		(delete-line))
-	    (if (and (string-match second-line line)
-		     (not (equal second-line line)))
+	    (if (and (string-match (concat "^" second-line) line)
+		     (not (string-equal second-line line)))
 		(progn
 		  (transpose-lines 1)
 	          (goto-char (point-min)))))))
@@ -462,44 +460,48 @@
   (split-string (buffer-string) "\n")))
 
 (defun orgrr-open-next-zettel ()
-  "Opens the next zettel in accordance with the sorting of orgrr-luhmann-sorting."
+  "Opens the next zettel."
   (interactive)
   (orgrr-read-current-zettel)
-  (when (not (equal current-zettel nil))
-      (with-temp-buffer
-	(orgrr-prepare-zettel-selection-list)
-	(setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp)) 
+  (orgrr-prepare-zettel-selection-list)
+  (with-temp-buffer
+    (orgrr-prepare-zettel-selection-list)
+    (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
 	(setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
 	(dolist (item orgrr-selection-list)
-	  (if (string-match "^\\[\\(.*?\\)\\]" (identity item))
-	  (setq item (match-string 1 item)))
-	  (insert (concat item "\n")))
+	  (if (string-match "^\\[\\(.*?\\)\\]" item)
+	      (progn
+		(setq item (match-string 1 item))
+		(insert (concat item "\n")))))
 	(goto-char (point-min))
-	(search-forward current-zettel)
+	(while (not (string-equal (buffer-substring-no-properties (line-beginning-position) (line-end-position)) current-zettel))
+	  (forward-line))
 	(forward-line)
 	(let* ((matched-zettel (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
-	      (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
-	  (orgrr-open-file matched-zettel-filename)))))
+	       (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
+	  (orgrr-open-file matched-zettel-filename))))
 
 (defun orgrr-open-previous-zettel ()
-  "Opens the previous zettel in accordance with the sorting of orgrr-luhmann-sorting."
+  "Opens the previous zettel."
   (interactive)
   (orgrr-read-current-zettel)
-  (when (not (equal current-zettel nil))
-      (with-temp-buffer
-	(orgrr-prepare-zettel-selection-list)
-	(setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp)) 
-	(setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
-	(dolist (item orgrr-selection-list)
-	  (if (string-match "^\\[\\(.*?\\)\\]" (identity item))
-	  (setq item (match-string 1 item)))
-	  (insert (concat item "\n")))
+  (orgrr-prepare-zettel-selection-list)
+  (with-temp-buffer
+    (orgrr-prepare-zettel-selection-list)
+    (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
+    (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
+    (dolist (item orgrr-selection-list)
+      (if (string-match "^\\[\\(.*?\\)\\]" item)
+	  (progn
+		(setq item (match-string 1 item))
+		(insert (concat item "\n")))))
 	(goto-char (point-min))
-	(search-forward current-zettel)
+	(while (not (string-equal (buffer-substring-no-properties (line-beginning-position) (line-end-position)) current-zettel))
+	  (forward-line))
 	(previous-line)
 	(let* ((matched-zettel (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
-	      (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
-	  (orgrr-open-file matched-zettel-filename)))))
+	       (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
+	  (orgrr-open-file matched-zettel-filename))))
 
 (defun orgrr-find ()
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
@@ -1137,8 +1139,6 @@ This one of the very few functions where orgrr is directly changing your data (t
 	    (message "Fixing backlinks for '%s'." filename)
 	    (orgrr-adjust-backlinks-in-current-container filename)))
 	(message "All links in this container have been adjusted!"))))
-
-       
 
 (provide 'orgrr)
 
