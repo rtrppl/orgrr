@@ -38,6 +38,7 @@ These are the primary functions orgrr provides:
   - [orgrr-random-note](#orgrr-random-note)
 - [Zettel functions](#zettel-functions)
   - [orgrr-find-zettel](#orgrr-find-zettel)
+  - [orgrr-no-find-zettel](#orgrr-no-find-zettel)
   - [orgrr-add-zettel](#orgrr-add-zettel)
   - [orgrr-open-next-zettel](#orgrr-open-next-zettel)
   - [orgrr-open-previous-zettel](#orgrr-open-previous-zettel)
@@ -215,6 +216,10 @@ This function opens a random note in the current container (org-directory).
 ### orgrr-find-zettel
 
 Similar to [orgrr-find](#orgrr-find), but limited to notes that have a zettel value. This is useful if you store some primary sources and your notes in the same container and only want to search your notes (as they should be the only ones with a zettel value).
+
+### orgrr-no-find-zettel
+
+Similar to [orgrr-find-zettel](#orgrr-find-zettel), but limited to notes that do not have a zettel value yet. Wrote this a few days after working with zettel values as way to quickly find notes that still need a zettel ID. The naming of this function (and it's code) could be improved.
 
 ### orgrr-add-zettel
 

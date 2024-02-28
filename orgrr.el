@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.2
+;; Version: 0.8.3
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,8 +33,9 @@
 ;;
 ;;; News
 ;;
-;; 0.8.2
-;; - Even more fixes for zettel sorting.
+;; 0.8.3
+;; - Introducing orgrr-no-find-zettel to find notes that still may need a
+;;   a value for zettel.
 ;;
 ;;; Code:
 
@@ -268,6 +269,47 @@
 (clrhash orgrr-short_filename-filename)
 (clrhash orgrr-filename-tags))
 
+(defun orgrr-no-selection-zettel ()
+  "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Excludes zettel. "
+  (interactive)
+  (orgrr-get-meta)
+  (setq orgrr-selection-list ())
+  (setq final-title "")
+  (let* ((titles (hash-table-keys orgrr-title-filename))
+	(filenames-for-tags (hash-table-keys orgrr-filename-tags))
+	(filenames-for-zettel (hash-table-keys orgrr-filename-zettel)))
+    (dolist (title titles)
+      (let* ((filename (gethash title orgrr-title-filename)))
+	(if (member (concat "\\" filename) filenames-for-tags)
+	    (if (not (member (concat "\\" filename) filenames-for-zettel))
+		(progn 
+		  (setq final-title (concat "(" (gethash (concat "\\" filename) orgrr-filename-tags) ") " title))
+		  (setq orgrr-selection-list (cons final-title orgrr-selection-list)))))
+	(if (not (member (concat "\\" filename) filenames-for-tags))
+	    (if (not (member (concat "\\" filename) filenames-for-zettel))
+		(progn 
+		  (setq final-title title)
+		   (setq orgrr-selection-list (cons final-title orgrr-selection-list)))))))
+    (setq orgrr-selection-list (reverse orgrr-selection-list))
+    (if (region-active-p)
+	(setq selection (completing-read "" orgrr-selection-list nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
+      (setq selection (completing-read "" orgrr-selection-list))) 
+    (if (string-match "^\(" selection)
+	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))))
+
+(defun orgrr-no-find-zettel ()
+  "Like orgrr-find-zettel, but only considers notes that have no value for zettel."
+  (interactive)
+  (orgrr-no-selection-zettel)
+  (if (member selection (hash-table-keys orgrr-title-filename))
+    (progn
+      (setq filename (gethash selection orgrr-title-filename))
+      (orgrr-open-file filename)))
+(clrhash orgrr-title-filename)
+(clrhash orgrr-filename-title)
+(clrhash orgrr-short_filename-filename)
+(clrhash orgrr-filename-tags))
+
 (defun orgrr-add-zettel ()
   "Drill down to allow the user to find the correct spot for a new zettel and then insert a line with #+zettel: zettel-value after the last line starting with #+ (from the beginning of the file)."
   (interactive)
@@ -305,7 +347,8 @@
 	    (progn
 	      (setq inserted-already t)
 	      (insert (concat "#+zettel: " selection-zettel "\n"))
-	      (goto-char saved-point)))))))
+	      (goto-char saved-point)
+	      (save-buffer)))))))
   (message "This note already has a value for zettel!")))
 	 
 (defun orgrr-read-current-zettel ()
