@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.3
+;; Version: 0.8.4
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,9 +33,8 @@
 ;;
 ;;; News
 ;;
-;; 0.8.3
-;; - Introducing orgrr-no-find-zettel to find notes that still may need a
-;;   a value for zettel.
+;; 0.8.4
+;; - Fine-tuning all sorting in zettel-related functions.
 ;;
 ;;; Code:
 
@@ -246,10 +245,9 @@
       (let* ((filename (gethash title orgrr-title-filename)))
 	(if (member (concat "\\" filename) filenames-for-zettel)
 	    (progn 
-	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\t\t" title))
+	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\s" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
-	    (sort orgrr-selection-list 'dictionary-lessp)  
-    (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))))
+	      (setq orgrr-selection-list (reverse orgrr-selection-list))))
 	  
 (defun orgrr-find-zettel ()
   "Like orgrr-find, but only considers notes that have a value for zettel. If the selected file name does not exist, a new one is created. Starts with the current zettel ID, which allows you to search within a context."
@@ -353,20 +351,21 @@
 (defun orgrr-read-current-zettel ()
     "Reads out #+zettel for current note."
     (setq current-zettel nil)
-    (let ((current-entry "")
-	  (buffer (buffer-substring-no-properties (point-min) (point-max))))
-      (with-temp-buffer
-	(insert buffer)
-	(goto-char (point-min))
-	(while (not (eobp))
-          (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
-          (if (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
-              (progn
-		(let* ((line (split-string current-entry "\\: " t))
-			(zettel (car (cdr line)))
-			(zettel (string-trim-left zettel)))
-                  (setq current-zettel zettel))))
-          (forward-line)))))
+    (when (eq major-mode 'org-mode)
+      (let ((current-entry "")
+	    (buffer (buffer-substring-no-properties (point-min) (point-max))))
+	(with-temp-buffer
+	  (insert buffer)
+	  (goto-char (point-min))
+	  (while (not (eobp))
+            (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
+            (if (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
+		(progn
+		  (let* ((line (split-string current-entry "\\: " t))
+			 (zettel (car (cdr line)))
+			 (zettel (string-trim-left zettel)))
+                    (setq current-zettel zettel))))
+            (forward-line))))))
  
 (defun orgrr-show-sequence ()
   "Shows a sequence of notes for any given zettel value. If run while visiting a buffer that has a value for zettel, this is taken as the starting value for zettel. Results are presented in a different buffer in accordance with orgrr-window-management."
@@ -465,7 +464,7 @@
       (reverse res))))
 
 (defun orgrr-improve-sorting (list)
-  "Function to sort a list of zettel values according to the Luhmann-pattern."
+  "Function to improve upon dictionary-lessp sort to achieve a Luhmann-pattern."
   (orgrr-get-meta)
   (with-temp-buffer
     (dolist (item list)
@@ -506,6 +505,8 @@
   (interactive)
   (orgrr-read-current-zettel)
   (orgrr-prepare-zettel-selection-list)
+  (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
+  (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
   (with-temp-buffer
     (dolist (item orgrr-selection-list)
       (if (string-match "^\\[\\(.*?\\)\\]" item)
@@ -525,6 +526,8 @@
   (interactive)
   (orgrr-read-current-zettel)
   (orgrr-prepare-zettel-selection-list)
+  (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
+  (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
   (with-temp-buffer
     (dolist (item orgrr-selection-list)
       (if (string-match "^\\[\\(.*?\\)\\]" item)
