@@ -327,10 +327,9 @@
       (let* ((filename (gethash title orgrr-title-filename)))
 	(if (member (concat "\\" filename) filenames-for-zettel)
 	    (progn 
-	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\t\t" title))
+	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\s" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
-    (sort orgrr-selection-list 'dictionary-lessp)
-    (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
+    (setq orgrr-selection-list (reverse orgrr-selection-list))
     (setq selection-zettel (completing-read "Hit enter to narrow down: " orgrr-selection-list))
     (if (string-match "^\\[\\(.*?\\)\\]" selection-zettel)
 	(setq selection-zettel (match-string 1 selection-zettel)))
