@@ -51,6 +51,7 @@ These are the primary functions orgrr provides:
   - [orgrr-container-commands](#orgrr-container-commands)
 - [Quality of life functions](#quality-of-life-functions)
   - [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)
+  - [orgrr-fix-all-links-buffer and orgrr-fix-all-links-container](#orgrr-fix-all-links-buffer-and-orgrr-fix-all-links-container)
 - [orgrr extensions](#orgrr-extensions)
   - [orgrr-save-website](#orgrr-save-website)
   - [orgrr-show-findlike](#orgrr-show-findlike)
@@ -205,7 +206,7 @@ This function deletes the current note and displays the previous buffer.
 
 ### orgrr-move-note
 
-This function allows to move the current note to one of the other containers. All links will be adjusted accordingly.
+This function allows to move the current note to one of the other containers. All links in the note and all containers (!) will be adjusted accordingly.
 
 ### orgrr-random-note
 
@@ -270,6 +271,10 @@ This function activates `single-window-mode`, in which all links as well as the 
 ```
 
 This is what I have done.
+
+### orgrr-fix-all-links-buffer and ogrr-fix-all-links-container
+
+These functions were a byproduct of rewriting orgrr-move-note and correct links either in the current buffer or the current container. Fixing hereby means: if you move org files to a different folder, org-links with hard-wired directories in them may cease to work. The functions will fix these links as long as there is a file with the same filename in the known containers. Even using the speedy rg, orgrr-fix-all-links-container may take a while to complete.
 
 ## orgrr extensions
 
