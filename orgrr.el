@@ -252,9 +252,9 @@
     (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))))
 	  
 (defun orgrr-find-zettel ()
-  "Like orgrr-find, but only considers notes that have a value for zettel. If the selected file name does not exist, a new one is created."
+  "Like orgrr-find, but only considers notes that have a value for zettel. If the selected file name does not exist, a new one is created. Starts with the current zettel ID, which allows you to search within a context."
   (interactive)
-  (setq current-zettel "")
+  (orgrr-read-current-zettel)
   (orgrr-selection-zettel)
   (if (member selection (hash-table-keys orgrr-title-filename))
     (progn
@@ -498,7 +498,7 @@
 	     (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename))
 	     (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
 	(kill-line)
-	(insert (concat "\[" matched-zettel "\]\t\t" matched-zettel-title)))   
+	(insert (concat "\[" matched-zettel "\]\s" matched-zettel-title)))   
       (forward-line 1))
   (split-string (buffer-string) "\n")))
 
@@ -508,14 +508,11 @@
   (orgrr-read-current-zettel)
   (orgrr-prepare-zettel-selection-list)
   (with-temp-buffer
-    (orgrr-prepare-zettel-selection-list)
-    (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
-	(setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
-	(dolist (item orgrr-selection-list)
-	  (if (string-match "^\\[\\(.*?\\)\\]" item)
-	      (progn
-		(setq item (match-string 1 item))
-		(insert (concat item "\n")))))
+    (dolist (item orgrr-selection-list)
+      (if (string-match "^\\[\\(.*?\\)\\]" item)
+	  (progn
+	    (setq item (match-string 1 item))
+	    (insert (concat item "\n")))))
 	(goto-char (point-min))
 	(while (not (string-equal (buffer-substring-no-properties (line-beginning-position) (line-end-position)) current-zettel))
 	  (forward-line))
@@ -530,14 +527,11 @@
   (orgrr-read-current-zettel)
   (orgrr-prepare-zettel-selection-list)
   (with-temp-buffer
-    (orgrr-prepare-zettel-selection-list)
-    (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
-    (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
     (dolist (item orgrr-selection-list)
       (if (string-match "^\\[\\(.*?\\)\\]" item)
 	  (progn
-		(setq item (match-string 1 item))
-		(insert (concat item "\n")))))
+	    (setq item (match-string 1 item))
+	    (insert (concat item "\n")))))
 	(goto-char (point-min))
 	(while (not (string-equal (buffer-substring-no-properties (line-beginning-position) (line-end-position)) current-zettel))
 	  (forward-line))
