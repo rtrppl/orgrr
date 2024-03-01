@@ -220,11 +220,11 @@ Similar to [orgrr-find](#orgrr-find), but limited to notes that have a zettel va
 
 ### orgrr-no-find-zettel
 
-Similar to [orgrr-find-zettel](#orgrr-find-zettel), but limited to notes that do not have a zettel value yet. Wrote this a few days after working with zettel values as way to quickly find notes that still need a zettel ID. The naming of this function (and it's code) could be improved.
+Similar to [orgrr-find-zettel](#orgrr-find-zettel), but limited to notes that do not have a zettel value yet. Wrote this a few days after working with zettel values as a way to quickly find notes that still need a zettel ID. The naming of this function (and it's code) could be improved.
 
 ### orgrr-add-zettel
 
-This function helps you to find a zettel value, i.e. a zettel ID, for the current note. Hitting enter on an entry in the mini-buffer will narrow the focus of your search. Only if you input a value that does not yet exist, the selection is accepted and an entry for "#+zettel:" is entered to the front-matter. 
+This function helps you to find a zettel value, i.e. a zettel ID, for the current note. Hitting enter on an entry in the mini-buffer will narrow the focus of your search. Only if you input a value that does not yet exist, the selection is accepted and an entry for "#+zettel:" is added to the front-matter. 
 
 ### orgrr-open-next-zettel
 
@@ -238,7 +238,7 @@ Opens the note/zettel coming before the current one. The notes' order is in acco
 
 ### orgrr-show-sequence
 
-One of the main benefits of adding zettel values to notes becomes the ability to explore a sequence of notes. After selecting a starting point, this functions displays a sequence of notes in a buffer (in accordance with your settings for orgrr-window-management, see [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)). 
+One of the main benefits of adding zettel values to notes becomes the ability to explore a sequence of notes. After you have selected a starting point, this functions displays a sequence of notes in a buffer (in accordance with your settings for orgrr-window-management, see [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)). 
 
 ### orgrr-show-backlinks
 
