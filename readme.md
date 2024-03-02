@@ -10,11 +10,11 @@ These are the primary functions orgrr provides:
 
 - **orgrr-insert** will insert a link to another note in the `org-directory` ([see here](#orgrr-insert)). If the title (or alias) entered does not exist, a new note is created.
 
-- **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note ([see here](#orgrr-show-sequence)). 
+- **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note in a buffer ([see here](#orgrr-show-sequence)). 
 
-- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a side-window ([see here](#orgrr-show-backlinks)). This is what you see in the image above.
+- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a buffer ([see here](#orgrr-show-backlinks)). This is what you see in the image above.
 
-- **orgrr-show-related-notes** will show all related notes in a side-window ([see here](#orgrr-show-related-notes)). For the underlying concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
+- **orgrr-show-related-notes** will show all related notes in a buffer ([see here](#orgrr-show-related-notes)). For the underlying concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
@@ -77,7 +77,7 @@ If you don't already have done so, you also have to set an org-directory.
 
 **In order to use orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine.** The easiest way to do so might be [homebrew](https://brew.sh), i.e. `brew install rg`.
 
-Finally, you may also want to set keybindings for the main functions (I have bound the Mac-command key to s):
+Finally, you may also want to set keybindings for the main functions (I have bound the Mac-command key to super/s):
 
 ```org
 (global-set-key (kbd "M-s-f") 'orgrr-find)
@@ -98,13 +98,13 @@ orgrr began as a nearly feature-complete replica of the core functionality of [o
 
 **A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files and their meta-data. The aim is to have as little dependencies as possible. A second difference is that orgrr sticks to the ideal of every note being a single file. The final difference is relative minimalism - orgrr should have all the features that are necessary and draw on org-mode/Emacs for everything else.**
 
-This is a package to primarily address my needs and I have been using orgrr almost daily for a year now (February 2024). My main container has close to 4000 notes and the speed between org-roam and orgrr is comparable. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data (see below)!
+This package primarily address my own needs and I have been using orgrr almost daily for a year now (February 2024). My main container has close to 4000 notes and the speed between org-roam and orgrr is comparable. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data (see below)!
 
 **As no database involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions.** 
 
 ### Basic design of a note
 
-In orgrr, all notes are assumed to follow a certain logic regarding metadata. The design principles used here are similar to org-roam v1 and interoperation between orgrr and org-roam v1 is possible (and was intended). Hence filenames themselves are used as unique identifiers and changing them without adjusting backlinks will break the connection between two notes (see also [orgrr-rename](#orgrr-rename)).
+In orgrr, all (org-)notes are assumed to follow a certain logic regarding metadata. The design principles used here are similar to org-roam v1 and interoperation between orgrr and org-roam v1 is possible (and was intended). Hence filenames themselves are used as unique identifiers and changing them without adjusting backlinks will break the connection between two notes (see also [orgrr-rename](#orgrr-rename)).
 
 At the very minimum, a note file for orgrr is an .org file that includes the following line:
 
@@ -130,9 +130,9 @@ Tags are added without quotation marks, separated by space.
 
 There is an ongoing debate on whether or not a true Zettelkasten-system also needs to respect Luhmann's emphasis on the importance of the sequence of notes ("Folgezettel"). For an in-depth discussion of the topic see [here](https://zettelkasten.de/folgezettel/).
 
-To be honest, initially, I did not see the need to add this. After all, didn't Luhmann use zettel IDs primarily for linking and this could be much more efficiently handled with org-links? Over time, however, the idea grew on me for a particular reason. This is another great way to show relationships between notes. It is also the only option to create a hierarchy of notes. Both aspects are very useful when you have more than a few hundred notes. 
+To be honest, initially, I did not see the need to add this. After all, didn't Luhmann use zettel IDs primarily for linking and this could be much more efficiently handled with org-links? Over time, however, the idea grew on me for a particular reason: This is another great way to show relationships between notes! It is also the only option to create a hierarchy of notes. Both aspects are very useful when you have more than a few hundred notes. 
 
-Values for zettel are added without quotation marks (you can use [orgrr-add-zettel](#orgrr-add-zettel) for this). Using zettel values in orgrr makes most sense if you stick to [Luhmann's naming scheme](https://niklas-luhmann-archiv.de/bestand/zettelkasten/zettel/ZK_1_NB_1-5_V), e.g. 1a, 1a1, 1a2, 1a2a, 1a3, 1a3a....
+Values for zettel (i.e. zettel IDs) are added without quotation marks (and you should use [orgrr-add-zettel](#orgrr-add-zettel) for this). Using zettel values in orgrr makes most sense if you stick to [Luhmann's naming scheme](https://niklas-luhmann-archiv.de/bestand/zettelkasten/zettel/ZK_1_NB_1-5_V), e.g. 1a, 1a1, 1a2, 1a2a, 1a3, 1a3a....
 
 ```org
 #+zettel:   value
@@ -184,9 +184,7 @@ If you have set an org-directory in your .emacs, this will always be the startin
 
 This function searches the org-directory (and all its subdirectories) for a note. It works with all [completing-read frameworks](https://www.emacswiki.org/emacs/CategoryCompletion). You can search for any combination of tags, zettel ID and title (or alias). A [marked region](https://www.gnu.org/software/emacs/manual/html_node/emacs/Mark.html) is recognized to narrow search.
 
-If the note does not exist, then a new one with the chosen title will be created in the `org-directory`, i.e. the current container. The naming scheme of the new file is similar to org-roam v1. In other words, you should use orgrr-find and orgrr-insert to create new notes.
-
-I have decided against the use of org-capture to create new notes as this adds a lot of complexity for very little gain. If you want to abort the creation process you should invoke `kill-current-buffer`.
+If the note does not exist, then a new one with the chosen title will be created in the `org-directory`, i.e. the current container. The naming scheme of the new file is similar to org-roam v1. In other words, you should use orgrr-find and orgrr-insert to create new notes. If you want to abort the creation process you should invoke `kill-current-buffer`.
 
 ### orgrr-insert
 
@@ -196,9 +194,9 @@ If the note does not exist, a new one with the same title will be created in the
 
 ### orgrr-rename
 
-orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the #+title of a note (or any other meta-data about a note) will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
+orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the #+title of a note (or any other meta-data about a note), however, will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
 
-This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in the org-directory. Use it with caution.
+This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in the org-directory. Use it with caution!
 
 ### orgrr-delete
 
