@@ -195,6 +195,15 @@
 	       (puthash (concat "\\" filename) tags orgrr-filename-tags))))
 (forward-line))))
 
+(defun orgrr-presorted-completion-table (completions)
+  "Adds metadata to completion entries, so that Vertico respects completion sorting."
+   (list :completions completions
+         :completions-function
+  (lambda (string pred action)
+    (if (eq action 'metadata)
+        `(metadata (display-sort-function . ,#'identity))
+      (complete-with-action action completions string pred)))))
+
 (defun orgrr-selection ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front of title and alias. New version."
   (interactive)
@@ -374,6 +383,7 @@
       (progn
 	(orgrr-read-current-zettel)
 	(orgrr-selection-zettel)
+	(setq orgrr-selection-list (plist-get result :completions))
 	(let ((sequence-buffer (concat "sequence for *[" selection-zettel "]*")))
 	  (with-current-buffer (get-buffer-create sequence-buffer)
 	    (let ((inhibit-read-only t))
