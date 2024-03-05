@@ -100,7 +100,7 @@ orgrr began as a nearly feature-complete replica of the core functionality of [o
 
 This package primarily address my own needs and I have been using orgrr almost daily for a year now (February 2024). My main container has close to 4000 notes and the speed between org-roam and orgrr is comparable. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data (see below)!
 
-**As no database involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions.** 
+**As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions.** 
 
 ### Basic design of a note
 
@@ -182,7 +182,7 @@ If you have set an org-directory in your .emacs, this will always be the startin
 
 ### orgrr-find
 
-This function searches the org-directory (and all its subdirectories) for a note. It works with all [completing-read frameworks](https://www.emacswiki.org/emacs/CategoryCompletion). You can search for any combination of tags, zettel ID and title (or alias). A [marked region](https://www.gnu.org/software/emacs/manual/html_node/emacs/Mark.html) is recognized to narrow search.
+This function searches the org-directory (and all its subdirectories) for a note. It should work with all [completing-read frameworks](https://www.emacswiki.org/emacs/CategoryCompletion) but I only tested with [Helm](https://github.com/emacs-helm/helm) and [Vertico](https://github.com/minad/vertico). You can search for any combination of tags, zettel ID and title (or alias). A [marked region](https://www.gnu.org/software/emacs/manual/html_node/emacs/Mark.html) is recognized to narrow search.
 
 If the note does not exist, then a new one with the chosen title will be created in the `org-directory`, i.e. the current container. The naming scheme of the new file is similar to org-roam v1. In other words, you should use orgrr-find and orgrr-insert to create new notes. If you want to abort the creation process you should invoke `kill-current-buffer`.
 

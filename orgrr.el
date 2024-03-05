@@ -197,12 +197,10 @@
 
 (defun orgrr-presorted-completion-table (completions)
   "Adds metadata to completion entries, so that Vertico respects completion sorting."
-   (list :completions completions
-         :completions-function
   (lambda (string pred action)
     (if (eq action 'metadata)
         `(metadata (display-sort-function . ,#'identity))
-      (complete-with-action action completions string pred)))))
+      (complete-with-action action completions string pred))))
 
 (defun orgrr-selection ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front of title and alias. New version."
@@ -224,9 +222,10 @@
 	  (setq final-title title)))
 	(setq orgrr-selection-list (cons final-title orgrr-selection-list))))
     (setq orgrr-selection-list (reverse orgrr-selection-list))
+    (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
     (if (region-active-p)
-	(setq selection (completing-read "" orgrr-selection-list nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
-      (setq selection (completing-read "" orgrr-selection-list)))
+	(setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
+      (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
     (if (string-match "^\\[" selection)
 	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))  
     (if (string-match "^\(" selection)
@@ -236,8 +235,8 @@
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files that have a value for zettel. Prepends zettel value in front of title and alias."
   (orgrr-prepare-zettel-selection-list)
   (if current-zettel
-      (setq selection (completing-read "" orgrr-selection-list nil nil current-zettel))
-      (setq selection (completing-read "" orgrr-selection-list)))
+      (setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil current-zettel))
+      (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
   (if (string-match "^\\[\\(.*?\\)\\]" selection)
       (progn
 	(setq selection-zettel (match-string 1 selection))
@@ -256,7 +255,8 @@
 	    (progn 
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\s" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
-	      (setq orgrr-selection-list (reverse orgrr-selection-list))))
+	      (setq orgrr-selection-list (reverse orgrr-selection-list))
+	      (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))))
 	  
 (defun orgrr-find-zettel ()
   "Like orgrr-find, but only considers notes that have a value for zettel. If the selected file name does not exist, a new one is created. Starts with the current zettel ID, which allows you to search within a context."
@@ -299,8 +299,8 @@
 		   (setq orgrr-selection-list (cons final-title orgrr-selection-list)))))))
     (setq orgrr-selection-list (reverse orgrr-selection-list))
     (if (region-active-p)
-	(setq selection (completing-read "" orgrr-selection-list nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
-      (setq selection (completing-read "" orgrr-selection-list))) 
+	(setq selection (completing-read "Select: " orgrr-selection-list nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
+      (setq selection (completing-read "Select: " orgrr-selection-list))) 
     (if (string-match "^\(" selection)
 	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))))
 
@@ -337,11 +337,12 @@
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\s" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
     (setq orgrr-selection-list (reverse orgrr-selection-list))
-    (setq selection-zettel (completing-read "Hit enter to narrow down: " orgrr-selection-list))
+    (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
+    (setq selection-zettel (completing-read "Hit enter to narrow down: " orgrr-selection-list-completion))
     (if (string-match "^\\[\\(.*?\\)\\]" selection-zettel)
 	(setq selection-zettel (match-string 1 selection-zettel)))
     (while (member selection-zettel (hash-table-values orgrr-filename-zettel))
-      (setq selection-zettel (completing-read "Hit enter to narrow down: " orgrr-selection-list nil nil selection-zettel))
+      (setq selection-zettel (completing-read "Hit enter to narrow down: " orgrr-selection-list-completion nil nil selection-zettel))
       (if (string-match "^\\[\\(.*?\\)\\]" selection-zettel)
 	  (setq selection-zettel (match-string 1 selection-zettel))))
     (goto-char (point-min))
@@ -383,7 +384,6 @@
       (progn
 	(orgrr-read-current-zettel)
 	(orgrr-selection-zettel)
-	(setq orgrr-selection-list (plist-get result :completions))
 	(let ((sequence-buffer (concat "sequence for *[" selection-zettel "]*")))
 	  (with-current-buffer (get-buffer-create sequence-buffer)
 	    (let ((inhibit-read-only t))
@@ -709,7 +709,7 @@
     (setq snippet (buffer-substring-no-properties start end))))))
 
 (defun orgrr-add-to-project ()
-  "Add the current line in the buffer (including orgrr-backlinks buffer) to an existing project."
+  "Add the current line at point (including when in orgrr-backlinks buffer) to an existing project."
   (interactive)
   (orgrr-get-meta)
   (orgrr-collect-project-snippet)
@@ -984,7 +984,7 @@ A use case could be to add snippets to a writing project, which is located in a 
   (let* ((containers (nreverse (hash-table-keys orgrr-name-container))))
     (if container
 	(setq selection container)
-      (setq selection (completing-read "" containers)))
+      (setq selection (completing-read "Select: " containers)))
     (if (member selection containers)
 	(setq org-directory (gethash selection orgrr-name-container))
       (message "Container does not exist.")))
