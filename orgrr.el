@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.4
+;; Version: 0.8.5
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,8 +33,9 @@
 ;;
 ;;; News
 ;;
-;; 0.8.4
-;; - Fine-tuning all sorting in zettel-related functions.
+;; 0.8.5
+;; - Fixes for Vertico and other completion-frameworks that change the order of
+;;   collections in completing-read (of no metadata is provided)
 ;;
 ;;; Code:
 
@@ -196,7 +197,7 @@
 (forward-line))))
 
 (defun orgrr-presorted-completion-table (completions)
-  "Adds metadata to completion entries, so that Vertico respects completion sorting."
+  "Adds metadata to completion entries, so that Vertico (and others) respects the sorting of a collection for completing-read. This is based on https://emacs.stackexchange.com/questions/8115/make-completing-read-respect-sorting-order-of-a-collection, thanks @sachac@emacs.ch for the hint!"
   (lambda (string pred action)
     (if (eq action 'metadata)
         `(metadata (display-sort-function . ,#'identity))
