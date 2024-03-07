@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.5
+;; Version: 0.8.6
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -34,8 +34,7 @@
 ;;; News
 ;;
 ;; 0.8.5
-;; - Fixes for Vertico and other completion-frameworks that change the order of
-;;   collections in completing-read (of no metadata is provided)
+;; - More fixes for Vertico
 ;;
 ;;; Code:
 
@@ -755,7 +754,8 @@
 	   (let ((title (gethash (concat "\\" line) orgrr-filename-title)))
 	   (puthash (concat "\\" line) title orgrr-project_filename-title)
 	    (setq orgrr-selection-list (cons title orgrr-selection-list)))))
-       (setq selection (completing-read "" orgrr-selection-list))
+       (setq orgrr-selection-list (orgrr-presorted-completion-table orgrr-selection-list))
+       (setq selection (completing-read "Select: " orgrr-selection-list))
        (if (string-match "^\(" selection)
 	   (setq selection (replace-regexp-in-string "\(.*?\) " "" selection)))))
 
