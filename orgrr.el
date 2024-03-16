@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.6
+;; Version: 0.8.7
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,8 +33,8 @@
 ;;
 ;;; News
 ;;
-;; 0.8.5
-;; - More fixes for Vertico
+;; 0.8.7
+;; - More bug fixes
 ;;
 ;;; Code:
 
@@ -779,7 +779,7 @@
 
 A use case could be to add snippets to a writing project, which is located in a different container than the main database."
   (orgrr-check-for-container-file)
-  (ogrr-get-list-of-containers)
+  (orgrr-get-list-of-containers)
   (setq orgrr-short_filename-filename (make-hash-table :test 'equal))
   (let* ((containers (nreverse (hash-table-values orgrr-name-container))))
     (dolist (container containers) 
@@ -981,7 +981,7 @@ A use case could be to add snippets to a writing project, which is located in a 
   "Switch between a list of containers stored in ~/.orgrr-container-list. orgrr-change-container can be called with a specific container."
   (interactive)
   (orgrr-check-for-container-file)
-  (ogrr-get-list-of-containers)
+  (orgrr-get-list-of-containers)
   (let* ((containers (nreverse (hash-table-keys orgrr-name-container))))
     (if container
 	(setq selection container)
@@ -1001,7 +1001,7 @@ A use case could be to add snippets to a writing project, which is located in a 
 	    (insert json-data)
 	    (write-file "~/.orgrr-container-list"))))))
 
-(defun ogrr-get-list-of-containers ()
+(defun orgrr-get-list-of-containers ()
  "Return orgrr-name-container, a hashtable that includes a list of names and locations of all containers."
  (setq orgrr-name-container (make-hash-table :test 'equal))
  (with-temp-buffer
@@ -1013,7 +1013,7 @@ A use case could be to add snippets to a writing project, which is located in a 
   "Create or add a directory as a container and switch to that container."
   (interactive)
   (orgrr-check-for-container-file)
-  (ogrr-get-list-of-containers)
+  (orgrr-get-list-of-containers)
   (let* ((new-container (read-directory-name "Enter a directory name: ")))
     (if (yes-or-no-p (format "Are you sure you want to create the directory %s as a container? " new-container))
 	(progn
@@ -1024,95 +1024,10 @@ A use case could be to add snippets to a writing project, which is located in a 
 	    (with-temp-buffer
 	     (let* ((json-data (json-encode orgrr-name-container)))
 	       (insert json-data)
-	       (write-file "~/.orgrr-container-list")))))
+	       (write-file "~/.orgrr-container-list"))))
+	  (setq org-directory new-container))
     (message "%s was not created!" new-container))
-  (setq org-directory new-container)
   (clrhash orgrr-name-container)))
-
-
-(defun orgrr-remove-container ()
-  "Allow to remove a container for the list of containers."
-  (interactive)
-  (setq orgrr-name-container (make-hash-table :test 'equal))
-  (if (not (file-exists-p "~/.orgrr-container-list"))
-      (progn
-	(puthash "main" org-directory orgrr-name-container)
-	(with-temp-buffer
-	  (setq json-data (json-encode orgrr-name-container))
-	  (insert json-data)
-	  (write-file "~/.orgrr-container-list"))))
-  (with-temp-buffer
-    (insert-file-contents "~/.orgrr-container-list")
-    (if (fboundp 'json-parse-buffer)
-	(setq orgrr-name-container (json-parse-buffer))))
-  (setq containers (hash-table-keys orgrr-name-container))
-  (setq selection (completing-read "Which container should be removed? " containers))
-  (if (not (member selection containers))
-      (message "Container does not exist.")
-    (if (string-equal selection "main")
-	(message "The container \"main\" cannot be removed!")
-      (if (yes-or-no-p (format "Are you sure you want to remove %s as a container? " (gethash selection orgrr-name-container)))
-	  (progn
-	    (remhash selection orgrr-name-container)
-	    (with-temp-buffer
-	      (setq json-data (json-encode orgrr-name-container))
-	      (insert json-data)
-	      (write-file "~/.orgrr-container-list"))
-	    (setq org-directory (gethash "main" orgrr-name-container))))))
-  (clrhash orgrr-name-container))
-
-(defun orgrr-change-container (&optional container)
-  "Switch between a list of containers stored in ~/.orgrr-container-list. orgrr-change-container can be called with a specific container."
-  (interactive)
-  (orgrr-check-for-container-file)
-  (ogrr-get-list-of-containers)
-  (let* ((containers (nreverse (hash-table-keys orgrr-name-container))))
-    (if container
-	(setq selection container)
-      (setq selection (completing-read "" containers)))
-    (if (member selection containers)
-	(setq org-directory (gethash selection orgrr-name-container))
-      (message "Container does not exist.")))
-  (clrhash orgrr-name-container))
-
-(defun orgrr-check-for-container-file ()
- "Creates a container file in ~/.orgrr-container-list in case one does not yet exist."
- (if (not (file-exists-p "~/.orgrr-container-list"))
-      (progn
-	(puthash "main" org-directory orgrr-name-container)
-	(with-temp-buffer
-	  (let ((json-data (json-encode orgrr-name-container)))
-	    (insert json-data)
-	    (write-file "~/.orgrr-container-list"))))))
-
-(defun ogrr-get-list-of-containers ()
- "Return orgrr-name-container, a hashtable that includes a list of names and locations of all containers."
- (setq orgrr-name-container (make-hash-table :test 'equal))
- (with-temp-buffer
-   (insert-file-contents "~/.orgrr-container-list")
-   (if (fboundp 'json-parse-buffer)
-       (setq orgrr-name-container (json-parse-buffer)))))
-
-(defun orgrr-create-container ()
-  "Create or add a directory as a container and switch to that container."
-  (interactive)
-  (orgrr-check-for-container-file)
-  (ogrr-get-list-of-containers)
-  (let* ((new-container (read-directory-name "Enter a directory name: ")))
-    (if (yes-or-no-p (format "Are you sure you want to create the directory %s as a container? " new-container))
-	(progn
-	  (unless (file-exists-p new-container)
-	    (make-directory new-container t))
-	  (let* ((name (read-from-minibuffer "Please provide a name for the new container: ")))
-	    (puthash name new-container orgrr-name-container)
-	    (with-temp-buffer
-	     (let* ((json-data (json-encode orgrr-name-container)))
-	       (insert json-data)
-	       (write-file "~/.orgrr-container-list")))))
-    (message "%s was not created!" new-container))
-  (setq org-directory new-container)
-  (clrhash orgrr-name-container)))
-
 
 (defun orgrr-remove-container ()
   "Allow to remove a container for the list of containers."
