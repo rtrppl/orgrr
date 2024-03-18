@@ -419,6 +419,7 @@
 		(beginning-of-buffer)
 		(org-next-visible-heading 1)
 		(deactivate-mark))))))
+  (orgrr-close-buffer)))
 
 ;; The following three functions have been taken from https://stackoverflow.com/questions/1942045/natural-order-sort-for-emacs-lisp. They work really well for dictionary compare.
 
