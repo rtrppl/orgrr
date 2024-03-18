@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.7
+;; Version: 0.8.8
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,8 +33,8 @@
 ;;
 ;;; News
 ;;
-;; 0.8.7
-;; - More bug fixes
+;; 0.8.8
+;; - code optimization
 ;;
 ;;; Code:
 
@@ -47,6 +47,25 @@
     (if (equal orgrr-window-management "single-window")
         (find-file filename)
       (find-file-other-window filename))))
+
+(defun orgrr-open-buffer (buffer)
+ "A wrapper to open BUFFER according to orgrr-window-management settings."
+ (if (equal orgrr-window-management "multi-window")
+		(progn
+		  (display-buffer-in-side-window
+		   (current-buffer)
+		   '((side . right)
+		     (slot . -1)
+		     (window-width . 60)))))
+	    (if (equal orgrr-window-management "single-window")
+		  (switch-to-buffer buffer)))
+
+(defun orgrr-close-buffer ()
+   "A wrapper to close BUFFER according to orgrr-window-management settings."  
+  (if (equal orgrr-window-management "multi-window")
+      (delete-window))
+  (if (equal orgrr-window-management "single-window")
+      (previous-buffer)))
 
 (defun orgrr-toggle-single-window-mode ()
   "Switch between single-window-mode and multi-window mode (which uses side-buffers)."
@@ -66,7 +85,6 @@
 
 (defun orgrr-show-backlinks ()
   "Show all backlinks in `org-directory' to the current org-file."
-;; TODO: add unlinked references below backlinks!
   (interactive)
   (orgrr-get-all-filenames)
   (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
@@ -116,15 +134,7 @@
 			       (snippet (orgrr-adjust-links snippet))
 			       (snippet (string-trim-left (string-trim-left snippet "*"))))
 			(insert (concat "\*\* \[\[file:" key "::" line-number "\]" "\[" result "\]\]:\n\n"  snippet "\n\n")))))))))
-            (if (equal orgrr-window-management "multi-window")
-		(progn
-		  (display-buffer-in-side-window
-		   (current-buffer)
-		   '((side . right)
-		     (slot . -1)
-		     (window-width . 60)))))
-	    (if (equal orgrr-window-management "single-window")
-		  (switch-to-buffer backlink-buffer))
+	    (orgrr-open-buffer backlink-buffer)
 	    (with-current-buffer backlink-buffer
 	      (org-mode))))
 	(let ((window (get-buffer-window backlink-buffer)))
@@ -137,10 +147,7 @@
 	(clrhash orgrr-counter-quote)
 	(clrhash orgrr-counter-filename)
 	(clrhash orgrr-filename-title))
-     (if (equal orgrr-window-management "multi-window")
-	 (delete-window))
-     (if (equal orgrr-window-management "single-window")
-	 (previous-buffer))))
+    (orgrr-close-buffer)))
 
 (defun orgrr-get-meta ()
   "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all org-files and adds them to hashtables."
@@ -402,28 +409,17 @@
 		  (if (not (equal matched-zettel selection-zettel))
 		      (insert (concat "** \[" matched-zettel "\]\t" "\[\[" matched-zettel-filename "\]\[" matched-zettel-title "\]\]\n")))))))
 ;;Starting here it is only window-management
-	  (if (equal orgrr-window-management "multi-window")
-	      (progn
-		(display-buffer-in-side-window
-		 (current-buffer)
-		 '((side . right)
-		   (slot . -1)
-		   (window-width . 60)))))
-	  (if (equal orgrr-window-management "single-window")
-	      (switch-to-buffer sequence-buffer))
-	  (with-current-buffer sequence-buffer
-	    (org-mode))
-	  (let ((window (get-buffer-window sequence-buffer)))
-	    (when window
-	      (select-window window)
-	      (setq default-directory org-directory)
-	      (beginning-of-buffer)
-	      (org-next-visible-heading 1)
-	      (deactivate-mark))))))
-     (if (equal orgrr-window-management "multi-window")
-	 (delete-window))
-     (if (equal orgrr-window-management "single-window")
-	 (previous-buffer))))
+	    (orgrr-open-buffer sequence-buffer)
+	    (with-current-buffer sequence-buffer
+	      (org-mode))
+	    (let ((window (get-buffer-window sequence-buffer)))
+	      (when window
+		(select-window window)
+		(setq default-directory org-directory)
+		(beginning-of-buffer)
+		(org-next-visible-heading 1)
+		(deactivate-mark))))))
+  (orgrr-close-buffer)))
 
 ;; The following three functions have been taken from https://stackoverflow.com/questions/1942045/natural-order-sort-for-emacs-lisp. They work really well for dictionary compare.
 
@@ -840,15 +836,7 @@ A use case could be to add snippets to a writing project, which is located in a 
 	(orgrr-forwardlinks-first-and-second-order)
 	(with-current-buffer (get-buffer-create relatednotes-buffer)
 	  (erase-buffer)
-	  (if (equal orgrr-window-management "multi-window")
-	      (progn
-		(display-buffer-in-side-window
-		 (current-buffer)
-		 '((side . right)
-		   (slot . -1)
-		   (window-width . 60)))))
-	  (if (equal orgrr-window-management "single-window")
-	      (switch-to-buffer relatednotes-buffer))
+	  (orgrr-open-buffer relatednotes-buffer)
 	  (org-mode)
 	  (insert (concat "* " (number-to-string related-notes) " connections for *" title "*\n\n"))
 	  (setq sorted-values '())
@@ -868,12 +856,8 @@ A use case could be to add snippets to a writing project, which is located in a 
 	(clrhash orgrr-filename-tags)
 	(clrhash orgrr-short_filename-filename)
 	(clrhash orgrr-filename-mentions))
-    (if (equal orgrr-window-management "multi-window")
-	(delete-window))
-    (if (equal orgrr-window-management "single-window")
-	(previous-buffer))))
+    (orgrr-close-buffer)))
   
-
 (defun orgrr-backlinks-first-and-second-order ()
   "Gets backlinks first and second order."
   (let ((filename (if (equal major-mode 'dired-mode)
