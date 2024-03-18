@@ -514,43 +514,47 @@
   "Opens the next zettel."
   (interactive)
   (orgrr-read-current-zettel)
-  (orgrr-prepare-zettel-selection-list)
-  (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
-  (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
-  (with-temp-buffer
-    (dolist (item orgrr-selection-list)
-      (if (string-match "^\\[\\(.*?\\)\\]" item)
-	  (progn
-	    (setq item (match-string 1 item))
-	    (insert (concat item "\n")))))
-	(goto-char (point-min))
-	(while (not (string-equal (buffer-substring-no-properties (line-beginning-position) (line-end-position)) current-zettel))
-	  (forward-line))
-	(forward-line)
-	(let* ((matched-zettel (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
-	       (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
-	  (orgrr-open-file matched-zettel-filename))))
+  (when current-zettel
+    (orgrr-prepare-zettel-selection-list)
+    (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
+    (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
+    (with-temp-buffer
+      (dolist (item orgrr-selection-list)
+	(if (string-match "^\\[\\(.*?\\)\\]" item)
+	    (progn
+	      (setq item (match-string 1 item))
+	      (insert (concat item "\n")))))
+      (goto-char (point-min))
+      (while (not (string-equal (buffer-substring-no-properties (line-beginning-position) (line-end-position)) current-zettel))
+	(forward-line))
+      (forward-line)
+      (let* ((matched-zettel (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+	     (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
+	(orgrr-open-file matched-zettel-filename))))
+   (message "This note no value for zettel, so there is no next zettel!"))
 
 (defun orgrr-open-previous-zettel ()
   "Opens the previous zettel."
   (interactive)
   (orgrr-read-current-zettel)
-  (orgrr-prepare-zettel-selection-list)
-  (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
-  (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
-  (with-temp-buffer
-    (dolist (item orgrr-selection-list)
-      (if (string-match "^\\[\\(.*?\\)\\]" item)
-	  (progn
-	    (setq item (match-string 1 item))
-	    (insert (concat item "\n")))))
-	(goto-char (point-min))
-	(while (not (string-equal (buffer-substring-no-properties (line-beginning-position) (line-end-position)) current-zettel))
-	  (forward-line))
+  (when current-zettel
+    (orgrr-prepare-zettel-selection-list)
+    (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
+    (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
+    (with-temp-buffer
+      (dolist (item orgrr-selection-list)
+	(if (string-match "^\\[\\(.*?\\)\\]" item)
+	    (progn
+	      (setq item (match-string 1 item))
+	      (insert (concat item "\n")))))
+      (goto-char (point-min))
+      (while (not (string-equal (buffer-substring-no-properties (line-beginning-position) (line-end-position)) current-zettel))
+	(forward-line))
 	(previous-line)
 	(let* ((matched-zettel (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
 	       (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
 	  (orgrr-open-file matched-zettel-filename))))
+     (message "This note no value for zettel, so there is no previous zettel!"))
 
 (defun orgrr-find ()
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
