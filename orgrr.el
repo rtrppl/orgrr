@@ -275,7 +275,7 @@
       (setq filename (gethash selection orgrr-title-filename))
       (orgrr-open-file filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s\/]" "_" selection))))
+         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
       (orgrr-open-file (concat filename ".org")))
     (insert (concat "#+title: " selection "\n")))
 (clrhash orgrr-title-filename)
@@ -561,7 +561,7 @@
       (setq filename (gethash selection orgrr-title-filename))
       (orgrr-open-file filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s\/]" "_" selection))))
+         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
       (orgrr-open-file (concat filename ".org")))
     (insert (concat "#+title: " selection "\n")))
 (clrhash orgrr-title-filename)
@@ -585,7 +585,7 @@
 	  (kill-region (region-beginning) (region-end)))
       (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"':;\\\s\/]" "_" selection))))
+         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
       (if (on-macos-p)
 	  (setq filename (ucs-normalize-HFS-NFD-string filename)))
       (if (region-active-p)
@@ -613,7 +613,7 @@
 (clrhash orgrr-filename-tags))
 
 (defun orgrr-rename ()
-  "Rename current file and change all backlinks. Does not work across directories."
+  "Rename current file. Does not work across directories."
   (interactive)
   (let ((old-filename (if (equal major-mode 'dired-mode)
                         default-directory
@@ -1059,7 +1059,7 @@ A use case could be to add snippets to a writing project, which is located in a 
  (beginning-of-buffer))
 
 (defun orgrr-adjust-backlinks-in-current-container (filename)
-  "This is a helper function for orgrr-move-note and will adjust all links in notes in the previous/old container referring to the moving note to its new location.
+  "This is a helper function for orgrr-move-note and will adjust all links in notes in the previous/old container referring to the moving note to its new location. It does not account for changes of the filename itself!
 
 This one of the very few functions where orgrr is directly changing your data (to fix the links). Be aware of this, but don't be scared."
   (save-some-buffers t)  ;; necessary, as we are working directly with the files 
@@ -1081,7 +1081,7 @@ This one of the very few functions where orgrr is directly changing your data (t
       (orgrr-fix-all-links-buffer)))))
 
 (defun orgrr-fix-all-links-container ()
-   "This function can be used to fix all links in a container. This is useful, if you move a whole container/directory to a new location. Make sure to be in the correct container, when running this function."
+   "This function can be used to fix all links in a container. This is useful if you move a whole container/directory to a new location. Make sure to be in the correct container, when running this function."
   (interactive)
   (if (yes-or-no-p (format "Are you sure you want to fix all links in this container? "))
       (progn
