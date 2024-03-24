@@ -185,14 +185,14 @@
 		    (goto-char (point-min))
 		    (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
 		      (puthash (match-string 1) filename orgrr-title-filename)))))
-;; The following checks if this is a #+zettel line and if so, adds the zettel-no to orgrr-zettel-filename.
+;; The following checks if this is a #+zettel line and if so, adds the zettel-no to orgrr-zettel-filename and zettelrank to orgrr-filename-zettelrank + orgrr-zettelrank-filename.
 	    (if (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
 		(progn
 		 (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
 		    (filename (car line))
-		    (zettel (car (cdr (cdr line)))))
-	       (puthash zettel filename orgrr-zettel-filename)
-	       (puthash (concat "\\" filename) zettel orgrr-filename-zettel))))
+		    (zettel (car (cdr (cdr line)))))   
+		   (puthash zettel filename orgrr-zettel-filename)
+		   (puthash (concat "\\" filename) zettel orgrr-filename-zettel))))
 ;; The following checks if the line contains tags and if so copies the tags to orgrr-tags-filename.
 	     (if (string-match "\\(#\\+roam_tags:\\|#+ROAM_TAGS:\\)\\s-*\\(.+\\)" current-entry)
 	     (progn
@@ -506,7 +506,7 @@
       (forward-line 1))
   (split-string (buffer-string) "\n")))
 
-(defun orgrr-open-next-zettel ()
+(defun orgrr-open-next-zettel-old ()
   "Opens the next zettel."
   (interactive)
   (orgrr-read-current-zettel)
@@ -529,6 +529,59 @@
 	(orgrr-open-file matched-zettel-filename))))
   (when (not current-zettel)
    (message "This note no value for zettel, so there is no next zettel!")))
+
+(defun orgrr-open-next-zettel ()
+  "Opens the next zettel."
+  (interactive)
+  (orgrr-read-current-zettel)
+  (when current-zettel
+    (orgrr-prepare-zettelrank)
+    (let* ((current-zettel-rank (gethash current-zettel orgrr-zettel-zettelrank))
+	   (next-rank (+ (string-to-number current-zettel-rank) 1))
+           (matched-zettel (gethash (number-to-string next-rank) orgrr-zettelrank-zettel))
+	   (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
+      	(orgrr-open-file matched-zettel-filename)))
+  (when (not current-zettel)
+   (message "This note no value for zettel, so there is no next zettel!")))
+
+
+(defun orgrr-prepare-zettelrank-old ()
+  "Prepares a hashtable that contains the rank of all zettel."
+  (setq zettelrank 0)
+  (orgrr-prepare-zettel-selection-list)
+  (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
+  (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
+  (setq orgrr-zettelrank-zettel (make-hash-table :test 'equal))
+  (setq orgrr-zettel-zettelrank (make-hash-table :test 'equal))
+(dolist (zettel orgrr-selection-list)
+  (if (string-match "^\\[\\(.*?\\)\\]" zettel)
+    (setq zettel (match-string 1 zettel)))
+  (setq zettelrank (+ zettelrank 1))   
+  (puthash (number-to-string zettelrank) zettel orgrr-zettelrank-zettel)
+  (puthash zettel (number-to-string zettelrank) orgrr-zettel-zettelrank)))
+
+(defun orgrr-prepare-zettelrank ()
+  "Prepares a hashtable that contains the rank of all zettel."
+  (setq zettelrank 0)
+  (orgrr-get-meta)
+  (setq orgrr-selection-list (hash-table-values orgrr-filename-zettel))
+;  (orgrr-prepare-zettel-selection-list)
+  (setq orgrr-selection-list (sort orgrr-selection-list 'dictionary-lessp))
+;  (setq orgrr-selection-list (orgrr-improve-sorting orgrr-selection-list))
+  (setq orgrr-zettelrank-zettel (make-hash-table :test 'equal))
+  (setq orgrr-zettel-zettelrank (make-hash-table :test 'equal))
+  (dolist (zettel orgrr-selection-list)
+    (setq zettelrank (+ zettelrank 1))   
+    (puthash (number-to-string zettelrank) zettel orgrr-zettelrank-zettel)
+    (puthash zettel (number-to-string zettelrank) orgrr-zettel-zettelrank)))
+
+
+
+(defun orgrr-return-fullzettel (zettel)
+  "Returns the fullname of a zettel (as in orgrr-selection-list)."
+  (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename))
+	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
+    (setq zettel (concat "\[" zettel "\]\s" matched-zettel-title))))
 
 (defun orgrr-open-previous-zettel ()
   "Opens the previous zettel."
