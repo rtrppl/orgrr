@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.8
+;; Version: 0.8.9
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,8 +33,8 @@
 ;;
 ;;; News
 ;;
-;; 0.8.8
-;; - code optimization
+;; 0.8.9
+;; - more code optimization
 ;;
 ;;; Code:
 
@@ -527,7 +527,8 @@
       (let* ((matched-zettel (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
 	     (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
 	(orgrr-open-file matched-zettel-filename))))
-   (message "This note no value for zettel, so there is no next zettel!"))
+  (when (not current-zettel)
+   (message "This note no value for zettel, so there is no next zettel!")))
 
 (defun orgrr-open-previous-zettel ()
   "Opens the previous zettel."
@@ -550,7 +551,8 @@
 	(let* ((matched-zettel (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
 	       (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
 	  (orgrr-open-file matched-zettel-filename))))
-     (message "This note no value for zettel, so there is no previous zettel!"))
+  (when (not current-zettel)
+     (message "This note no value for zettel, so there is no previous zettel!")))
 
 (defun orgrr-find ()
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
