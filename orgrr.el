@@ -951,17 +951,17 @@ A use case could be to add snippets to a writing project, which is located in a 
 
 (defun orgrr-check-for-container-file ()
  "Creates a container file in ~/.orgrr-container-list in case one does not yet exist."
- (if (not (file-exists-p "~/.orgrr-container-list"))
-      (progn
-	(puthash "main" org-directory orgrr-name-container)
-	(with-temp-buffer
+ (when (not (file-exists-p "~/.orgrr-container-list"))
+   (puthash "main" org-directory orgrr-name-container)
+   (with-temp-buffer
 	  (let ((json-data (json-encode orgrr-name-container)))
 	    (insert json-data)
-	    (write-file "~/.orgrr-container-list"))))))
+	    (write-file "~/.orgrr-container-list")))))
 
 (defun orgrr-get-list-of-containers ()
  "Return orgrr-name-container, a hashtable that includes a list of names and locations of all containers."
  (setq orgrr-name-container (make-hash-table :test 'equal))
+ (orgrr-check-for-container-file)
  (with-temp-buffer
    (insert-file-contents "~/.orgrr-container-list")
    (if (fboundp 'json-parse-buffer)
@@ -970,7 +970,6 @@ A use case could be to add snippets to a writing project, which is located in a 
 (defun orgrr-create-container ()
   "Create or add a directory as a container and switch to that container."
   (interactive)
-  (orgrr-check-for-container-file)
   (orgrr-get-list-of-containers)
   (let* ((new-container (read-directory-name "Enter a directory name: ")))
     (if (yes-or-no-p (format "Are you sure you want to create the directory %s as a container? " new-container))
@@ -990,18 +989,7 @@ A use case could be to add snippets to a writing project, which is located in a 
 (defun orgrr-remove-container ()
   "Allow to remove a container for the list of containers."
   (interactive)
-  (setq orgrr-name-container (make-hash-table :test 'equal))
-  (if (not (file-exists-p "~/.orgrr-container-list"))
-      (progn
-	(puthash "main" org-directory orgrr-name-container)
-	(with-temp-buffer
-	  (setq json-data (json-encode orgrr-name-container))
-	  (insert json-data)
-	  (write-file "~/.orgrr-container-list"))))
-  (with-temp-buffer
-    (insert-file-contents "~/.orgrr-container-list")
-    (if (fboundp 'json-parse-buffer)
-	(setq orgrr-name-container (json-parse-buffer))))
+  (orgrr-get-list-of-containers)
   (setq containers (hash-table-keys orgrr-name-container))
   (setq selection (completing-read "Which container should be removed? " containers))
   (if (not (member selection containers))
