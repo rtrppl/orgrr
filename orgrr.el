@@ -503,7 +503,7 @@
     (setq zettel (concat "\[" zettel "\]\t\[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]"))))
 
 (defun orgrr-return-fullzettel-linked-head (zettel)
-  "A special format version of orgrr-return-fullzettel-linked."
+  "A version of orgrr-return-fullzettel-linked in a special format."
   (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename))
 	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
     (setq zettel (concat "*\[" zettel "\]*\t\[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]"))))
@@ -515,8 +515,8 @@
   (when current-zettel
     (orgrr-prepare-zettelrank)
     (let* ((current-zettel-rank (gethash current-zettel orgrr-zettel-zettelrank))
-	   (next-rank (- (string-to-number current-zettel-rank) 1))
-           (matched-zettel (gethash (number-to-string next-rank) orgrr-zettelrank-zettel))
+	   (previous-rank (- (string-to-number current-zettel-rank) 1))
+           (matched-zettel (gethash (number-to-string previous-rank) orgrr-zettelrank-zettel))
 	   (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
       	(orgrr-open-file matched-zettel-filename)))
   (when (not current-zettel)
