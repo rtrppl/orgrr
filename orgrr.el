@@ -1,10 +1,10 @@
 ;; orgrr.el --- org-roam-replica or org-roam-ripgrep -*- lexical-binding: t -*-
 
-;; Copyright (C) 2023 Free Software Foundation, Inc.
+;; Copyright (C) 2024 Free Software Foundation, Inc.
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.10
+;; Version: 0.8.11
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,8 +33,8 @@
 ;;
 ;;; News
 ;;
-;; 0.8.10
-;; - improving performance for zettel-related functions
+;; 0.8.11
+;; - orgrr-info now shows number of org-files considered
 ;;
 ;;; Code:
 
@@ -789,8 +789,9 @@ A use case could be to add snippets to a writing project, which is located in a 
  (let ((result (benchmark-run-compiled 1
                  (progn
                    (orgrr-get-meta)
-                   (setq titles (hash-table-keys orgrr-title-filename))))))
-   (message "Orgrr considers %d titles in this container (this includes titles and alias). Collecting all titles took %s seconds to complete." (length titles) (format "%.5f" (car result)))))
+                   (setq titles (hash-table-keys orgrr-title-filename)))))
+       (number-of-files (shell-command-to-string (concat "find " org-directory "  -type f -name \"*.org\" | wc -l"))))
+   (message "Orgrr considers %d titles and alias in %s org-files in this container. Collecting all titles took %s seconds to complete." (length titles) (s-trim number-of-files) (format "%.5f" (car result)))))
     
 (defun orgrr-show-related-notes ()
   "Show all related notes in `org-directory' to the current org-file. Related means here notes linking to this note and the notes that link to them as well as notes linked by the current note and the links from these notes. It is assumed that the more times a note in environment is mentioned, the more important it is. Notes of higher importance are listed at the top. Parents and grandparents as well as children and grandchildren."
