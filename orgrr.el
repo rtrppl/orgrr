@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.11
+;; Version: 0.8.12
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -32,6 +32,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.8.12
+;; - Added orgrr-insert-project, which allows to qickly link to an orgrr-project.
 ;;
 ;; 0.8.11
 ;; - orgrr-info now shows number of org-files considered
@@ -540,7 +543,7 @@
 (clrhash orgrr-filename-tags))
 
 (defun orgrr-insert ()
-  "Links to org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
+  "Insert links to an org-file in `org-directory' via mini-buffer completion. If the selected title does not exist, a new note is created."
   (interactive)
   (setq path-of-current-note
       (if (buffer-file-name)
@@ -648,6 +651,21 @@
          (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org")))
 	 (with-current-buffer (orgrr-open-file filename)
 	 (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n"))))
+(clrhash orgrr-counter-filename)
+(clrhash orgrr-filename-title)
+(clrhash orgrr-short_filename-filename)
+(clrhash orgrr-project_filename-title))
+
+(defun orgrr-insert-project ()
+  "Insert link to an existing project."
+  (interactive)
+  (orgrr-pick-project)
+  (setq titles (hash-table-keys orgrr-title-filename))
+  (if (member selection titles)
+    (progn
+      (setq filename (gethash selection orgrr-title-filename))
+      (setq filename (file-relative-name filename path-of-current-note))
+      (insert (concat "\[\[file:" filename "\]\[" selection "\]\]"))))
 (clrhash orgrr-counter-filename)
 (clrhash orgrr-filename-title)
 (clrhash orgrr-short_filename-filename)
