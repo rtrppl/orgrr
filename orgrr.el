@@ -45,6 +45,7 @@
 ;;; Code:
 
 (require 'ucs-normalize)
+(require 'org)
 
 (defvar orgrr-window-management "single-window")
 
