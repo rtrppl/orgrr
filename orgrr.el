@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.12
+;; Version: 0.8.13
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,6 +33,9 @@
 ;;
 ;;; News
 ;;
+;; 0.8.13 
+;; - Optimizations for straight.el; change of orgrr-window-management default
+;;
 ;; 0.8.12
 ;; - Added orgrr-insert-project, which allows to qickly link to an orgrr-project.
 ;;
@@ -41,7 +44,9 @@
 ;;
 ;;; Code:
 
-(defvar orgrr-window-management "multi-window")
+(require 'ucs-normalize)
+
+(defvar orgrr-window-management "single-window")
 
 (defun orgrr-open-file (filename)
   "A wrapper to open FILENAME either with find-file or find-file-other-window."
@@ -75,12 +80,11 @@
   (interactive)
   (if (equal orgrr-window-management "multi-window")
       (progn
-	(setq old-org-link-frame-setup org-link-frame-setup)
 	(setq orgrr-window-management "single-window")
 	(setq org-link-frame-setup '((file . find-file))))
     (progn
       (setq orgrr-window-management "multi-window")
-      (setq org-link-frame-setup old-org-link-frame-setup))))
+      (setq org-link-frame-setup '((file . find-file-other-window))))))
 
 (defun on-macos-p ()
   "Check if Emacs is running on macOS. This became necessary due to some normalization issues with filenames that contain non-ascii characters and require NCD-formating."
@@ -93,16 +97,15 @@
   (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
       (progn
 	(orgrr-get-meta)
-	(let ((filename (if (equal major-mode 'dired-mode)
+	(let* ((filename (if (equal major-mode 'dired-mode)
                             default-directory
-			  (buffer-file-name))))
-	  (pcase (org-collect-keywords '("TITLE"))
-	    (`(("TITLE" . ,val))
-             (setq title (car val))))
-	  (setq backlink-buffer (concat "backlinks for *" title "*"))
-	  (setq backlinks 0)
-	  (setq orgrr-counter-quote (make-hash-table :test 'equal))
-	  (setq orgrr-counter-filename (make-hash-table :test 'equal))
+			  (buffer-file-name)))
+	       (title (pcase (org-collect-keywords '("TITLE"))
+			(`(("TITLE" . ,val)) (car val))))
+	       (backlink-buffer (concat "backlinks for *" title "*"))
+	       (backlinks 0)
+	       (orgrr-counter-quote (make-hash-table :test 'equal))
+	       (orgrr-counter-filename (make-hash-table :test 'equal)))
 	  (with-temp-buffer
 	    (if (on-macos-p)
 	    (insert (shell-command-to-string (concat "rg -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' " org-directory " -n --sort accessed -g \"*.org\"")))
