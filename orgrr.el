@@ -146,10 +146,7 @@
 	    (setq default-directory org-directory)
 	    (beginning-of-buffer)
 	    (org-next-visible-heading 2)
-	    (deactivate-mark)))
-	(clrhash orgrr-counter-quote)
-	(clrhash orgrr-counter-filename)
-	(clrhash orgrr-filename-title))
+	    (deactivate-mark))))
     (orgrr-close-buffer)))
 
 (defun orgrr-get-meta ()
@@ -280,11 +277,7 @@
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
          (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
       (orgrr-open-file (concat filename ".org")))
-    (insert (concat "#+title: " selection "\n")))
-(clrhash orgrr-title-filename)
-(clrhash orgrr-filename-title)
-(clrhash orgrr-short_filename-filename)
-(clrhash orgrr-filename-tags))
+    (insert (concat "#+title: " selection "\n"))))
 
 (defun orgrr-no-selection-zettel ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Excludes zettel. "
@@ -321,11 +314,7 @@
   (if (member selection (hash-table-keys orgrr-title-filename))
     (progn
       (setq filename (gethash selection orgrr-title-filename))
-      (orgrr-open-file filename)))
-(clrhash orgrr-title-filename)
-(clrhash orgrr-filename-title)
-(clrhash orgrr-short_filename-filename)
-(clrhash orgrr-filename-tags))
+      (orgrr-open-file filename))))
 
 (defun orgrr-add-zettel ()
   "Drill down to allow the user to find the correct spot for a new zettel and then insert a line with #+zettel: zettel-value after the last line starting with #+ (from the beginning of the file)."
@@ -536,11 +525,7 @@
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
          (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
       (orgrr-open-file (concat filename ".org")))
-    (insert (concat "#+title: " selection "\n")))
-(clrhash orgrr-title-filename)
-(clrhash orgrr-filename-title)
-(clrhash orgrr-short_filename-filename)
-(clrhash orgrr-filename-tags))
+    (insert (concat "#+title: " selection "\n"))))
 
 (defun orgrr-insert ()
   "Insert links to an org-file in `org-directory' via mini-buffer completion. If the selected title does not exist, a new note is created."
@@ -565,11 +550,7 @@
 	  (kill-region (region-beginning) (region-end)))
       (insert (concat "\[\[file:" (file-relative-name filename path-of-current-note) ".org" "\]\[" selection "\]\]"))
       (orgrr-open-file (concat filename ".org"))
-      (insert (concat "#+title: " selection "\n"))))
-(clrhash orgrr-title-filename)
-(clrhash orgrr-filename-title)
-(clrhash orgrr-short_filename-filename)
-(clrhash orgrr-filename-tags))
+      (insert (concat "#+title: " selection "\n")))))
 
 (defun orgrr-random-note ()
   "Opens random org-file in `org-directory'."
@@ -579,11 +560,7 @@
 	 (filenames-for-titles (hash-table-values orgrr-title-filename))
 	 (random-title (elt titles (random (length titles))))
          (filename (gethash random-title orgrr-title-filename)))
-    (orgrr-open-file filename))
-(clrhash orgrr-title-filename)
-(clrhash orgrr-filename-title)
-(clrhash orgrr-short_filename-filename)
-(clrhash orgrr-filename-tags))
+    (orgrr-open-file filename)))
 
 (defun orgrr-rename ()
   "Rename current file. Does not work across directories."
@@ -650,26 +627,22 @@
     (let* ((time (format-time-string "%Y%m%d%H%M%S")))
          (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org")))
 	 (with-current-buffer (orgrr-open-file filename)
-	 (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n"))))
-(clrhash orgrr-counter-filename)
-(clrhash orgrr-filename-title)
-(clrhash orgrr-short_filename-filename)
-(clrhash orgrr-project_filename-title))
+	 (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n")))))
 
 (defun orgrr-insert-project ()
   "Insert link to an existing project."
   (interactive)
   (orgrr-pick-project)
+  (setq path-of-current-note
+      (if (buffer-file-name)
+          (file-name-directory (buffer-file-name))
+        default-directory))
   (setq titles (hash-table-keys orgrr-title-filename))
   (if (member selection titles)
     (progn
       (setq filename (gethash selection orgrr-title-filename))
       (setq filename (file-relative-name filename path-of-current-note))
-      (insert (concat "\[\[file:" filename "\]\[" selection "\]\]"))))
-(clrhash orgrr-counter-filename)
-(clrhash orgrr-filename-title)
-(clrhash orgrr-short_filename-filename)
-(clrhash orgrr-project_filename-title))
+      (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))))
 
 (defun orgrr-collect-project-snippet ()
   "Prepare snippet for `orgrr-add-to-project'."
@@ -723,10 +696,7 @@
   (setq footnote-line (string-to-number (car (cdr (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))))
   (goto-char (point-max))
    (insert (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")"))
-   (save-buffer))
-(clrhash orgrr-filename-title)
-(clrhash orgrr-short_filename-filename)
-(clrhash orgrr-project_filename-title))
+   (save-buffer)))
 
 (defun orgrr-pick-project ()
   "Provides a list of all projects to add the new snippet, with the option to create a new one."
@@ -839,12 +809,7 @@ A use case could be to add snippets to a writing project, which is located in a 
 	  (select-window win)
 	  (beginning-of-buffer)
 	  (org-next-visible-heading 1)
-	  (deactivate-mark)))
-	(clrhash orgrr-title-filename)
-	(clrhash orgrr-filename-title)
-	(clrhash orgrr-filename-tags)
-	(clrhash orgrr-short_filename-filename)
-	(clrhash orgrr-filename-mentions))
+	  (deactivate-mark))))
     (orgrr-close-buffer)))
   
 (defun orgrr-backlinks-first-and-second-order ()
@@ -965,8 +930,7 @@ A use case could be to add snippets to a writing project, which is located in a 
       (setq selection (completing-read "Select: " containers)))
     (if (member selection containers)
 	(setq org-directory (gethash selection orgrr-name-container))
-      (message "Container does not exist.")))
-  (clrhash orgrr-name-container))
+      (message "Container does not exist."))))
 
 (defun orgrr-check-for-container-file ()
  "Creates a container file in ~/.orgrr-container-list in case one does not yet exist."
@@ -1002,8 +966,7 @@ A use case could be to add snippets to a writing project, which is located in a 
 	       (insert json-data)
 	       (write-file "~/.orgrr-container-list"))))
 	  (setq org-directory new-container))
-    (message "%s was not created!" new-container))
-  (clrhash orgrr-name-container)))
+    (message "%s was not created!" new-container))))
 
 (defun orgrr-remove-container ()
   "Allow to remove a container for the list of containers."
@@ -1022,8 +985,7 @@ A use case could be to add snippets to a writing project, which is located in a 
 	      (setq json-data (json-encode orgrr-name-container))
 	      (insert json-data)
 	      (write-file "~/.orgrr-container-list"))
-	    (setq org-directory (gethash "main" orgrr-name-container))))))
-  (clrhash orgrr-name-container))
+	    (setq org-directory (gethash "main" orgrr-name-container)))))))
 
 (defun orgrr-fix-all-links-buffer ()
   "This runs the function orgrr-adjust-links on the current buffer."
