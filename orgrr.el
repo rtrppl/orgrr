@@ -53,7 +53,7 @@
 (defvar orgrr-filename-tags (make-hash-table :test 'equal) "Hashtable with key filename and value tags.")
 (defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable with key filename without path and value filename+path.")
 (defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with key zettel and value filename.") 
-(defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with key filename and value zettel.")  
+(defvar orgrr-filename-zettel (make-hash-table :test 'equal) "Hashtable with key filename and value zettel.")  
 
 
 (defun orgrr-open-file (filename)
