@@ -210,6 +210,7 @@
   (let* ((orgrr-selection-list ())
 	 (orgrr-selection-list-completion)
          (final-title)
+	 (selection)
 	 (titles (hash-table-keys orgrr-title-filename))
 	 (filenames-for-tags (hash-table-keys orgrr-filename-tags))
 	 (filenames-for-zettel (hash-table-keys orgrr-filename-zettel)))
