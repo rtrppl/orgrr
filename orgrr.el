@@ -207,11 +207,12 @@
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front of title and alias. New version."
   (interactive)
   (orgrr-get-meta)
-  (setq orgrr-selection-list ())
-  (setq final-title "")
-  (let* ((titles (hash-table-keys orgrr-title-filename))
-	(filenames-for-tags (hash-table-keys orgrr-filename-tags))
-	(filenames-for-zettel (hash-table-keys orgrr-filename-zettel)))
+  (let* ((orgrr-selection-list ())
+	 (orgrr-selection-list-completion)
+         (final-title)
+	 (titles (hash-table-keys orgrr-title-filename))
+	 (filenames-for-tags (hash-table-keys orgrr-filename-tags))
+	 (filenames-for-zettel (hash-table-keys orgrr-filename-zettel)))
     (dolist (title titles)
       (let* ((filename (gethash title orgrr-title-filename)))
 	(if (member (concat "\\" filename) filenames-for-tags)
@@ -511,15 +512,17 @@
 (defun orgrr-find ()
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
   (interactive)
-  (orgrr-selection)
+  (let ((selection (orgrr-selection))
+	(filename)
+	(time (format-time-string "%Y%m%d%H%M%S")))
   (if (member selection (hash-table-keys orgrr-title-filename))
     (progn
       (setq filename (gethash selection orgrr-title-filename))
       (orgrr-open-file filename))
-    (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
-      (orgrr-open-file (concat filename ".org")))
-    (insert (concat "#+title: " selection "\n"))))
+    (progn
+      (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection)))
+      (orgrr-open-file (concat filename ".org"))
+      (insert (concat "#+title: " selection "\n"))))))
 
 (defun orgrr-insert ()
   "Insert links to an org-file in `org-directory' via mini-buffer completion. If the selected title does not exist, a new note is created."
