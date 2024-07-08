@@ -171,12 +171,12 @@
       ;; The following checks if this is a #+title line and is so, adds the title + filename to orgrr-title-filename and filename + title to orgrr-filename-title.
 	(when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
 	      (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
-		   (filename (car line)))
-	      (let* ((line (split-string current-entry "^.+\\(#\\+title:\\|:#+TITLE:\\)\\s-*" t))
-		     (title (car line)))
+		   (filename (car line))
+		   (line (split-string current-entry "^.+\\(#\\+title:\\|:#+TITLE:\\)\\s-*" t))
+		   (title (car line)))
 		(puthash title filename orgrr-title-filename)
 		(puthash (concat "\\" filename) title orgrr-filename-title)
-		(puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename))))
+		(puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)))
 	;; The following checks if this is a #+roam_alias line and if so, adds all alias to orgrr-title-filename.
 	(when (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
 	  (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
@@ -238,7 +238,8 @@
 	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))  
     (if (string-match "^\(" selection)
 	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
-(print orgrr-selection-list-completion)))
+  (setq selection selection)))
+
 
 (defun orgrr-selection-zettel ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files that have a value for zettel. Prepends zettel value in front of title and alias."
@@ -525,13 +526,11 @@
   (if (member selection (hash-table-keys orgrr-title-filename))
     (progn
       (setq filename (gethash selection orgrr-title-filename))
-      (orgrr-open-file filename)
-      (print filename))
+      (orgrr-open-file filename))
     (progn
       (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection)))
       (orgrr-open-file (concat filename ".org"))
       (insert (concat "#+title: " selection "\n"))))))
-
 
 (defun orgrr-insert ()
   "Insert links to an org-file in `org-directory' via mini-buffer completion. If the selected title does not exist, a new note is created."
