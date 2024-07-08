@@ -48,6 +48,13 @@
 (require 'org)
 
 (defvar orgrr-window-management "single-window")
+(defvar orgrr-title-filename (make-hash-table :test 'equal) "Hashtable with key title and value filename.")
+(defvar orgrr-filename-title (make-hash-table :test 'equal) "Hashtable with key filename and value title.")
+(defvar orgrr-filename-tags (make-hash-table :test 'equal) "Hashtable with key filename and value tags.")
+(defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable with key filename without path and value filename+path.")
+(defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with key zettel and value filename.") 
+(defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with key filename and value zettel.")  
+
 
 (defun orgrr-open-file (filename)
   "A wrapper to open FILENAME either with find-file or find-file-other-window."
@@ -156,18 +163,11 @@
 (defun orgrr-get-meta ()
   "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all org-files and adds them to hashtables."
   (interactive)
-  (setq current-entry "")
-  (setq orgrr-title-filename (make-hash-table :test 'equal))
-  (setq orgrr-filename-title (make-hash-table :test 'equal))
-  (setq orgrr-filename-tags (make-hash-table :test 'equal))
-  (setq orgrr-short_filename-filename (make-hash-table :test 'equal))
-  (setq orgrr-zettel-filename (make-hash-table :test 'equal))
-  (setq orgrr-filename-zettel (make-hash-table :test 'equal))
   (with-temp-buffer
     (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)|(zettel:.*)\" " org-directory " -g \"*.org\"")))
     (goto-char (point-min))
     (while (not (eobp))
-      (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
+      (let ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
       ;; The following checks if this is a #+title line and is so, adds the title + filename to orgrr-title-filename and filename + title to orgrr-filename-title.
       (if (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
 	  (progn
@@ -184,12 +184,11 @@
 		  (setq line (split-string current-entry "\\(: \\|:\\)" t))
 		  (setq filename (car line))
 		  (with-temp-buffer
-		    (setq alias "")
 		    (insert current-entry)
 		    (goto-char (point-min))
 		    (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
 		      (puthash (match-string 1) filename orgrr-title-filename)))))
-;; The following checks if this is a #+zettel line and if so, adds the zettel-no to orgrr-zettel-filename and zettelrank to orgrr-filename-zettelrank + orgrr-zettelrank-filename.
+;; The following checks if this is a #+zettel line and if so, adds the zettel-no to orgrr-zettel-filename.
 	    (if (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
 		(progn
 		 (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
@@ -204,7 +203,7 @@
 		    (filename (car line))
 		    (tags (car (cdr (cdr line)))))
 	       (puthash (concat "\\" filename) tags orgrr-filename-tags))))
-(forward-line))))
+(forward-line)))))
 
 (defun orgrr-presorted-completion-table (completions)
   "Adds metadata to completion entries, so that Vertico (and others) respects the sorting of a collection for completing-read. This is based on https://emacs.stackexchange.com/questions/8115/make-completing-read-respect-sorting-order-of-a-collection, thanks @sachac@emacs.ch for the hint!"
