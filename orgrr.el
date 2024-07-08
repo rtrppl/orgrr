@@ -158,6 +158,11 @@
 (defun orgrr-get-meta ()
   "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all org-files and adds them to hashtables."
   (interactive)
+  (clrhash orgrr-filename-title)
+  (clrhash orgrr-filename-tags)
+  (clrhash orgrr-short_filename-filename) 
+  (clrhash orgrr-zettel-filename)
+  (clrhash orgrr-filename-zettel)
   (with-temp-buffer
     (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)|(zettel:.*)\" " org-directory " -g \"*.org\"")))
     (goto-char (point-min))
@@ -232,7 +237,8 @@
     (if (string-match "^\\[" selection)
 	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))  
     (if (string-match "^\(" selection)
-	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))))
+	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
+(print orgrr-selection-list-completion)))
 
 (defun orgrr-selection-zettel ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files that have a value for zettel. Prepends zettel value in front of title and alias."
@@ -514,25 +520,28 @@
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
   (interactive)
   (let ((selection (orgrr-selection))
-	(filename)
+	(filename "")
 	(time (format-time-string "%Y%m%d%H%M%S")))
   (if (member selection (hash-table-keys orgrr-title-filename))
     (progn
       (setq filename (gethash selection orgrr-title-filename))
-      (orgrr-open-file filename))
+      (orgrr-open-file filename)
+      (print filename))
     (progn
       (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection)))
       (orgrr-open-file (concat filename ".org"))
       (insert (concat "#+title: " selection "\n"))))))
 
+
 (defun orgrr-insert ()
   "Insert links to an org-file in `org-directory' via mini-buffer completion. If the selected title does not exist, a new note is created."
   (interactive)
-  (setq path-of-current-note
-      (if (buffer-file-name)
-          (file-name-directory (buffer-file-name))
-        default-directory))
-  (orgrr-selection)
+  (let ((path-of-current-note
+	 (if (buffer-file-name)
+             (file-name-directory (buffer-file-name))
+           default-directory))
+	(selection (orgrr-selection))
+	(filename))
   (if (member selection (hash-table-keys orgrr-title-filename))
     (progn
       (setq filename (gethash selection orgrr-title-filename))
@@ -548,7 +557,7 @@
 	  (kill-region (region-beginning) (region-end)))
       (insert (concat "\[\[file:" (file-relative-name filename path-of-current-note) ".org" "\]\[" selection "\]\]"))
       (orgrr-open-file (concat filename ".org"))
-      (insert (concat "#+title: " selection "\n")))))
+      (insert (concat "#+title: " selection "\n"))))))
 
 (defun orgrr-random-note ()
   "Opens random org-file in `org-directory'."
