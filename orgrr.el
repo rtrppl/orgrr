@@ -46,6 +46,7 @@
 
 (require 'ucs-normalize)
 (require 'org)
+(require 'json)
 
 (defvar orgrr-window-management "single-window")
 (defvar orgrr-title-filename (make-hash-table :test 'equal) "Hashtable with key title and value filename.")
@@ -55,6 +56,16 @@
 (defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with key zettel and value filename.") 
 (defvar orgrr-filename-zettel (make-hash-table :test 'equal) "Hashtable with key filename and value zettel.")  
 
+
+(defun orgrr-initialize-window-mode ()
+  "Sets org-link-frame-setup for single-window-mode and multi-window mode (which uses side-buffers)."
+  (interactive)
+  (when (equal orgrr-window-management "single-window")
+    (setq org-link-frame-setup '((file . find-file))))
+   (when (equal orgrr-window-management "multi-window")
+      (setq org-link-frame-setup '((file . find-file-other-window)))))
+
+(orgrr-initialize-window-mode)
 
 (defun orgrr-open-file (filename)
   "A wrapper to open FILENAME either with find-file or find-file-other-window."
@@ -159,6 +170,7 @@
   "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all org-files and adds them to hashtables."
   (interactive)
   (clrhash orgrr-filename-title)
+  (clrhash orgrr-title-filename)
   (clrhash orgrr-filename-tags)
   (clrhash orgrr-short_filename-filename) 
   (clrhash orgrr-zettel-filename)
@@ -238,19 +250,20 @@
 	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))  
     (if (string-match "^\(" selection)
 	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
-  (setq selection selection)))
+  selection)) ;; this line ensures that the value of selection is returned when this function is called
 
 
 (defun orgrr-selection-zettel ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files that have a value for zettel. Prepends zettel value in front of title and alias."
   (orgrr-prepare-zettel-selection-list)
-  (if current-zettel
+  (let ((current-zettel (orgrr-read-current-zettel)))
+    (if current-zettel
       (setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil current-zettel))
       (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
-  (if (string-match "^\\[\\(.*?\\)\\]" selection)
+    (if (string-match "^\\[\\(.*?\\)\\]" selection)
       (progn
 	(setq selection-zettel (match-string 1 selection))
-	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))))
+	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection))))))
 
 (defun orgrr-prepare-zettel-selection-list ()
 "A function preparing a list of all zettel for selection and other functions."
@@ -271,7 +284,6 @@
 (defun orgrr-find-zettel ()
   "Like orgrr-find, but only considers notes that have a value for zettel. If the selected file name does not exist, a new one is created. Starts with the current zettel ID, which allows you to search within a context."
   (interactive)
-  (orgrr-read-current-zettel)
   (orgrr-selection-zettel)
   (if (member selection (hash-table-keys orgrr-title-filename))
     (progn
@@ -361,29 +373,29 @@
   (message "This note already has a value for zettel!")))
 	 
 (defun orgrr-read-current-zettel ()
-    "Reads out #+zettel for current note."
-    (setq current-zettel nil)
-    (when (eq major-mode 'org-mode)
-      (let ((current-entry "")
-	    (buffer (buffer-substring-no-properties (point-min) (point-max))))
-	(with-temp-buffer
-	  (insert buffer)
-	  (goto-char (point-min))
-	  (while (not (eobp))
-            (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
-            (if (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
-		(progn
-		  (let* ((line (split-string current-entry "\\: " t))
-			 (zettel (car (cdr line)))
-			 (zettel (string-trim-left zettel)))
-                    (setq current-zettel zettel))))
-            (forward-line))))))
- 
+    "Returns #+zettel for current note."
+    (let ((current-zettel nil))
+      (when (eq major-mode 'org-mode)
+	(let ((current-entry "")
+	      (buffer (buffer-substring-no-properties (point-min) (point-max))))
+	  (with-temp-buffer
+	    (insert buffer)
+	    (goto-char (point-min))
+	    (while (not (eobp))
+              (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
+              (if (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
+		  (progn
+		    (let* ((line (split-string current-entry "\\: " t))
+			   (zettel (car (cdr line)))
+			   (zettel (string-trim-left zettel)))
+                      (setq current-zettel zettel))))
+            (forward-line)))))
+      current-zettel))
+    
 (defun orgrr-show-sequence ()
   "Shows a sequence of notes for any given zettel value. If run while visiting a buffer that has a value for zettel, this is taken as the starting value for zettel. Results are presented in a different buffer in accordance with orgrr-window-management."
   (interactive)
   (when (not (string-match-p "sequence for *" (buffer-name (current-buffer))))
-    (orgrr-read-current-zettel)
     (orgrr-selection-zettel)
     (orgrr-prepare-zettelrank)
     (let ((sequence-buffer (concat "sequence for *[" selection-zettel "]*")))
@@ -461,16 +473,16 @@
 (defun orgrr-open-next-zettel ()
   "Opens the next zettel."
   (interactive)
-  (orgrr-read-current-zettel)
-  (when current-zettel
-    (orgrr-prepare-zettelrank)
-    (let* ((current-zettel-rank (gethash current-zettel orgrr-zettel-zettelrank))
-	   (next-rank (+ (string-to-number current-zettel-rank) 1))
-           (matched-zettel (gethash (number-to-string next-rank) orgrr-zettelrank-zettel))
-	   (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
+  (let ((current-zettel (orgrr-read-current-zettel)))
+    (when current-zettel
+      (orgrr-prepare-zettelrank)
+      (let* ((current-zettel-rank (gethash current-zettel orgrr-zettel-zettelrank))
+	     (next-rank (+ (string-to-number current-zettel-rank) 1))
+             (matched-zettel (gethash (number-to-string next-rank) orgrr-zettelrank-zettel))
+	     (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
       	(orgrr-open-file matched-zettel-filename)))
-  (when (not current-zettel)
-   (message "This note has no value for zettel, so there is no next zettel!")))
+    (when (not current-zettel)
+   (message "This note has no value for zettel, so there is no next zettel!"))))
 
 (defun orgrr-prepare-zettelrank ()
   "Prepares a hashtable that contains the rank of all zettel."
@@ -506,16 +518,16 @@
 (defun orgrr-open-previous-zettel ()
   "Opens the previous zettel."
   (interactive)
-  (orgrr-read-current-zettel)
-  (when current-zettel
-    (orgrr-prepare-zettelrank)
-    (let* ((current-zettel-rank (gethash current-zettel orgrr-zettel-zettelrank))
-	   (previous-rank (- (string-to-number current-zettel-rank) 1))
-           (matched-zettel (gethash (number-to-string previous-rank) orgrr-zettelrank-zettel))
-	   (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
+  (let ((current-zettel (orgrr-read-current-zettel)))
+    (when current-zettel
+      (orgrr-prepare-zettelrank)
+      (let* ((current-zettel-rank (gethash current-zettel orgrr-zettel-zettelrank))
+	     (previous-rank (- (string-to-number current-zettel-rank) 1))
+             (matched-zettel (gethash (number-to-string previous-rank) orgrr-zettelrank-zettel))
+	     (matched-zettel-filename (gethash matched-zettel orgrr-zettel-filename)))
       	(orgrr-open-file matched-zettel-filename)))
-  (when (not current-zettel)
-   (message "This note has no value for zettel, so there is no next zettel!")))
+    (when (not current-zettel)
+      (message "This note has no value for zettel, so there is no next zettel!"))))
 
 (defun orgrr-find ()
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
@@ -930,7 +942,8 @@ A use case could be to add snippets to a writing project, which is located in a 
   (interactive)
   (orgrr-check-for-container-file)
   (orgrr-get-list-of-containers)
-  (let* ((containers (nreverse (hash-table-keys orgrr-name-container))))
+  (let* ((containers (nreverse (hash-table-keys orgrr-name-container)))
+	 (selection))
     (if container
 	(setq selection container)
       (setq selection (completing-read "Select: " containers)))
