@@ -614,9 +614,13 @@
 (defun orgrr-move-note ()
   "Move current note to one of the other containers."
   (interactive)
-  (setq orgrr-name-container (make-hash-table :test 'equal))
-  (if (buffer-file-name)
-      (setq filename (buffer-file-name)))
+  (let ((orgrr-name-container (make-hash-table :test 'equal))
+	(filename)
+	(containers)
+	(new-container)
+	(selection))
+    (if (buffer-file-name)
+	(setq filename (buffer-file-name)))
   (with-temp-buffer
     (insert-file-contents "~/.orgrr-container-list")
     (if (fboundp 'json-parse-buffer)
@@ -638,7 +642,7 @@
 	    (message "Note has been moved and links have been adjusted!"))
 	  (message "Note not moved!")))
     (message "Container does not exist."))
-  (clrhash orgrr-name-container))
+  (clrhash orgrr-name-container)))
 
 (defun orgrr-open-project ()
   "Find existing project or create a new one."
