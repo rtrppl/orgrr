@@ -255,44 +255,49 @@
 
 (defun orgrr-selection-zettel ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files that have a value for zettel. Prepends zettel value in front of title and alias."
-  (orgrr-prepare-zettel-selection-list)
-  (let ((current-zettel (orgrr-read-current-zettel)))
+  (let ((current-zettel (orgrr-read-current-zettel))
+	(orgrr-selection-list-completion (orgrr-prepare-zettel-selection-list))
+	(selection)
+	(selection-zettel))
     (if current-zettel
       (setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil current-zettel))
       (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
     (if (string-match "^\\[\\(.*?\\)\\]" selection)
       (progn
 	(setq selection-zettel (match-string 1 selection))
-	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection))))))
+	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection))))
+    selection))
 
 (defun orgrr-prepare-zettel-selection-list ()
 "A function preparing a list of all zettel for selection and other functions."
   (orgrr-get-meta)
-  (setq orgrr-selection-list ())
-  (setq final-title "")
   (let* ((titles (hash-table-keys orgrr-title-filename))
-	(filenames-for-zettel (hash-table-keys orgrr-filename-zettel)))
+	 (filenames-for-zettel (hash-table-keys orgrr-filename-zettel))
+	 (orgrr-selection-list ())
+	 (orgrr-selection-list-completion)
+	 (final-title))
     (dolist (title titles)
       (let* ((filename (gethash title orgrr-title-filename)))
 	(if (member (concat "\\" filename) filenames-for-zettel)
 	    (progn 
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\s" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
-	      (setq orgrr-selection-list (reverse orgrr-selection-list))
-	      (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))))
+    (setq orgrr-selection-list (reverse orgrr-selection-list))
+    (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
+    orgrr-selection-list-completion))
 	  
 (defun orgrr-find-zettel ()
   "Like orgrr-find, but only considers notes that have a value for zettel. If the selected file name does not exist, a new one is created. Starts with the current zettel ID, which allows you to search within a context."
   (interactive)
-  (orgrr-selection-zettel)
-  (if (member selection (hash-table-keys orgrr-title-filename))
-    (progn
+  (let ((selection (orgrr-selection-zettel)))
+    (when (member selection (hash-table-keys orgrr-title-filename))
       (setq filename (gethash selection orgrr-title-filename))
       (orgrr-open-file filename))
-    (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
-      (orgrr-open-file (concat filename ".org")))
-    (insert (concat "#+title: " selection "\n"))))
+    (when (not (member selection (hash-table-keys orgrr-title-filename)))
+      (let* ((time (format-time-string "%Y%m%d%H%M%S"))
+	     (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
+	(orgrr-open-file (concat filename ".org")))
+      (insert (concat "#+title: " selection "\n")))))
 
 (defun orgrr-no-selection-zettel ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Excludes zettel. "
