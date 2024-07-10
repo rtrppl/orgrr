@@ -55,7 +55,9 @@
 (defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable with key filename without path and value filename+path.")
 (defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with key zettel and value filename.") 
 (defvar orgrr-filename-zettel (make-hash-table :test 'equal) "Hashtable with key filename and value zettel.")  
-
+(defvar orgrr-zettelrank-zettel (make-hash-table :test 'equal) "Hashtable with the key rank of a zettel and the value zettel.") ;; rank means how a zettel value of a note relates to other notes
+(defvar orgrr-zettel-zettelrank (make-hash-table :test 'equal) "Hashtable with the key zettel and the value rank of a zettel.")
+  
 
 (defun orgrr-initialize-window-mode ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode (which uses side-buffers)."
@@ -403,7 +405,6 @@
   "Shows a sequence of notes for any given zettel value. If run while visiting a buffer that has a value for zettel, this is taken as the starting value for zettel. Results are presented in a different buffer in accordance with orgrr-window-management."
   (interactive)
   (when (not (string-match-p "sequence for *" (buffer-name (current-buffer))))
-    (orgrr-get-meta)
     (orgrr-prepare-zettelrank)
     (let* ((zettel-title (orgrr-selection-zettel))
 	   (zettel-filename (gethash zettel-title orgrr-title-filename))
@@ -496,16 +497,16 @@
 
 (defun orgrr-prepare-zettelrank ()
   "Prepares a hashtable that contains the rank of all zettel."
-  (setq zettelrank 0)
   (orgrr-get-meta)
-  (setq orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
-  (setq orgrr-zettel-list (sort orgrr-zettel-list 'dictionary-lessp))
-  (setq orgrr-zettelrank-zettel (make-hash-table :test 'equal))
-  (setq orgrr-zettel-zettelrank (make-hash-table :test 'equal))
-  (dolist (zettel orgrr-zettel-list)
-    (setq zettelrank (+ zettelrank 1))   
-    (puthash (number-to-string zettelrank) zettel orgrr-zettelrank-zettel)
-    (puthash zettel (number-to-string zettelrank) orgrr-zettel-zettelrank)))
+  (let* ((zettelrank 0)	 
+	 (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
+	 (orgrr-zettel-list (sort orgrr-zettel-list 'dictionary-lessp)))
+    (clrhash orgrr-zettelrank-zettel)
+    (clrhash orgrr-zettel-zettelrank)
+    (dolist (zettel orgrr-zettel-list)
+      (setq zettelrank (+ zettelrank 1))   
+      (puthash (number-to-string zettelrank) zettel orgrr-zettelrank-zettel)
+      (puthash zettel (number-to-string zettelrank) orgrr-zettel-zettelrank))))
 
 (defun orgrr-return-fullzettel (zettel)
   "Returns the full name of a zettel (as in orgrr-zettel-list)."
