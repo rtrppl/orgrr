@@ -542,14 +542,13 @@
   (let ((selection (orgrr-selection))
 	(filename "")
 	(time (format-time-string "%Y%m%d%H%M%S")))
-  (if (member selection (hash-table-keys orgrr-title-filename))
-    (progn
-      (setq filename (gethash selection orgrr-title-filename))
-      (orgrr-open-file filename))
-    (progn
-      (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection)))
-      (orgrr-open-file (concat filename ".org"))
-      (insert (concat "#+title: " selection "\n"))))))
+  (when (member selection (hash-table-keys orgrr-title-filename))
+    (setq filename (gethash selection orgrr-title-filename))
+    (orgrr-open-file filename))
+  (when (not (member selection (hash-table-keys orgrr-title-filename)))
+    (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection)))
+    (orgrr-open-file (concat filename ".org"))
+    (insert (concat "#+title: " selection "\n")))))
 
 (defun orgrr-insert ()
   "Insert links to an org-file in `org-directory' via mini-buffer completion. If the selected title does not exist, a new note is created."
