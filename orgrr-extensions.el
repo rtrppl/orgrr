@@ -7,6 +7,8 @@
 
 ;; change the following to your liking
 
+(require 'orgrr)
+
 (defvar orgrr-save-website-tags "website orgrr-project")
 
 (cl-defun orgrr-save-website ()
