@@ -746,6 +746,10 @@
 
 (defun orgrr-format-project-snippet (snippet)
   "Formats an orgrr-project SNIPPET."
+  (let ((footnote-link)
+	(footnote-description)
+	(footnote)
+	(project-snippet))
   (with-temp-buffer
     (insert snippet)
     (goto-char (point-min))
@@ -761,7 +765,7 @@
   (setq footnote (car (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))
   (setq footnote (file-relative-name footnote default-directory))
   (setq footnote-line (string-to-number (car (cdr (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))))
-  (setq snippet (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")")))
+  (setq snippet (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")"))))
 
 (defun orgrr-get-all-filenames ()
   "Collects the name all of org-files across all containers and adds them to the hashtable orgrr-short_filename-filename. This is needed to correct the links of a snippet created in one container for use in another via orgrr-add-to-project. 
