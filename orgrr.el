@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.8.13
+;; Version: 0.9
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -33,7 +33,7 @@
 ;;
 ;;; News
 ;;
-;; 0.8.13 
+;; 0.9 
 ;; - Optimizations for straight.el; change of orgrr-window-management default
 ;;
 ;; 0.8.12
@@ -544,7 +544,7 @@
   "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
   (interactive)
   (let ((selection (orgrr-selection))
-	(filename "")
+	(filename)
 	(time (format-time-string "%Y%m%d%H%M%S")))
   (when (member selection (hash-table-keys orgrr-title-filename))
     (setq filename (gethash selection orgrr-title-filename))
@@ -650,8 +650,9 @@
 (defun orgrr-open-project ()
   "Find existing project or create a new one."
   (interactive)
-  (orgrr-pick-project)
-  (setq titles (hash-table-keys orgrr-title-filename))
+  (let ((selection (orgrr-pick-project))
+	(titles (hash-table-keys orgrr-title-filename))
+	(filename))
   (if (member selection titles)
     (progn
       (setq filename (gethash selection orgrr-title-filename))
@@ -659,22 +660,23 @@
     (let* ((time (format-time-string "%Y%m%d%H%M%S")))
          (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org")))
 	 (with-current-buffer (orgrr-open-file filename)
-	 (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n")))))
+	 (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n"))))))
 
 (defun orgrr-insert-project ()
   "Insert link to an existing project."
   (interactive)
-  (orgrr-pick-project)
-  (setq path-of-current-note
+  (let ((selection (orgrr-pick-project))
+	(path-of-current-note
       (if (buffer-file-name)
           (file-name-directory (buffer-file-name))
         default-directory))
-  (setq titles (hash-table-keys orgrr-title-filename))
+	(titles (hash-table-keys orgrr-title-filename))
+	(filename))
   (if (member selection titles)
     (progn
       (setq filename (gethash selection orgrr-title-filename))
       (setq filename (file-relative-name filename path-of-current-note))
-      (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))))
+      (insert (concat "\[\[file:" filename "\]\[" selection "\]\]"))))))
 
 (defun orgrr-collect-project-snippet ()
   "Prepare snippet for `orgrr-add-to-project'."
@@ -699,7 +701,9 @@
         (end (save-excursion
                (org-end-of-subtree)
                (point))))
-    (setq snippet (buffer-substring-no-properties start end))))))
+	(setq snippet (buffer-substring-no-properties start end))))))
+
+;;open TODO orgrr-add-to-project
 
 (defun orgrr-add-to-project ()
   "Add the current line at point (including when in orgrr-backlinks buffer) to an existing project."
@@ -707,7 +711,7 @@
   (orgrr-get-meta)
   (orgrr-collect-project-snippet)
   (orgrr-format-project-snippet snippet)
-  (orgrr-pick-project)
+  (let ((selection (orgrr-pick-project)))
   (orgrr-get-all-filenames)
   (setq titles (hash-table-keys orgrr-title-filename))
   (if (member selection titles)
@@ -728,13 +732,14 @@
   (setq footnote-line (string-to-number (car (cdr (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))))
   (goto-char (point-max))
    (insert (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")"))
-   (save-buffer)))
+   (save-buffer))))
 
 (defun orgrr-pick-project ()
   "Provides a list of all projects to add the new snippet, with the option to create a new one."
   (orgrr-get-meta)
-  (setq orgrr-selection-list ())
-  (setq orgrr-project_filename-title (make-hash-table :test 'equal))
+  (let* ((orgrr-selection-list ())
+	 (orgrr-project_filename-title (make-hash-table :test 'equal))
+	 (selection))
      (with-temp-buffer
        (insert (shell-command-to-string (concat "rg -i --sort modified -l -e  \"^\\#\\+roam_tags:.+orgrr-project\" " org-directory)))
        (let ((result '())
@@ -747,7 +752,8 @@
        (setq orgrr-selection-list (orgrr-presorted-completion-table orgrr-selection-list))
        (setq selection (completing-read "Select: " orgrr-selection-list))
        (if (string-match "^\(" selection)
-	   (setq selection (replace-regexp-in-string "\(.*?\) " "" selection)))))
+	   (setq selection (replace-regexp-in-string "\(.*?\) " "" selection))))
+     selection))
 
 (defun orgrr-format-project-snippet (snippet)
   "Formats an orgrr-project SNIPPET."
