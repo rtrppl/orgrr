@@ -49,19 +49,20 @@
 (require 'json)
 
 (defvar orgrr-window-management "single-window")
-(defvar orgrr-title-filename (make-hash-table :test 'equal) "Hashtable with key title and value filename.")
-(defvar orgrr-filename-title (make-hash-table :test 'equal) "Hashtable with key filename and value title.")
-(defvar orgrr-filename-tags (make-hash-table :test 'equal) "Hashtable with key filename and value tags.")
-(defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable with key filename without path and value filename+path.")
-(defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with key zettel and value filename.") 
-(defvar orgrr-filename-zettel (make-hash-table :test 'equal) "Hashtable with key filename and value zettel.")  
+;; The following list of hashtables create the data structure in which orgrr stores notes.
+(defvar orgrr-title-filename (make-hash-table :test 'equal) "Hashtable with the key title and the value filename.")
+(defvar orgrr-filename-title (make-hash-table :test 'equal) "Hashtable with the the key filename and the value title.")
+(defvar orgrr-filename-tags (make-hash-table :test 'equal) "Hashtable with the key filename and the value tags.")
+(defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable with the key filename without path and the value filename+path.")
+(defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with the key zettel and the value filename.") 
+(defvar orgrr-filename-zettel (make-hash-table :test 'equal) "Hashtable with the key filename and the value zettel.")  
 (defvar orgrr-zettelrank-zettel (make-hash-table :test 'equal) "Hashtable with the key rank of a zettel and the value zettel.") ;; rank means how a zettel value of a note relates to other notes
 (defvar orgrr-zettel-zettelrank (make-hash-table :test 'equal) "Hashtable with the key zettel and the value rank of a zettel.")
+(defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable containing all org-files accross all containers.")
   
 
 (defun orgrr-initialize-window-mode ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode (which uses side-buffers)."
-  (interactive)
   (when (equal orgrr-window-management "single-window")
     (setq org-link-frame-setup '((file . find-file))))
    (when (equal orgrr-window-management "multi-window")
@@ -773,11 +774,10 @@
 (defun orgrr-get-all-filenames ()
   "Collects the name all of org-files across all containers and adds them to the hashtable orgrr-short_filename-filename. This is needed to correct the links of a snippet created in one container for use in another via orgrr-add-to-project. 
 
-A use case could be to add snippets to a writing project, which is located in a different container than the main database."
-  (orgrr-check-for-container-file)
-  (orgrr-get-list-of-containers)
-  (setq orgrr-short_filename-filename (make-hash-table :test 'equal))
-  (let* ((containers (nreverse (hash-table-values orgrr-name-container))))
+An intended use case for orgrr-add-to-project is to add snippets to a writing project, which is located in a different container than the main database."
+  (clrhash orgrr-short_filename-filename)
+  (let* ((orgrr-name-container (orgrr-get-list-of-containers))
+	 (containers (nreverse (hash-table-values orgrr-name-container))))
     (dolist (container containers) 
       (with-temp-buffer
 	(insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)\" " container " -g \"*.org\"")))
@@ -973,27 +973,32 @@ A use case could be to add snippets to a writing project, which is located in a 
 
 (defun orgrr-check-for-container-file ()
  "Creates a container file in ~/.orgrr-container-list in case one does not yet exist."
- (when (not (file-exists-p "~/.orgrr-container-list"))
-   (puthash "main" org-directory orgrr-name-container)
-   (with-temp-buffer
-	  (let ((json-data (json-encode orgrr-name-container)))
-	    (insert json-data)
-	    (write-file "~/.orgrr-container-list")))))
+ (let ((orgrr-name-container (make-hash-table :test 'equal))
+       (alternative-org-directory))
+   (when (not (file-exists-p "~/.orgrr-container-list"))
+     (when org-directory
+       (puthash "main" org-directory orgrr-name-container))
+     (when (not org-directory)
+       (setq alternative-org-directory (read-directory-name "Please provide a directory where orgrr should store your notes (org-directory was not set): ")))
+       (with-temp-buffer
+	 (let ((json-data (json-encode orgrr-name-container)))
+	   (insert json-data)
+	   (write-file "~/.orgrr-container-list"))))))
 
 (defun orgrr-get-list-of-containers ()
  "Return orgrr-name-container, a hashtable that includes a list of names and locations of all containers."
- (setq orgrr-name-container (make-hash-table :test 'equal))
  (orgrr-check-for-container-file)
- (with-temp-buffer
-   (insert-file-contents "~/.orgrr-container-list")
-   (if (fboundp 'json-parse-buffer)
-       (setq orgrr-name-container (json-parse-buffer)))))
+ (let ((orgrr-name-container (make-hash-table :test 'equal)))
+   (with-temp-buffer
+     (insert-file-contents "~/.orgrr-container-list")
+     (if (fboundp 'json-parse-buffer)
+	 (setq orgrr-name-container (json-parse-buffer))))))
 
 (defun orgrr-create-container ()
   "Create or add a directory as a container and switch to that container."
   (interactive)
-  (orgrr-get-list-of-containers)
-  (let* ((new-container (read-directory-name "Enter a directory name: ")))
+  (let ((orgrr-name-container (orgrr-get-list-of-containers))
+	(new-container (read-directory-name "Enter a directory name: ")))
     (if (yes-or-no-p (format "Are you sure you want to create the directory %s as a container? " new-container))
 	(progn
 	  (unless (file-exists-p new-container)
@@ -1010,9 +1015,9 @@ A use case could be to add snippets to a writing project, which is located in a 
 (defun orgrr-remove-container ()
   "Allow to remove a container for the list of containers."
   (interactive)
-  (orgrr-get-list-of-containers)
-  (setq containers (hash-table-keys orgrr-name-container))
-  (setq selection (completing-read "Which container should be removed? " containers))
+  (let* ((orgrr-name-container (orgrr-get-list-of-containers))
+	 (containers (hash-table-keys orgrr-name-container))
+	 (selection (completing-read "Which container should be removed? " containers)))
   (if (not (member selection containers))
       (message "Container does not exist.")
     (if (string-equal selection "main")
@@ -1024,7 +1029,7 @@ A use case could be to add snippets to a writing project, which is located in a 
 	      (setq json-data (json-encode orgrr-name-container))
 	      (insert json-data)
 	      (write-file "~/.orgrr-container-list"))
-	    (setq org-directory (gethash "main" orgrr-name-container)))))))
+	    (setq org-directory (gethash "main" orgrr-name-container))))))))
 
 (defun orgrr-fix-all-links-buffer ()
   "This runs the function orgrr-adjust-links on the current buffer."
