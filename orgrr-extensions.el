@@ -85,6 +85,3 @@
     (and findlike-exe (file-executable-p findlike-exe))))
 
 (provide 'orgrr-extensions)
- (title (pcase (org-collect-keywords '("TITLE"))
-		    (`(("TITLE" . ,val)) (car val))))
-

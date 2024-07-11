@@ -820,8 +820,10 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
   (when (not (string-match-p "related notes for *" (buffer-name (current-buffer))))
     (clrhash orgrr-filename-mentions)
     (orgrr-get-meta)
-    (let* ((title (pcase (org-collect-keywords '("TITLE"))
-		    (`(("TITLE" . ,val)) (car val))))
+    (let* ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+		     (buffer-file-name)))
+	   (title (gethash (concat "\\" filename) orgrr-filename-title))
            (relatednotes-buffer (concat "related notes for *" title "*"))
 	   (related-notes (orgrr-backlinks-first-and-second-order))
 	   (related-notes (+ related-notes (orgrr-forwardlinks-first-and-second-order)))
@@ -839,7 +841,7 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
 	  (insert (concat "** " "\[\[file:" (substring (cdr entry) 1) "\]\[" (gethash (cdr entry) orgrr-filename-title) "\]\]: " (number-to-string (car entry)) "\n")))
 	(let ((win (get-buffer-window relatednotes-buffer)))
 	  (select-window win)
-	  (beginning-of-buffer)
+	  (goto-char (point-min))
 	  (org-next-visible-heading 1)
 	  (deactivate-mark)))))
     (when (string-match-p "related notes for *" (buffer-name (current-buffer)))
@@ -849,12 +851,10 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
   "Gets backlinks first and second order."
   (let* ((filename (if (equal major-mode 'dired-mode)
                       default-directory
-		    (buffer-file-name)))
-	(title (pcase (org-collect-keywords '("TITLE"))
-	      (`(("TITLE" . ,val)) (car val))))
-	(original-filename filename)
-	(related-notes 0)
-	(counter 0))
+		     (buffer-file-name)))
+	 (original-filename filename)
+	 (related-notes 0)
+	 (counter 0))
     ;; get all backlinks first order
     (with-temp-buffer
        (if (on-macos-p)
@@ -904,8 +904,6 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
   (let* ((filename (if (equal major-mode 'dired-mode)
                       default-directory
 		    (buffer-file-name)))
-		(title (pcase (org-collect-keywords '("TITLE"))
-	      (`(("TITLE" . ,val)) (car val))))
 		(original-filename filename)
 		(lines '())
 		(related-notes 0)
@@ -971,17 +969,16 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
 
 (defun orgrr-check-for-container-file ()
  "Creates a container file in ~/.orgrr-container-list in case one does not yet exist."
- (let ((orgrr-name-container (make-hash-table :test 'equal))
-       (alternative-org-directory))
+ (let ((orgrr-name-container (make-hash-table :test 'equal)))
    (when (not (file-exists-p "~/.orgrr-container-list"))
      (when org-directory
        (puthash "main" org-directory orgrr-name-container))
      (when (not org-directory)
-       (setq alternative-org-directory (read-directory-name "Please provide a directory where orgrr should store your notes (org-directory was not set): ")))
+       (setq org-directory (read-directory-name "Please provide a directory where orgrr should store your notes (org-directory was not set): "))
        (with-temp-buffer
 	 (let ((json-data (json-encode orgrr-name-container)))
 	   (insert json-data)
-	   (write-file "~/.orgrr-container-list"))))))
+	   (write-file "~/.orgrr-container-list")))))))
 
 (defun orgrr-get-list-of-containers ()
  "Return orgrr-name-container, a hashtable that includes a list of names and locations of all containers."
