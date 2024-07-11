@@ -961,8 +961,8 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
   "Switch between a list of containers stored in ~/.orgrr-container-list. orgrr-change-container can be called with a specific container."
   (interactive)
   (orgrr-check-for-container-file)
-  (orgrr-get-list-of-containers)
-  (let* ((containers (nreverse (hash-table-keys orgrr-name-container)))
+  (let* ((orgrr-name-container (orgrr-get-list-of-containers))
+	 (containers (nreverse (hash-table-keys orgrr-name-container)))
 	 (selection))
     (if container
 	(setq selection container)
