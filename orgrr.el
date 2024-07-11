@@ -47,7 +47,6 @@
 (require 'ucs-normalize)
 (require 'org)
 (require 'json)
-(require 's)
 
 (defvar orgrr-window-management "single-window")
 ;; The following list of hashtables create the data structure in which orgrr stores notes.
