@@ -8,6 +8,7 @@
 ;; change the following to your liking
 
 (require 'orgrr)
+(require 'org)
 (require 'org-web-tools)
 
 (defvar orgrr-save-website-tags "website orgrr-project")
@@ -76,10 +77,8 @@
 		(when window
 		  (select-window window)
 		  (setq default-directory org-directory)
-		  (beginning-of-buffer)
-		  (next-line 2)))
-	      (clrhash orgrr-counter-filename)
-	      (clrhash orgrr-filename-title))
+		  (goto-char (point-min))
+		  (forward-line 2))))
 	  (delete-window)))
     (message "findlike is not installed. See https://github.com/brunoarine/findlike for instructions.")))
 
