@@ -472,7 +472,7 @@
                  (setq res (cons str res))
                  (setq str nil))
                 ((= p 0)
-                 (setq res (cons (string-to-number (match-string 0 str)) rebs))
+                 (setq res (cons (string-to-number (match-string 0 str)) res))
                  (setq str (substring str (match-end 0))))
                 (t
                  (setq res (cons (substring str 0 (match-beginning 0)) res))
@@ -583,7 +583,6 @@
   (interactive)
   (orgrr-get-meta)
   (let* ((titles (hash-table-keys orgrr-title-filename))
-	 (filenames-for-titles (hash-table-values orgrr-title-filename))
 	 (random-title (elt titles (random (length titles))))
          (filename (gethash random-title orgrr-title-filename)))
     (orgrr-open-file filename)))
@@ -678,59 +677,51 @@
 
 (defun orgrr-collect-project-snippet ()
   "Prepare snippet for `orgrr-add-to-project'."
-  (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
-    (progn
-      (save-excursion
-      (setq line-number (line-number-at-pos))
-      (setq filename (buffer-file-name))
-      (pcase (org-collect-keywords '("TITLE"))
-	(`(("TITLE" . ,val))
-         (setq title (car val))))
-      (beginning-of-line)
-      (set-mark-command nil)
-      (end-of-line)
-      (setq snippet (buffer-substring-no-properties (region-beginning) (region-end)))
-      (setq snippet (concat "\*\* \[\[file:" filename "::" (number-to-string line-number)  "\]" "\[" title "\]\]:\n" snippet))
-      (deactivate-mark)))
-    (progn
-      (let ((start (save-excursion
-                 (org-back-to-heading)
-                 (point)))
-        (end (save-excursion
-               (org-end-of-subtree)
-               (point))))
-	(setq snippet (buffer-substring-no-properties start end))))))
-
-;;open TODO orgrr-add-to-project
+  (let ((snippet))
+    (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
+	(progn
+	  (save-excursion
+	    (let* ((line-number (line-number-at-pos))
+		   (filename (buffer-file-name))
+		   (title (pcase (org-collect-keywords '("TITLE"))
+		    (`(("TITLE" . ,val)) (car val)))))
+	      (beginning-of-line)
+	      (set-mark-command nil)
+	      (end-of-line)
+	      (setq snippet (buffer-substring-no-properties (region-beginning) (region-end)))
+	      (setq snippet (concat "\*\* \[\[file:" filename "::" (number-to-string line-number)  "\]" "\[" title "\]\]:\n" snippet))
+	      (deactivate-mark))))
+      (progn
+	(let ((start (save-excursion
+                       (org-back-to-heading)
+                       (point)))
+              (end (save-excursion
+		     (org-end-of-subtree)
+		     (point))))
+	(setq snippet (buffer-substring-no-properties start end)))))
+    snippet))
 
 (defun orgrr-add-to-project ()
   "Add the current line at point (including when in orgrr-backlinks buffer) to an existing project."
   (interactive)
   (orgrr-get-meta)
-  (orgrr-collect-project-snippet)
-  (orgrr-format-project-snippet snippet)
-  (let ((selection (orgrr-pick-project)))
   (orgrr-get-all-filenames)
-  (setq titles (hash-table-keys orgrr-title-filename))
-  (if (member selection titles)
-    (progn
+  (let* ((snippet (orgrr-collect-project-snippet))
+	 (selection (orgrr-pick-project))
+	 (filename)
+         (titles (hash-table-keys orgrr-title-filename)))
+  (when (member selection titles)
       (setq filename (gethash selection orgrr-title-filename))
       (find-file-noselect filename))
-    (let* ((time (format-time-string "%Y%m%d%H%M%S")))
-         (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org")))
-	 (with-current-buffer (find-file-noselect filename)
-	 (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n"))))
+  (when (not (member selection titles))
+     (let ((time (format-time-string "%Y%m%d%H%M%S")))
+       (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org"))
+       (find-file-noselect filename)
+       (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n"))))
     (with-current-buffer (find-file-noselect filename)
-  (setq path-of-current-note
-      (if (buffer-file-name)
-          (file-name-directory (buffer-file-name))
-        default-directory))
-  (setq footnote (car (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))
-  (setq footnote (file-relative-name footnote default-directory))
-  (setq footnote-line (string-to-number (car (cdr (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))))
-  (goto-char (point-max))
-   (insert (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")"))
-   (save-buffer))))
+      (goto-char (point-max))
+      (insert (orgrr-format-project-snippet snippet))
+      (save-buffer))))
 
 (defun orgrr-pick-project ()
   "Provides a list of all projects to add the new snippet, with the option to create a new one."
@@ -760,13 +751,17 @@
     (goto-char (point-min))
     (while (not (eobp))
       (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
-	  (if (string-match "^\\*\\* \\[\\[\\([^]]+\\)\\]\\[\\([^]]+\\)\\]\\]" current-entry)
+      (if (string-match "^\\*\\* \\[\\[\\([^]]+\\)\\]\\[\\([^]]+\\)\\]\\]" current-entry)
 	  (progn
-          (setq footnote-link (match-string 1 current-entry))
-          (setq footnote-description (match-string 2 current-entry))
-	  (kill-whole-line 1))
+            (setq footnote-link (match-string 1 current-entry))
+            (setq footnote-description (match-string 2 current-entry))
+	    (kill-whole-line 1))
 	(forward-line)))
-    (setq project-snippet (buffer-string))))
+    (setq project-snippet (buffer-string)))
+  (setq footnote (car (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))
+  (setq footnote (file-relative-name footnote default-directory))
+  (setq footnote-line (string-to-number (car (cdr (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))))
+  (setq snippet (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")")))
 
 (defun orgrr-get-all-filenames ()
   "Collects the name all of org-files across all containers and adds them to the hashtable orgrr-short_filename-filename. This is needed to correct the links of a snippet created in one container for use in another via orgrr-add-to-project. 
