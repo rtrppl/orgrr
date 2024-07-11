@@ -47,6 +47,7 @@
 (require 'ucs-normalize)
 (require 'org)
 (require 'json)
+(require 's)
 
 (defvar orgrr-window-management "single-window")
 ;; The following list of hashtables create the data structure in which orgrr stores notes.
@@ -905,7 +906,6 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
                       default-directory
 		    (buffer-file-name)))
 		(original-filename filename)
-		(lines '())
 		(related-notes 0)
 		(counter 0)
 		(contents (with-current-buffer (buffer-name)
@@ -987,7 +987,8 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
    (with-temp-buffer
      (insert-file-contents "~/.orgrr-container-list")
      (if (fboundp 'json-parse-buffer)
-	 (setq orgrr-name-container (json-parse-buffer))))))
+	 (setq orgrr-name-container (json-parse-buffer))))
+orgrr-name-container))
 
 (defun orgrr-create-container ()
   "Create or add a directory as a container and switch to that container."
@@ -1012,6 +1013,7 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
   (interactive)
   (let* ((orgrr-name-container (orgrr-get-list-of-containers))
 	 (containers (hash-table-keys orgrr-name-container))
+	 (json-data)
 	 (selection (completing-read "Which container should be removed? " containers)))
   (if (not (member selection containers))
       (message "Container does not exist.")
@@ -1034,7 +1036,7 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
                   (buffer-substring-no-properties (point-min) (point-max)))))
    (erase-buffer)
    (insert (orgrr-adjust-links contents)))
- (beginning-of-buffer))
+ (goto-char (point-min)))
 
 (defun orgrr-adjust-backlinks-in-current-container (filename)
   "This is a helper function for orgrr-move-note and will adjust all links in notes in the previous/old container referring to the moving note to its new location. It does not account for changes of the filename itself!

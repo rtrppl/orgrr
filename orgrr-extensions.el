@@ -6,6 +6,9 @@
 ;;
 
 ;; change the following to your liking
+
+(require 'org-web-tools)
+
 (defvar orgrr-save-website-tags "website orgrr-project")
 
 (cl-defun orgrr-save-website ()
