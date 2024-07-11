@@ -731,22 +731,21 @@
 	 (selection))
      (with-temp-buffer
        (insert (shell-command-to-string (concat "rg -i --sort modified -l -e  \"^\\#\\+roam_tags:.+orgrr-project\" " org-directory)))
-       (let ((result '())
-            (current-entry "")
-            (lines (split-string (buffer-string) "\n" t)))
+       (let ((lines (split-string (buffer-string) "\n" t)))
 	 (dolist (line lines)
 	   (let ((title (gethash (concat "\\" line) orgrr-filename-title)))
-	   (puthash (concat "\\" line) title orgrr-project_filename-title)
-	    (setq orgrr-selection-list (cons title orgrr-selection-list)))))
-       (setq orgrr-selection-list (orgrr-presorted-completion-table orgrr-selection-list))
-       (setq selection (completing-read "Select: " orgrr-selection-list))
-       (if (string-match "^\(" selection)
-	   (setq selection (replace-regexp-in-string "\(.*?\) " "" selection))))
+	     (puthash (concat "\\" line) title orgrr-project_filename-title)
+	     (setq orgrr-selection-list (cons title orgrr-selection-list)))))
+     (setq orgrr-selection-list (orgrr-presorted-completion-table orgrr-selection-list))
+     (setq selection (completing-read "Select: " orgrr-selection-list))
+     (if (string-match "^\(" selection)
+	 (setq selection (replace-regexp-in-string "\(.*?\) " "" selection))))
      selection))
 
 (defun orgrr-format-project-snippet (snippet)
   "Formats an orgrr-project SNIPPET."
   (let ((footnote-link)
+	(footnote-line)
 	(footnote-description)
 	(footnote)
 	(project-snippet))
@@ -754,7 +753,7 @@
     (insert snippet)
     (goto-char (point-min))
     (while (not (eobp))
-      (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
+      (let ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
       (if (string-match "^\\*\\* \\[\\[\\([^]]+\\)\\]\\[\\([^]]+\\)\\]\\]" current-entry)
 	  (progn
             (setq footnote-link (match-string 1 current-entry))
@@ -765,7 +764,7 @@
   (setq footnote (car (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))
   (setq footnote (file-relative-name footnote default-directory))
   (setq footnote-line (string-to-number (car (cdr (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))))
-  (setq snippet (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")"))))
+  (setq snippet (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")")))))
 
 (defun orgrr-get-all-filenames ()
   "Collects the name all of org-files across all containers and adds them to the hashtable orgrr-short_filename-filename. This is needed to correct the links of a snippet created in one container for use in another via orgrr-add-to-project. 
