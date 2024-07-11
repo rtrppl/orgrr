@@ -812,7 +812,7 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
                     (orgrr-get-meta))))
        (titles (hash-table-keys orgrr-title-filename))
        (number-of-files (shell-command-to-string (concat "find " org-directory "  -type f -name \"*.org\" | wc -l"))))
-   (message "Orgrr considers %d titles and alias in %s org-files in this container. Collecting all titles took %s seconds to complete." (length titles) (s-trim number-of-files) (format "%.5f" (car result)))))
+   (message "Orgrr considers %d titles and alias in %s org-files in this container. Collecting all titles took %s seconds to complete." (length titles) (string-trim number-of-files) (format "%.5f" (car result)))))
     
 (defun orgrr-show-related-notes ()
   "Show all related notes in `org-directory' to the current org-file. Related means here notes linking to this note and the notes that link to them as well as notes linked by the current note and the links from these notes. It is assumed that the more times a note in environment is mentioned, the more important it is. Notes of higher importance are listed at the top. Parents and grandparents as well as children and grandchildren."
