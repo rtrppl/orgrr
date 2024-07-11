@@ -8,6 +8,7 @@
 ;; change the following to your liking
 
 (require 'orgrr)
+(require 'org-web-tools)
 
 (defvar orgrr-save-website-tags "website orgrr-project")
 
