@@ -255,20 +255,16 @@
 	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
   selection)) ;; this line ensures that the value of selection is returned when this function is called
 
-
 (defun orgrr-selection-zettel ()
   "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files that have a value for zettel. Prepends zettel value in front of title and alias."
   (let ((current-zettel (orgrr-read-current-zettel))
 	(orgrr-selection-list-completion (orgrr-prepare-zettel-selection-list))
-	(selection)
-	(selection-zettel))
+	(selection))
     (if current-zettel
       (setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil current-zettel))
       (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
     (if (string-match "^\\[\\(.*?\\)\\]" selection)
-      (progn
-	(setq selection-zettel (match-string 1 selection))
-	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection))))
+      	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))
     selection))
 
 (defun orgrr-prepare-zettel-selection-list ()
@@ -410,6 +406,7 @@
     (let* ((zettel-title (orgrr-selection-zettel))
 	   (zettel-filename (gethash zettel-title orgrr-title-filename))
 	   (selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel))
+	   (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
 	   (sequence-buffer (concat "sequence for *[" selection-zettel "]*")))
       (with-current-buffer (get-buffer-create sequence-buffer)
 	(let ((inhibit-read-only t))
@@ -427,7 +424,7 @@
 	      (when window
 		(select-window window)
 		(setq default-directory org-directory)
-		(beginning-of-buffer)
+		(goto-char (point-min))
 		(org-next-visible-heading 1)
 		(deactivate-mark))))))
   (when (string-match-p "sequence for *" (buffer-name (current-buffer)))
