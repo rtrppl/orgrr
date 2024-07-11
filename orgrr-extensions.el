@@ -38,12 +38,12 @@
 	      (orgrr-get-meta)
 	      (let ((filename (if (equal major-mode 'dired-mode)
 				  default-directory
-				(buffer-file-name))))
-		(pcase (org-collect-keywords '("TITLE"))
-		  (`(("TITLE" . ,val))
-		   (setq title (car val))))
-		(setq findlikelinks 0)
-		(setq orgrr-counter-filename (make-hash-table :test 'equal))
+				(buffer-file-name)))
+		     (title (pcase (org-collect-keywords '("TITLE"))
+		    (`(("TITLE" . ,val)) (car val))))
+		     (findlikelinks 0)
+		     (entry)
+		     (orgrr-counter-filename (make-hash-table :test 'equal)))
 		(with-temp-buffer
 		  (insert (shell-command-to-string (concat "findlike -R -d " org-directory " " filename)))
 		  (let ((lines (split-string (buffer-string) "\n" t)))
@@ -83,3 +83,8 @@
   "Check whether exa is installed in the system path."
   (let ((findlike-exe (executable-find "findlike")))
     (and findlike-exe (file-executable-p findlike-exe))))
+
+(provide 'orgrr-extensions)
+ (title (pcase (org-collect-keywords '("TITLE"))
+		    (`(("TITLE" . ,val)) (car val))))
+

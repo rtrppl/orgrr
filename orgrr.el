@@ -724,7 +724,7 @@
       (save-buffer))))
 
 (defun orgrr-pick-project ()
-  "Provides a list of all projects to add the new snippet, with the option to create a new one."
+  "Provides a list of all projects to add the new snippet, with the option to create a new one. Returns a project."
   (orgrr-get-meta)
   (let* ((orgrr-selection-list ())
 	 (orgrr-project_filename-title (make-hash-table :test 'equal))
@@ -788,29 +788,29 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
 	 
 (defun orgrr-adjust-links (string)
   "Adjusts/corrects all links of STRING relative to the position of the note."
-  (setq path-of-current-note
-      (if (buffer-file-name)
-          (file-name-directory (buffer-file-name))
-        default-directory))
-  (setq default-directory path-of-current-note)
+  (let* ((path-of-current-note
+	  (if (buffer-file-name)
+              (file-name-directory (buffer-file-name))
+            default-directory)))
+    (setq default-directory path-of-current-note)
   (with-temp-buffer
     (insert string)
     (goto-char (point-min))
     (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
       (let* ((filename (file-name-nondirectory (match-string 1))))
-	     (if (member (concat "\\" filename) (hash-table-keys orgrr-short_filename-filename))
-		 (progn 
-		   (let* ((new-filename (gethash (concat "\\" filename) orgrr-short_filename-filename)))
+	(if (member (concat "\\" filename) (hash-table-keys orgrr-short_filename-filename))
+	    (progn 
+	      (let* ((new-filename (gethash (concat "\\" filename) orgrr-short_filename-filename)))
 		     (replace-match (concat "file:" (file-relative-name new-filename path-of-current-note))))))))
-    (buffer-string)))
+    (buffer-string))))
     
 (defun orgrr-info ()
  "Show the amount of titles considered by orgrr."
  (interactive)
- (let ((result (benchmark-run-compiled 1
-                 (progn
-                   (orgrr-get-meta)
-                   (setq titles (hash-table-keys orgrr-title-filename)))))
+ (let* ((result (benchmark-run-compiled 1
+                  (progn
+                    (orgrr-get-meta))))
+       (titles (hash-table-keys orgrr-title-filename))
        (number-of-files (shell-command-to-string (concat "find " org-directory "  -type f -name \"*.org\" | wc -l"))))
    (message "Orgrr considers %d titles and alias in %s org-files in this container. Collecting all titles took %s seconds to complete." (length titles) (s-trim number-of-files) (format "%.5f" (car result)))))
     
