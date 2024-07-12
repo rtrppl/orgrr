@@ -62,7 +62,8 @@
 (defvar orgrr-filename-mentions (make-hash-table :test 'equal) "Hashtable necessary for orgrr-show-related-notes.") 
 
 (defun orgrr-initialize-window-mode ()
-  "Sets org-link-frame-setup for single-window-mode and multi-window mode (which uses side-buffers)."
+  "Sets org-link-frame-setup for single-window-mode and multi-window mode 
+(which uses side-buffers)."
   (when (equal orgrr-window-management "single-window")
     (setq org-link-frame-setup '((file . find-file))))
    (when (equal orgrr-window-management "multi-window")
@@ -91,14 +92,15 @@
 		  (switch-to-buffer buffer)))
 
 (defun orgrr-close-buffer ()
-   "A wrapper to close BUFFER according to orgrr-window-management settings."  
+   "A wrapper to close BUFFER according to orgrr-window-management settings."
   (if (equal orgrr-window-management "multi-window")
       (delete-window))
   (if (equal orgrr-window-management "single-window")
       (previous-buffer)))
 
 (defun orgrr-toggle-single-window-mode ()
-  "Switch between single-window-mode and multi-window mode (which uses side-buffers)."
+  "Switch between single-window-mode and multi-window mode (which uses 
+side-buffers)."
   (interactive)
   (if (equal orgrr-window-management "multi-window")
       (progn
@@ -109,7 +111,9 @@
       (setq org-link-frame-setup '((file . find-file-other-window))))))
 
 (defun on-macos-p ()
-  "Check if Emacs is running on macOS. This became necessary due to some normalization issues with filenames that contain non-ascii characters and require NCD-formating."
+  "Check if Emacs is running on macOS. This became necessary due to some 
+normalization issues with filenames that contain non-ascii characters and 
+require NCD-formating."
   (eq system-type 'darwin))
 
 (defun orgrr-show-backlinks ()
@@ -170,7 +174,8 @@
     (orgrr-close-buffer)))
 
 (defun orgrr-get-meta ()
-  "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all org-files and adds them to hashtables."
+  "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all 
+org-files and adds them to hashtables."
   (interactive)
   (clrhash orgrr-filename-title)
   (clrhash orgrr-title-filename)
@@ -217,14 +222,18 @@
 (forward-line)))))
 
 (defun orgrr-presorted-completion-table (completions)
-  "Adds metadata to completion entries, so that Vertico (and others) respects the sorting of a collection for completing-read. This is based on https://emacs.stackexchange.com/questions/8115/make-completing-read-respect-sorting-order-of-a-collection, thanks @sachac@emacs.ch for the hint!"
+  "Adds metadata to completion entries, so that Vertico (and others) respects 
+the sorting of a collection for completing-read." 
+;; This is based on https://emacs.stackexchange.com/questions/8115/make-completing-read-respect-sorting-order-of-a-collection, thanks @sachac@emacs.ch for the hint!"
   (lambda (string pred action)
     (if (eq action 'metadata)
         `(metadata (display-sort-function . ,#'identity))
       (complete-with-action action completions string pred))))
 
 (defun orgrr-selection ()
-  "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front of title and alias. New version."
+  "Prepare the symbol orgrr-selection for completing-read and send the result 
+in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front 
+of title and alias."
   (interactive)
   (orgrr-get-meta)
   (let* ((orgrr-selection-list ())
@@ -256,7 +265,10 @@
   selection)) ;; this line ensures that the value of selection is returned when this function is called
 
 (defun orgrr-selection-zettel ()
-  "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files that have a value for zettel. Prepends zettel value in front of title and alias."
+  "Prepare the symbol orgrr-selection for completing-read and send the result 
+in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files 
+that have a value for zettel. Prepends zettel value in front of title and 
+alias."
   (let ((current-zettel (orgrr-read-current-zettel))
 	(orgrr-selection-list-completion (orgrr-prepare-zettel-selection-list))
 	(selection))
@@ -286,7 +298,9 @@
     orgrr-selection-list-completion))
 	  
 (defun orgrr-find-zettel ()
-  "Like orgrr-find, but only considers notes that have a value for zettel. If the selected file name does not exist, a new one is created. Starts with the current zettel ID, which allows you to search within a context."
+  "Like orgrr-find, but only considers notes that have a value for zettel. If 
+the selected file name does not exist, a new one is created. Starts with the 
+current zettel ID, which allows you to search within a context."
   (interactive)
   (let ((selection (orgrr-selection-zettel)))
     (when (member selection (hash-table-keys orgrr-title-filename))
@@ -299,7 +313,8 @@
 	(insert (concat "#+title: " selection "\n"))))))
 
 (defun orgrr-no-selection-zettel ()
-  "Prepare the symbol orgrr-selection for completing-read and send the result in selection to orgrr-find and orgrr-insert. Excludes zettel. "
+  "Prepare the symbol orgrr-selection for completing-read and send the result 
+in selection to orgrr-find and orgrr-insert. Excludes zettel. "
   (interactive)
   (orgrr-get-meta)
   (let*  ((orgrr-selection-list ())
@@ -329,7 +344,8 @@
     selection))
 
 (defun orgrr-no-find-zettel ()
-  "Like orgrr-find-zettel, but only considers notes that have no value for zettel."
+  "Like orgrr-find-zettel, but only considers notes that have no value for 
+zettel."
   (interactive)
   (let ((selection (orgrr-no-selection-zettel))
 	(filename))
@@ -338,7 +354,10 @@
       (orgrr-open-file filename))))
 
 (defun orgrr-add-zettel ()
-  "Drill down a list of notes with values for zettel to allow the user to find the correct spot for a new zettel and then insert a line with #+zettel: zettel-value after the last line starting with #+ (from the beginning of the file)."
+  "Drill down a list of notes with values for zettel to allow the user to find 
+the correct spot for a new zettel and then insert a line with #+zettel: 
+zettel-value after the last line starting with #+ (from the beginning of the 
+file)."
   (interactive)
   (orgrr-get-meta)
   (let ((current-zettel (orgrr-read-current-zettel)))
@@ -399,7 +418,10 @@
       current-zettel))
     
 (defun orgrr-show-sequence ()
-  "Shows a sequence of notes for any given zettel value. If run while visiting a buffer that has a value for zettel, this is taken as the starting value for zettel. Results are presented in a different buffer in accordance with orgrr-window-management."
+  "Shows a sequence of notes for any given zettel value. If run while visiting 
+a buffer that has a value for zettel, this is taken as the starting value for 
+zettel. Results are presented in a different buffer in accordance with 
+orgrr-window-management."
   (interactive)
   (when (not (string-match-p "sequence for *" (buffer-name (current-buffer))))
     (orgrr-prepare-zettelrank)
@@ -513,7 +535,8 @@
     (setq zettel (concat "\[" zettel "\]\t" matched-zettel-title))))
 
 (defun orgrr-return-fullzettel-linked (zettel)
-  "Returns the full name of a zettel (as in orgrr-zettel-list) and links the title to the note."
+  "Returns the full name of a zettel (as in orgrr-zettel-list) and links the 
+title to the note."
   (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename))
 	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
     (setq zettel (concat "\[" zettel "\]\t\[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]"))))
@@ -539,7 +562,8 @@
       (message "This note has no value for zettel, so there is no next zettel!"))))
 
 (defun orgrr-find ()
-  "Find org-file in `org-directory' via mini-buffer completion. If the selected file name does not exist, a new one is created."
+  "Find org-file in `org-directory' via mini-buffer completion. If the 
+selected file name does not exist, a new one is created."
   (interactive)
   (let ((selection (orgrr-selection))
 	(filename)
@@ -553,7 +577,8 @@
     (insert (concat "#+title: " selection "\n")))))
 
 (defun orgrr-insert ()
-  "Insert links to an org-file in `org-directory' via mini-buffer completion. If the selected title does not exist, a new note is created."
+  "Insert links to an org-file in `org-directory' via mini-buffer completion. 
+If the selected title does not exist, a new note is created."
   (interactive)
   (let ((path-of-current-note
 	 (if (buffer-file-name)
@@ -702,7 +727,8 @@
     snippet))
 
 (defun orgrr-add-to-project ()
-  "Add the current line at point (including when in orgrr-backlinks buffer) to an existing project."
+  "Add the current line at point (including when in orgrr-backlinks buffer) to 
+an existing project."
   (interactive)
   (orgrr-get-meta)
   (orgrr-get-all-filenames)
@@ -724,7 +750,8 @@
       (save-buffer))))
 
 (defun orgrr-pick-project ()
-  "Provides a list of all projects to add the new snippet, with the option to create a new one. Returns a project."
+  "Provides a list of all projects to add the new snippet, with the option to 
+create a new one. Returns a project."
   (orgrr-get-meta)
   (let* ((orgrr-selection-list ())
 	 (orgrr-project_filename-title (make-hash-table :test 'equal))
@@ -767,9 +794,13 @@
   (setq snippet (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")")))))
 
 (defun orgrr-get-all-filenames ()
-  "Collects the name all of org-files across all containers and adds them to the hashtable orgrr-short_filename-filename. This is needed to correct the links of a snippet created in one container for use in another via orgrr-add-to-project. 
+  "Collects the name all of org-files across all containers and adds them to 
+the hashtable orgrr-short_filename-filename. This is needed to correct the 
+links of a snippet created in one container for use in another via 
+orgrr-add-to-project. 
 
-An intended use case for orgrr-add-to-project is to add snippets to a writing project, which is located in a different container than the main database."
+An intended use case for orgrr-add-to-project is to add snippets to a writing 
+project, which is located in a different container than the main database."
   (clrhash orgrr-short_filename-filename)
   (let* ((orgrr-name-container (orgrr-get-list-of-containers))
 	 (containers (nreverse (hash-table-values orgrr-name-container))))
@@ -815,7 +846,12 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
    (message "Orgrr considers %d titles and alias in %s org-files in this container. Collecting all titles took %s seconds to complete." (length titles) (string-trim number-of-files) (format "%.5f" (car result)))))
     
 (defun orgrr-show-related-notes ()
-  "Show all related notes in `org-directory' to the current org-file. Related means here notes linking to this note and the notes that link to them as well as notes linked by the current note and the links from these notes. It is assumed that the more times a note in environment is mentioned, the more important it is. Notes of higher importance are listed at the top. Parents and grandparents as well as children and grandchildren."
+  "Show all related notes in `org-directory' to the current org-file. Related 
+means here notes linking to this note and the notes that link to them as well 
+as notes linked by the current note and the links from these notes. It is 
+assumed that the more times a note in environment is mentioned, the more 
+important it is. Notes of higher importance are listed at the top. Parents and 
+grandparents as well as children and grandchildren."
   (interactive)
   (when (not (string-match-p "related notes for *" (buffer-name (current-buffer))))
     (clrhash orgrr-filename-mentions)
@@ -953,7 +989,8 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
     related-notes))
 
 (defun orgrr-change-container (&optional container)
-  "Switch between a list of containers stored in ~/.orgrr-container-list. orgrr-change-container can be called with a specific container."
+  "Switch between a list of containers stored in ~/.orgrr-container-list. 
+orgrr-change-container can be called with a specific container."
   (interactive)
   (orgrr-check-for-container-file)
   (let* ((orgrr-name-container (orgrr-get-list-of-containers))
@@ -967,7 +1004,8 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
       (message "Container does not exist."))))
 
 (defun orgrr-check-for-container-file ()
- "Creates a container file in ~/.orgrr-container-list in case one does not yet exist."
+ "Creates a container file in ~/.orgrr-container-list in case one does 
+not yet exist."
  (let ((orgrr-name-container (make-hash-table :test 'equal)))
    (when (not (file-exists-p "~/.orgrr-container-list"))
      (when org-directory
@@ -980,7 +1018,8 @@ An intended use case for orgrr-add-to-project is to add snippets to a writing pr
 	   (write-file "~/.orgrr-container-list")))))))
 
 (defun orgrr-get-list-of-containers ()
- "Return orgrr-name-container, a hashtable that includes a list of names and locations of all containers."
+ "Return orgrr-name-container, a hashtable that includes a list of names and 
+locations of all containers."
  (orgrr-check-for-container-file)
  (let ((orgrr-name-container (make-hash-table :test 'equal)))
    (with-temp-buffer
@@ -1038,9 +1077,12 @@ orgrr-name-container))
  (goto-char (point-min)))
 
 (defun orgrr-adjust-backlinks-in-current-container (filename)
-  "This is a helper function for orgrr-move-note and will adjust all links in notes in the previous/old container referring to the moving note to its new location. It does not account for changes of the filename itself!
+  "This is a helper function for orgrr-move-note and will adjust all links in 
+notes in the previous/old container referring to the moving note to its new 
+location. It does not account for changes of the filename itself!
 
-This one of the very few functions where orgrr is directly changing your data (to fix the links). Be aware of this, but don't be scared."
+This one of the very few functions where orgrr is directly changing your data 
+(to fix the links). Be aware of this, but don't be scared."
   (save-some-buffers t)  ;; necessary, as we are working directly with the files 
   (let* ((orgrr-backlinks '()) 
 	 (original-filename filename))
@@ -1060,7 +1102,9 @@ This one of the very few functions where orgrr is directly changing your data (t
       (orgrr-fix-all-links-buffer)))))
 
 (defun orgrr-fix-all-links-container ()
-   "This function can be used to fix all links in a container. This is useful if you move a whole container/directory to a new location. Make sure to be in the correct container, when running this function."
+   "This function can be used to fix all links in a container. This is useful 
+if you move a whole container/directory to a new location. When running this 
+function, make sure to be in the correct container."
   (interactive)
   (if (yes-or-no-p (format "Are you sure you want to fix all links in this container? "))
       (progn
