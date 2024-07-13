@@ -61,15 +61,17 @@
 (defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable containing all org-files accross all containers.")
 (defvar orgrr-filename-mentions (make-hash-table :test 'equal) "Hashtable necessary for orgrr-show-related-notes.") 
 
-(defun orgrr-initialize-window-mode ()
+(defun orgrr-initialize ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode 
-(which uses side-buffers)."
+(which uses side-buffers). Also checks for org-directory and container
+file."
   (when (equal orgrr-window-management "single-window")
     (setq org-link-frame-setup '((file . find-file))))
    (when (equal orgrr-window-management "multi-window")
-      (setq org-link-frame-setup '((file . find-file-other-window)))))
+      (setq org-link-frame-setup '((file . find-file-other-window))))
+   (orgrr-check-for-container-file))
 
-(orgrr-initialize-window-mode)
+(orgrr-initialize)
 
 (defun orgrr-open-file (filename)
   "A wrapper to open FILENAME either with find-file or find-file-other-window."
@@ -176,7 +178,6 @@ require NCD-formating."
 (defun orgrr-get-meta ()
   "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all 
 org-files and adds them to hashtables."
-  (interactive)
   (clrhash orgrr-filename-title)
   (clrhash orgrr-title-filename)
   (clrhash orgrr-filename-tags)
@@ -1006,7 +1007,13 @@ orgrr-change-container can be called with a specific container."
 (defun orgrr-check-for-container-file ()
  "Creates a container file in ~/.orgrr-container-list in case one does 
 not yet exist."
- (let ((orgrr-name-container (make-hash-table :test 'equal)))
+ (let ((orgrr-name-container (orgrr-get-list-of-containers)))
+   (when (file-exists-p "~/.orgrr-container-list")
+     (when (not (org-directory))
+        (let* ((containers (nreverse (hash-table-keys orgrr-name-container))))
+	  (if (member "main" containers)
+	      (setq org-directory (gethash "main" orgrr-name-container))
+	    (setq org-directory (gethash (car containers) orgrr-name-container))))))
    (when (not (file-exists-p "~/.orgrr-container-list"))
      (when org-directory
        (puthash "main" org-directory orgrr-name-container))
