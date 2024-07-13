@@ -61,18 +61,6 @@
 (defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable containing all org-files accross all containers.")
 (defvar orgrr-filename-mentions (make-hash-table :test 'equal) "Hashtable necessary for orgrr-show-related-notes.") 
 
-(defun orgrr-initialize ()
-  "Sets org-link-frame-setup for single-window-mode and multi-window mode 
-(which uses side-buffers). Also checks for org-directory and container
-file."
-  (when (equal orgrr-window-management "single-window")
-    (setq org-link-frame-setup '((file . find-file))))
-   (when (equal orgrr-window-management "multi-window")
-      (setq org-link-frame-setup '((file . find-file-other-window))))
-   (orgrr-check-for-container-file))
-
-(orgrr-initialize)
-
 (defun orgrr-open-file (filename)
   "A wrapper to open FILENAME either with find-file or find-file-other-window."
   (if (equal orgrr-window-management "multi-window")
@@ -1005,24 +993,31 @@ orgrr-change-container can be called with a specific container."
       (message "Container does not exist."))))
 
 (defun orgrr-check-for-container-file ()
- "Creates a container file in ~/.orgrr-container-list in case one does 
-not yet exist."
- (let ((orgrr-name-container (orgrr-get-list-of-containers)))
-   (when (file-exists-p "~/.orgrr-container-list")
-     (when (not (org-directory))
-        (let* ((containers (nreverse (hash-table-keys orgrr-name-container))))
-	  (if (member "main" containers)
-	      (setq org-directory (gethash "main" orgrr-name-container))
-	    (setq org-directory (gethash (car containers) orgrr-name-container))))))
-   (when (not (file-exists-p "~/.orgrr-container-list"))
-     (when org-directory
-       (puthash "main" org-directory orgrr-name-container))
-     (when (not org-directory)
-       (setq org-directory (read-directory-name "Please provide a directory where orgrr should store your notes (org-directory was not set): "))
+  "Creates a container file in ~/.orgrr-container-list in case one does 
+  not yet exist."
+  (when (not (file-exists-p "~/.orgrr-container-list"))
+    (let ((orgrr-name-container (make-hash-table :test 'equal)))
+       (if org-directory
+           (puthash "main" org-directory orgrr-name-container)
+	 (progn
+	   (setq org-directory (read-directory-name "Please provide a directory where orgrr should store your notes (org-directory was not set): "))
+	   (puthash "main" org-directory orgrr-name-container)))
        (with-temp-buffer
-	 (let ((json-data (json-encode orgrr-name-container)))
-	   (insert json-data)
-	   (write-file "~/.orgrr-container-list")))))))
+            (let ((json-data (json-encode orgrr-name-container)))
+              (insert json-data)
+              (write-file "~/.orgrr-container-list")))))
+  (when (file-exists-p "~/.orgrr-container-list")
+     (when (not org-directory)
+       (let ((orgrr-name-container (make-hash-table :test 'equal))
+	     (containers))
+       (with-temp-buffer
+	 (insert-file-contents "~/.orgrr-container-list")
+	 (if (fboundp 'json-parse-buffer)
+	     (setq orgrr-name-container (json-parse-buffer))))
+       (setq containers (nreverse (hash-table-keys orgrr-name-container)))
+       (if (member "main" containers)
+           (setq org-directory (gethash "main" orgrr-name-container))
+         (setq org-directory (gethash (car containers) orgrr-name-container)))))))
 
 (defun orgrr-get-list-of-containers ()
  "Return orgrr-name-container, a hashtable that includes a list of names and 
@@ -1122,6 +1117,18 @@ function, make sure to be in the correct container."
 	    (message "Fixing backlinks for '%s'." filename)
 	    (orgrr-adjust-backlinks-in-current-container filename)))
 	(message "All links in this container have been adjusted!"))))
+
+(defun orgrr-initialize ()
+  "Sets org-link-frame-setup for single-window-mode and multi-window mode 
+(which uses side-buffers). Also checks for org-directory and container
+file."
+  (when (equal orgrr-window-management "single-window")
+    (setq org-link-frame-setup '((file . find-file))))
+   (when (equal orgrr-window-management "multi-window")
+      (setq org-link-frame-setup '((file . find-file-other-window))))
+   (orgrr-check-for-container-file))
+
+(orgrr-initialize)
 
 (provide 'orgrr)
 
