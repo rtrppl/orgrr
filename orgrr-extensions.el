@@ -1,3 +1,5 @@
+;; orgrr-extensions.el -*- lexical-binding: t -*-
+;;
 ;; orgrr-extensions.el includes nice-to-have additions to orgrr,
 ;; that depend on external packages or binaries. The core functions
 ;; of orgrr do not require these functions. 
@@ -14,7 +16,8 @@
 (defvar orgrr-save-website-tags "website orgrr-project")
 
 (cl-defun orgrr-save-website ()
-  "Adds a website as an org-file to the current org-directory. Works on links, org-links or via entry of an URL."
+  "Adds a website as an org-file to the current org-directory. Works on links, 
+org-links or via entry of an URL."
   (interactive) 
   (let ((url (or 
               (thing-at-point-url-at-point)

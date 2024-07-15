@@ -1,5 +1,3 @@
-;; orgrr.el --- org-roam-replica or org-roam-ripgrep -*- lexical-binding: t -*-
-
 ;; Copyright (C) 2024 Free Software Foundation, Inc.
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
@@ -210,10 +208,13 @@ org-files and adds them to hashtables."
 	    (puthash (concat "\\" filename) tags orgrr-filename-tags)))
 (forward-line)))))
 
+;; orgrr-presorted-completion-table is based on 
+;; https://emacs.stackexchange.com/questions/8115/make-completing-read
+;; -respect-sorting-order-of-a-collection, thanks @sachac@emacs.ch for the hint!
+
 (defun orgrr-presorted-completion-table (completions)
   "Adds metadata to completion entries, so that Vertico (and others) respects 
-the sorting of a collection for completing-read." 
-;; This is based on https://emacs.stackexchange.com/questions/8115/make-completing-read-respect-sorting-order-of-a-collection, thanks @sachac@emacs.ch for the hint!"
+the sorting of a collection for completing-read. "
   (lambda (string pred action)
     (if (eq action 'metadata)
         `(metadata (display-sort-function . ,#'identity))
@@ -225,6 +226,7 @@ in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front
 of title and alias."
   (interactive)
   (orgrr-get-meta)
+;  (setq orgrr-selection-list ())
   (let* ((orgrr-selection-list ())
 	 (orgrr-selection-list-completion)
          (final-title)
@@ -244,6 +246,7 @@ of title and alias."
 	(setq orgrr-selection-list (cons final-title orgrr-selection-list))))
     (setq orgrr-selection-list (reverse orgrr-selection-list))
     (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
+;    (setq orgrr-selection-list-completion orgrr-selection-list)
     (if (region-active-p)
 	(setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
       (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
@@ -997,15 +1000,12 @@ orgrr-change-container can be called with a specific container."
   not yet exist."
   (when (not (file-exists-p "~/.orgrr-container-list"))
     (let ((orgrr-name-container (make-hash-table :test 'equal)))
-       (if org-directory
-           (puthash "main" org-directory orgrr-name-container)
-	 (progn
-	   (setq org-directory (read-directory-name "Please provide a directory where orgrr should store your notes (org-directory was not set): "))
-	   (puthash "main" org-directory orgrr-name-container)))
+       (when org-directory
+         (puthash "main" org-directory orgrr-name-container)
        (with-temp-buffer
-            (let ((json-data (json-encode orgrr-name-container)))
-              (insert json-data)
-              (write-file "~/.orgrr-container-list")))))
+         (let ((json-data (json-encode orgrr-name-container)))
+           (insert json-data)
+           (write-file "~/.orgrr-container-list")))))
   (when (file-exists-p "~/.orgrr-container-list")
      (let ((orgrr-name-container (make-hash-table :test 'equal))
 	   (containers)
@@ -1019,7 +1019,7 @@ orgrr-change-container can be called with a specific container."
        (when (or (not org-directory) (not (member org-directory containers-folders)))
 	 (if (member "main" containers)
              (setq org-directory (gethash "main" orgrr-name-container))
-           (setq org-directory (gethash (car containers) orgrr-name-container)))))))
+           (setq org-directory (gethash (car containers) orgrr-name-container))))))))
 
 (defun orgrr-get-list-of-containers ()
  "Return orgrr-name-container, a hashtable that includes a list of names and 
