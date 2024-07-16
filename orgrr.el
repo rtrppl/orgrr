@@ -211,14 +211,16 @@ org-files and adds them to hashtables."
 ;; orgrr-presorted-completion-table is based on 
 ;; https://emacs.stackexchange.com/questions/8115/make-completing-read
 ;; -respect-sorting-order-of-a-collection, thanks @sachac@emacs.ch for the hint!
+;; lambda functions and lexical binding don't like each other.
 
-(defun orgrr-presorted-completion-table (completions)
-  "Adds metadata to completion entries, so that Vertico (and others) respects 
-the sorting of a collection for completing-read. "
-  (lambda (string pred action)
-    (if (eq action 'metadata)
-        `(metadata (display-sort-function . ,#'identity))
-      (complete-with-action action completions string pred))))
+(defun orgrr-presorted-completion-table (orgrr-selection-list)
+  (let ((orgrr-selection-list-completion))
+  (setq orgrr-selection-list-completion 
+	(lambda (string pred action)
+	  (if (eq action 'metadata)
+	      `(metadata (display-sort-function . ,#'identity))
+	    (complete-with-action action orgrr-selection-list string pred))))))
+
 
 (defun orgrr-selection ()
   "Prepare the symbol orgrr-selection for completing-read and send the result 
@@ -226,7 +228,6 @@ in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front
 of title and alias."
   (interactive)
   (orgrr-get-meta)
-;  (setq orgrr-selection-list ())
   (let* ((orgrr-selection-list ())
 	 (orgrr-selection-list-completion)
          (final-title)
@@ -246,7 +247,6 @@ of title and alias."
 	(setq orgrr-selection-list (cons final-title orgrr-selection-list))))
     (setq orgrr-selection-list (reverse orgrr-selection-list))
     (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
-;    (setq orgrr-selection-list-completion orgrr-selection-list)
     (if (region-active-p)
 	(setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
       (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
