@@ -69,15 +69,14 @@
 
 (defun orgrr-open-buffer (buffer)
  "A wrapper to open BUFFER according to orgrr-window-management settings."
- (if (equal orgrr-window-management "multi-window")
-		(progn
+ (when (equal orgrr-window-management "multi-window")
 		  (display-buffer-in-side-window
 		   (current-buffer)
 		   '((side . right)
 		     (slot . -1)
-		     (window-width . 60)))))
-	    (if (equal orgrr-window-management "single-window")
-		  (switch-to-buffer buffer)))
+		     (window-width . 60))))
+ (when (equal orgrr-window-management "single-window")
+   (switch-to-buffer buffer)))
 
 (defun orgrr-close-buffer ()
    "A wrapper to close BUFFER according to orgrr-window-management settings."
@@ -211,16 +210,17 @@ org-files and adds them to hashtables."
 ;; orgrr-presorted-completion-table is based on 
 ;; https://emacs.stackexchange.com/questions/8115/make-completing-read
 ;; -respect-sorting-order-of-a-collection, thanks @sachac@emacs.ch for the hint!
-;; lambda functions and lexical binding don't like each other.
+;; lambda functions and let for whatever reason don't like each other,
+;; hence this construction.
 
 (defun orgrr-presorted-completion-table (orgrr-selection-list)
-  (let ((orgrr-selection-list-completion))
-  (setq orgrr-selection-list-completion 
-	(lambda (string pred action)
-	  (if (eq action 'metadata)
-	      `(metadata (display-sort-function . ,#'identity))
-	    (complete-with-action action orgrr-selection-list string pred))))))
-
+  (let ((orgrr-selection-list-completion ()))
+    (setq orgrr-selection-list-completion 
+	  (lambda (string pred action)
+	    (if (eq action 'metadata)
+		`(metadata (display-sort-function . ,#'identity))
+	    (complete-with-action action orgrr-selection-list string pred))))
+orgrr-selection-list-completion))
 
 (defun orgrr-selection ()
   "Prepare the symbol orgrr-selection for completing-read and send the result 
@@ -261,8 +261,9 @@ of title and alias."
 in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files 
 that have a value for zettel. Prepends zettel value in front of title and 
 alias."
-  (let ((current-zettel (orgrr-read-current-zettel))
-	(orgrr-selection-list-completion (orgrr-prepare-zettel-selection-list))
+  (let* ((current-zettel (orgrr-read-current-zettel))
+	(orgrr-selection-list (orgrr-prepare-zettel-selection-list))
+	(orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
 	(selection))
     (if current-zettel
       (setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil current-zettel))
@@ -272,12 +273,12 @@ alias."
     selection))
 
 (defun orgrr-prepare-zettel-selection-list ()
-"A function preparing a list of all zettel for selection and other functions."
+  "A function preparing a list of all zettel for selection and other functions."
+  (interactive)
   (orgrr-get-meta)
-  (let* ((titles (hash-table-keys orgrr-title-filename))
+  (let* ((orgrr-selection-list ())
+	 (titles (hash-table-keys orgrr-title-filename))
 	 (filenames-for-zettel (hash-table-keys orgrr-filename-zettel))
-	 (orgrr-selection-list ())
-	 (orgrr-selection-list-completion)
 	 (final-title))
     (dolist (title titles)
       (let* ((filename (gethash title orgrr-title-filename)))
@@ -285,10 +286,8 @@ alias."
 	    (progn 
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\s" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
-    (setq orgrr-selection-list (reverse orgrr-selection-list))
-    (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
-    orgrr-selection-list-completion))
-	  
+    (setq orgrr-selection-list (reverse orgrr-selection-list))))
+
 (defun orgrr-find-zettel ()
   "Like orgrr-find, but only considers notes that have a value for zettel. If 
 the selected file name does not exist, a new one is created. Starts with the 
@@ -310,6 +309,7 @@ in selection to orgrr-find and orgrr-insert. Excludes zettel. "
   (interactive)
   (orgrr-get-meta)
   (let*  ((orgrr-selection-list ())
+	  (orgrr-selection-list-completion)
 	  (final-title)
 	  (selection)
 	  (titles (hash-table-keys orgrr-title-filename))
@@ -328,9 +328,10 @@ in selection to orgrr-find and orgrr-insert. Excludes zettel. "
 		  (setq final-title title)
 		  (setq orgrr-selection-list (cons final-title orgrr-selection-list)))))))
     (setq orgrr-selection-list (reverse orgrr-selection-list))
+    (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
     (if (region-active-p)
-	(setq selection (completing-read "Select: " orgrr-selection-list nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
-      (setq selection (completing-read "Select: " orgrr-selection-list))) 
+	(setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
+      (setq selection (completing-read "Select: " orgrr-selection-list-completion))) 
     (if (string-match "^\(" selection)
 	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
     selection))
@@ -353,41 +354,42 @@ file)."
   (interactive)
   (orgrr-get-meta)
   (let ((current-zettel (orgrr-read-current-zettel)))
-    (when (not current-zettel)
-      (let ((orgrr-selection-list ())
-	    (orgrr-selection-list-completion)
-	    (selection-zettel)
-	    (inserted-already)
-	    (final-title)
-	    (titles (hash-table-keys orgrr-title-filename))
-	    (filenames-for-zettel (hash-table-keys orgrr-filename-zettel))
-	    (saved-point (point-marker)))
-	(dolist (title titles)
+    (if (not current-zettel)
+	(progn
+	  (let ((orgrr-selection-list ())
+		(orgrr-selection-list-completion)
+		(selection-zettel)
+		(inserted-already)
+		(final-title)
+		(titles (hash-table-keys orgrr-title-filename))
+		(filenames-for-zettel (hash-table-keys orgrr-filename-zettel))
+		(saved-point (point-marker)))
+	    (dolist (title titles)
 	  (let* ((filename (gethash title orgrr-title-filename)))
 	    (when (member (concat "\\" filename) filenames-for-zettel)
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\s" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list)))))
-    (setq orgrr-selection-list (reverse orgrr-selection-list))
-    (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
-    (setq selection-zettel (completing-read "Hit enter to narrow down: " orgrr-selection-list-completion))
-    (if (string-match "^\\[\\(.*?\\)\\]" selection-zettel)
-	(setq selection-zettel (match-string 1 selection-zettel)))
+	    (setq orgrr-selection-list (reverse orgrr-selection-list))
+	    (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
+	    (setq selection-zettel (completing-read "Hit enter to narrow down: " orgrr-selection-list-completion))
+	    (if (string-match "^\\[\\(.*?\\)\\]" selection-zettel)
+		(setq selection-zettel (match-string 1 selection-zettel)))
     (while (member selection-zettel (hash-table-values orgrr-filename-zettel))
       (setq selection-zettel (completing-read "Hit enter to narrow down: " orgrr-selection-list-completion nil nil selection-zettel))
       (when (string-match "^\\[\\(.*?\\)\\]" selection-zettel)
-	  (setq selection-zettel (match-string 1 selection-zettel))))
+	(setq selection-zettel (match-string 1 selection-zettel))))
     (goto-char (point-min))
     (setq inserted-already nil)
-      (while (not inserted-already)
-	(let ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
-	  (if (string-prefix-p "#+" current-entry)
-	      (forward-line)
-	    (progn
-	      (setq inserted-already t)
-	      (insert (concat "#+zettel: " selection-zettel "\n"))
-	      (goto-char saved-point)
-	      (save-buffer)))))))
-  (message "This note already has a value for zettel!")))
+    (while (not inserted-already)
+      (let ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
+	(if (string-prefix-p "#+" current-entry)
+	    (forward-line)
+	  (progn
+	    (setq inserted-already t)
+	    (insert (concat "#+zettel: " selection-zettel "\n"))
+	    (goto-char saved-point)
+	    (save-buffer)))))))
+  (message "This note already has a value for zettel!"))))
 	 
 (defun orgrr-read-current-zettel ()
     "Returns #+zettel for current note."
@@ -746,6 +748,7 @@ an existing project."
 create a new one. Returns a project."
   (orgrr-get-meta)
   (let* ((orgrr-selection-list ())
+	 (orgrr-selection-list-completion)
 	 (orgrr-project_filename-title (make-hash-table :test 'equal))
 	 (selection))
      (with-temp-buffer
@@ -755,7 +758,7 @@ create a new one. Returns a project."
 	   (let ((title (gethash (concat "\\" line) orgrr-filename-title)))
 	     (puthash (concat "\\" line) title orgrr-project_filename-title)
 	     (setq orgrr-selection-list (cons title orgrr-selection-list)))))
-     (setq orgrr-selection-list (orgrr-presorted-completion-table orgrr-selection-list))
+     (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
      (setq selection (completing-read "Select: " orgrr-selection-list))
      (if (string-match "^\(" selection)
 	 (setq selection (replace-regexp-in-string "\(.*?\) " "" selection))))
@@ -807,7 +810,7 @@ project, which is located in a different container than the main database."
 		  (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
 		       (filename (car line)))
 		    (puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)))))
-(forward-line))))))
+	  (forward-line))))))
 	 
 (defun orgrr-adjust-links (string)
   "Adjusts/corrects all links of STRING relative to the position of the note."
