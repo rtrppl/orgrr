@@ -423,6 +423,7 @@ orgrr-window-management."
 	   (zettel-filename (gethash zettel-title orgrr-title-filename))
 	   (selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel))
 	   (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
+	   (orgrr-zettel-list (sort orgrr-zettel-list 'dictionary-lessp))
 	   (sequence-buffer (concat "sequence for *[" selection-zettel "]*")))
       (with-current-buffer (get-buffer-create sequence-buffer)
 	(let ((inhibit-read-only t))
