@@ -814,7 +814,8 @@ project, which is located in a different container than the main database."
 	  (forward-line))))))
 	 
 (defun orgrr-adjust-links (string)
-  "Adjusts/corrects all links of STRING relative to the position of the note."
+  "Adjusts/corrects all links of STRING relative to the position of the note. 
+Does not work when filenames themselves are changed."
   (let* ((path-of-current-note
 	  (if (buffer-file-name)
               (file-name-directory (buffer-file-name))
@@ -832,7 +833,8 @@ project, which is located in a different container than the main database."
     (buffer-string))))
     
 (defun orgrr-info ()
- "Show the amount of titles considered by orgrr."
+ "Show the amount of titles considered by orgrr and how long it takes to 
+collect this information."
  (interactive)
  (let* ((result (benchmark-run-compiled 1
                   (progn
