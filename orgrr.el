@@ -934,26 +934,27 @@ grandparents as well as children and grandchildren."
   related-notes))
 
 (defun orgrr-forwardlinks-first-and-second-order ()
-  "Gets backlinks first and second order."
-  (let* ((filename (if (equal major-mode 'dired-mode)
+  "Gets forward links first and second order in the same directory."
+  (let* ((original-filename (if (equal major-mode 'dired-mode)
                       default-directory
 		    (buffer-file-name)))
-		(original-filename filename)
-		(related-notes 0)
-		(counter 0)
-		(contents (with-current-buffer (buffer-name)
-			    (buffer-substring-no-properties (point-min) (point-max)))))
-;; find all foward links first order
+	 (related-notes 0)
+	 (counter 0)
+	 (contents (with-current-buffer (buffer-name)
+		     (buffer-substring-no-properties (point-min) (point-max)))))
+;; find all forward links first order
     (with-temp-buffer
       (insert contents)
       (goto-char (point-min))
       (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
-	 (let* ((filename (file-name-nondirectory (match-string 1)))
+	 (let* ((filename (match-string 1))
+		(new-directory (file-name-directory filename))
+		(filename (file-name-nondirectory filename))
 		(new-filename
-		  (if (on-macos-p)
-		      (string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string filename) "\" --files " org-directory)))
-		(string-trim (shell-command-to-string (concat "rg -g \"" filename "\" --files " org-directory))))))
-	   (if (not (equal original-filename new-filename))
+		 (if (on-macos-p)
+		     (string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string filename) "\" --files " org-directory)))
+		   (string-trim (shell-command-to-string (concat "rg -g \"" filename "\" --files " org-directory))))))
+	   (if (and (not (equal original-filename new-filename))(not new-directory))
 		 (progn
 		   (if (not (member (concat "\\" new-filename) (hash-table-keys orgrr-filename-mentions)))
 		     (progn
@@ -963,18 +964,20 @@ grandparents as well as children and grandchildren."
 		     (setq counter (gethash (concat "\\" new-filename) orgrr-filename-mentions))
 		     (setq counter (+ counter 1))
 		     (setq related-notes (+ related-notes 1))
-		     (puthash (concat "\\" new-filename) counter orgrr-filename-mentions)))))
+		     (puthash (concat "\\" new-filename) counter orgrr-filename-mentions)))
 ;; add links second order
 	       (with-temp-buffer
 		 (insert-file-contents new-filename)
 		 (goto-char (point-min))
 		 (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
-		   (let* ((2nd-filename (file-name-nondirectory (match-string 1)))
+		   (let* ((2nd-filename (match-string 1))
+			  (2nd-new-directory (file-name-directory 2nd-filename))
+			  (2nd-filename (file-name-nondirectory 2nd-filename))
 			  (2nd-new-filename
 			    (if (on-macos-p)
 				(string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string 2nd-filename) "\" --files " org-directory)))
 			      (string-trim (shell-command-to-string (concat "rg -g \"" 2nd-filename "\" --files " org-directory))))))
-		      (if (not (equal original-filename 2nd-new-filename))
+		      (if (and (not (equal original-filename 2nd-new-filename))(not 2nd-new-directory))
 			  (if (not (member (concat "\\" 2nd-new-filename) (hash-table-keys orgrr-filename-mentions)))
 			      (progn
 				(puthash (concat "\\" 2nd-new-filename) 1 orgrr-filename-mentions)
@@ -983,7 +986,7 @@ grandparents as well as children and grandchildren."
 			      (setq counter (gethash (concat "\\" 2nd-new-filename) orgrr-filename-mentions))
 			      (setq counter (+ counter 1))
 			      (setq related-notes (+ related-notes 1))
-			      (puthash (concat "\\" 2nd-new-filename) counter orgrr-filename-mentions))))))))))
+			      (puthash (concat "\\" 2nd-new-filename) counter orgrr-filename-mentions))))))))))))
     related-notes))
 
 (defun orgrr-change-container (&optional container)
