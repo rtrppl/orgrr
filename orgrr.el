@@ -57,6 +57,7 @@
 (defvar orgrr-zettelrank-zettel (make-hash-table :test 'equal) "Hashtable with the key rank of a zettel and the value zettel.") ;; rank means how a zettel value of a note relates to other notes
 (defvar orgrr-zettel-zettelrank (make-hash-table :test 'equal) "Hashtable with the key zettel and the value rank of a zettel.")
 (defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable containing all org-files accross all containers.")
+(defvar orgrr-short_filename-title (make-hash-table :test 'equal) "Hashtable containing titles for all org-files accross all containers.")
 (defvar orgrr-filename-mentions (make-hash-table :test 'equal) "Hashtable necessary for orgrr-show-related-notes.") 
 
 (defun orgrr-open-file (filename)
@@ -106,7 +107,7 @@ require NCD-formating."
 (defun orgrr-show-backlinks ()
   "Show all backlinks in `org-directory' to the current org-file."
   (interactive)
-  (orgrr-get-all-filenames)
+  (orgrr-get-all-meta)
   (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
       (progn
 	(orgrr-get-meta)
@@ -726,7 +727,7 @@ If the selected title does not exist, a new note is created."
 an existing project."
   (interactive)
   (orgrr-get-meta)
-  (orgrr-get-all-filenames)
+  (orgrr-get-all-meta)
   (let* ((snippet (orgrr-collect-project-snippet))
 	 (selection (orgrr-pick-project))
 	 (filename)
@@ -789,15 +790,19 @@ create a new one. Returns a project."
   (setq footnote-line (string-to-number (car (cdr (split-string (replace-regexp-in-string "^file:" "" footnote-link) "::")))))
   (setq snippet (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")")))))
 
-(defun orgrr-get-all-filenames ()
-  "Collects the name all of org-files across all containers and adds them to 
-the hashtable orgrr-short_filename-filename. This is needed to correct the 
-links of a snippet created in one container for use in another via 
-orgrr-add-to-project. 
+(defun orgrr-get-all-meta ()
+  "Collects the filenames and titles all of org-files across all containers 
+and adds them to the hashtables orgrr-short_filename-filename and 
+orgrr-short_filename-title. This is needed to correct the links of a snippet 
+created in one container for use in another via orgrr-add-to-project. 
 
 An intended use case for orgrr-add-to-project is to add snippets to a writing 
-project, which is located in a different container than the main database."
+project, which is located in a different container than the main database.
+
+This also allows orgrr-show-related-notes to refer linked documents even 
+if they are not in the same container."
   (clrhash orgrr-short_filename-filename)
+  (clrhash orgrr-short_filename-title)
   (let* ((orgrr-name-container (orgrr-get-list-of-containers))
 	 (containers (nreverse (hash-table-values orgrr-name-container))))
     (dolist (container containers) 
@@ -806,11 +811,12 @@ project, which is located in a different container than the main database."
 	(goto-char (point-min))
 	(while (not (eobp))
 	  (let* ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
-	    (if (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
+	    (if (string-match "\\(.*\\):#\\+\\(title\\|TITLE\\):\\s-*\\(.+\\)" current-entry)
 		(progn
-		  (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
-		       (filename (car line)))
-		    (puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)))))
+		  (let* ((filename (match-string 1 current-entry))
+			 (title (match-string 3 current-entry)))
+		    (puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)
+		    (puthash (concat "\\" (file-name-nondirectory filename)) title orgrr-short_filename-title)))))
 	  (forward-line))))))
 	 
 (defun orgrr-adjust-links (string)
@@ -853,11 +859,11 @@ grandparents as well as children and grandchildren."
   (interactive)
   (when (not (string-match-p "related notes for *" (buffer-name (current-buffer))))
     (clrhash orgrr-filename-mentions)
-    (orgrr-get-meta)
+    (orgrr-get-all-meta)
     (let* ((filename (if (equal major-mode 'dired-mode)
                       default-directory
 		     (buffer-file-name)))
-	   (title (gethash (concat "\\" filename) orgrr-filename-title))
+	   (title (gethash (concat "\\" (file-name-nondirectory filename)) orgrr-short_filename-title))
            (relatednotes-buffer (concat "related notes for *" title "*"))
 	   (related-notes (orgrr-backlinks-first-and-second-order))
 	   (related-notes (+ related-notes (orgrr-forwardlinks-first-and-second-order)))
@@ -872,7 +878,10 @@ grandparents as well as children and grandchildren."
 		 orgrr-filename-mentions)
 	(setq sorted-values (sort sorted-values (lambda (a b) (> (car a) (car b)))))
 	(dolist (entry sorted-values)
-	  (insert (concat "** " "\[\[file:" (substring (cdr entry) 1) "\]\[" (gethash (cdr entry) orgrr-filename-title) "\]\]: " (number-to-string (car entry)) "\n")))
+	  (let* ((connections (number-to-string (car entry)))
+		 (list-filename (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-filename))
+		 (list-title (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-title)))
+	  (insert (concat "** " "\[\[file:" list-filename "\]\[" list-title "\]\]: " connections "\n"))))
 	(let ((win (get-buffer-window relatednotes-buffer)))
 	  (select-window win)
 	  (goto-char (point-min))
@@ -886,7 +895,7 @@ grandparents as well as children and grandchildren."
   (let* ((filename (if (equal major-mode 'dired-mode)
                       default-directory
 		     (buffer-file-name)))
-	 (original-filename filename)
+	 (original-filename (file-name-nondirectory filename))
 	 (related-notes 0)
 	 (counter 0))
     ;; get all backlinks first order
@@ -896,19 +905,20 @@ grandparents as well as children and grandchildren."
 	 (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\""))))
       (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (line lines)
+	  (let* ((short-filename (file-name-nondirectory line)))
 	  (if (string-match "\\.org$" line)
 	      (progn
-		(if (not (equal original-filename line))
+		(if (not (equal original-filename short-filename))
 		    (progn
-		      (if (not (member (concat "\\" line) (hash-table-keys orgrr-filename-mentions)))
+		      (if (not (member (concat "\\" short-filename) (hash-table-keys orgrr-filename-mentions)))
 			  (progn
-			    (puthash (concat "\\" line) 1 orgrr-filename-mentions)
+			    (puthash (concat "\\" short-filename) 1 orgrr-filename-mentions)
 			    (setq related-notes (+ related-notes 1)))
 			(progn
-			  (setq counter (gethash (concat "\\" line) orgrr-filename-mentions))
+			  (setq counter (gethash (concat "\\" short-filename) orgrr-filename-mentions))
 			  (setq counter (+ counter 1))
 			  (setq related-notes (+ related-notes 1))
-			  (puthash (concat "\\" line) counter orgrr-filename-mentions))))))))))
+			  (puthash (concat "\\" short-filename) counter orgrr-filename-mentions)))))))))))
   ;; get all backlinks second order
   (dolist (entry (hash-table-keys orgrr-filename-mentions))
     (setq filename (substring entry 1))
@@ -918,19 +928,20 @@ grandparents as well as children and grandchildren."
 	(insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\""))))
       (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (line lines)
-	  (if (string-match "\\.org$" line)
+	  (let* ((short-filename (file-name-nondirectory line)))
+	    (if (string-match "\\.org$" line)
 	      (progn
-		(if (not (equal original-filename line))
+		(if (not (equal original-filename short-filename))
 		    (progn
-		      (if (not (member (concat "\\" line) (hash-table-keys orgrr-filename-mentions)))
+		      (if (not (member (concat "\\" short-filename) (hash-table-keys orgrr-filename-mentions)))
 			  (progn
-			    (puthash (concat "\\" line) 1 orgrr-filename-mentions)
+			    (puthash (concat "\\" short-filename) 1 orgrr-filename-mentions)
 			    (setq related-notes (+ related-notes 1)))
 			(progn
-			  (setq counter (gethash (concat "\\" line) orgrr-filename-mentions))
+			  (setq counter (gethash (concat "\\" short-filename) orgrr-filename-mentions))
 			  (setq counter (+ counter 1))
 			  (setq related-notes (+ related-notes 1))
-			  (puthash (concat "\\" line) counter orgrr-filename-mentions)))))))))))
+			  (puthash (concat "\\" short-filename) counter orgrr-filename-mentions))))))))))))
   related-notes))
 
 (defun orgrr-forwardlinks-first-and-second-order ()
@@ -938,6 +949,7 @@ grandparents as well as children and grandchildren."
   (let* ((original-filename (if (equal major-mode 'dired-mode)
                       default-directory
 		    (buffer-file-name)))
+	 (original-filename (file-name-nondirectory original-filename))
 	 (related-notes 0)
 	 (counter 0)
 	 (contents (with-current-buffer (buffer-name)
@@ -949,14 +961,10 @@ grandparents as well as children and grandchildren."
       (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
 	 (let* ((filename (match-string 1))
 		(new-directory (file-name-directory filename))
-		(filename (file-name-nondirectory filename))
-		(new-filename
-		 (if (on-macos-p)
-		     (string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string filename) "\" --files " org-directory)))
-		   (string-trim (shell-command-to-string (concat "rg -g \"" filename "\" --files " org-directory))))))
-	   (if (and (not (equal original-filename new-filename))(not new-directory))
-		 (progn
-		   (if (not (member (concat "\\" new-filename) (hash-table-keys orgrr-filename-mentions)))
+		(new-filename (file-name-nondirectory filename)))
+	   (if (and (not (equal original-filename new-filename))(member (concat "\\" new-filename) (hash-table-keys orgrr-short_filename-filename)))
+	       (progn
+		 (if (not (member (concat "\\" new-filename) (hash-table-keys orgrr-filename-mentions)))
 		     (progn
 		       (puthash (concat "\\" new-filename) 1 orgrr-filename-mentions)
 		       (setq related-notes (+ related-notes 1)))
@@ -967,26 +975,23 @@ grandparents as well as children and grandchildren."
 		     (puthash (concat "\\" new-filename) counter orgrr-filename-mentions)))
 ;; add links second order
 	       (with-temp-buffer
-		 (insert-file-contents new-filename)
+		 (insert-file-contents filename)
 		 (goto-char (point-min))
 		 (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
 		   (let* ((2nd-filename (match-string 1))
 			  (2nd-new-directory (file-name-directory 2nd-filename))
-			  (2nd-filename (file-name-nondirectory 2nd-filename))
-			  (2nd-new-filename
-			    (if (on-macos-p)
-				(string-trim (shell-command-to-string (concat "rg -g \"" (ucs-normalize-HFS-NFD-string 2nd-filename) "\" --files " org-directory)))
-			      (string-trim (shell-command-to-string (concat "rg -g \"" 2nd-filename "\" --files " org-directory))))))
-		      (if (and (not (equal original-filename 2nd-new-filename))(not 2nd-new-directory))
-			  (if (not (member (concat "\\" 2nd-new-filename) (hash-table-keys orgrr-filename-mentions)))
-			      (progn
-				(puthash (concat "\\" 2nd-new-filename) 1 orgrr-filename-mentions)
+			  (2nd-new-filename (file-name-nondirectory 2nd-filename)))
+		     (if (and (not (equal original-filename 2nd-new-filename))(member (concat "\\" 2nd-new-filename) (hash-table-keys orgrr-short_filename-filename)))
+			 (progn
+			   (if (not (member (concat "\\" 2nd-new-filename) (hash-table-keys orgrr-filename-mentions)))
+			     (progn
+			       (puthash (concat "\\" 2nd-new-filename) 1 orgrr-filename-mentions)
 				(setq related-notes (+ related-notes 1)))
 			    (progn
 			      (setq counter (gethash (concat "\\" 2nd-new-filename) orgrr-filename-mentions))
 			      (setq counter (+ counter 1))
 			      (setq related-notes (+ related-notes 1))
-			      (puthash (concat "\\" 2nd-new-filename) counter orgrr-filename-mentions))))))))))))
+			      (puthash (concat "\\" 2nd-new-filename) counter orgrr-filename-mentions)))))))))))))
     related-notes))
 
 (defun orgrr-change-container (&optional container)
@@ -1082,7 +1087,7 @@ orgrr-name-container))
 (defun orgrr-fix-all-links-buffer ()
   "This runs the function orgrr-adjust-links on the current buffer."
  (interactive)
- (orgrr-get-all-filenames)
+ (orgrr-get-all-meta)
  (let ((contents (with-current-buffer (buffer-name)
                   (buffer-substring-no-properties (point-min) (point-max)))))
    (erase-buffer)
