@@ -86,7 +86,7 @@
   (if (equal orgrr-window-management "single-window")
       (previous-buffer)))
 
-(defun orgrr-toggle-single-window-mode ()
+(defun orgrr-toggle-window-mode ()
   "Switch between single-window-mode and multi-window mode (which uses 
 side-buffers)."
   (interactive)

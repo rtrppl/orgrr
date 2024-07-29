@@ -18,6 +18,9 @@ These are the primary functions orgrr provides:
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
+Version 0.9  
+- Optimizing/Rewrite of code for straight package management (in preparation of an potential MELPA release)
+
 ------------------------------
 
 ## Table of Contents
@@ -59,6 +62,8 @@ These are the primary functions orgrr provides:
 
 ## Installation
 
+### Manual install
+
 Clone the repository:
 
 ```git clone https://github.com/rtrppl/orgrr```
@@ -69,7 +74,7 @@ To run orgrr, you need to load the package by adding it to your .emacs or init.e
 (load "/path/to/orgrr/orgrr.el") ;; You actually only need orgrr.el
 ```
 
-If you don't already have done so, you also have to set an org-directory.
+If you don't already have done so, you also should set an org-directory as the location for your notes.
 
 ```org
 (setq org-directory "~/path/to/org-directory")
@@ -81,14 +86,73 @@ Finally, you may also want to set keybindings for the main functions (I have bou
 
 ```org
 (global-set-key (kbd "M-s-f") 'orgrr-find)
-(global-set-key (kbd "M-s-i") 'orgrr-insert)
 (global-set-key (kbd "M-s-l") 'orgrr-show-backlinks)
-(global-set-key (kbd "M-s-a") 'orgrr-add-to-project)
-(global-set-key (kbd "M-s-p") 'orgrr-open-project)
+(global-set-key (kbd "M-s-i") 'orgrr-insert)
+(global-set-key (kbd "M-s-I") 'orgrr-insert-project)
+(global-set-key (kbd "M-s-A") 'orgrr-add-to-project)
+(global-set-key (kbd "M-s-P") 'orgrr-open-project)
 (global-set-key (kbd "M-s-r") 'orgrr-show-related-notes)
+(global-set-key (kbd "M-s-ö") 'orgrr-change-container)
+(global-set-key (kbd "M-s-a") 'orgrr-add-zettel)
+(global-set-key (kbd "M-s-z") 'orgrr-find-zettel)
+(global-set-key (kbd "M-s-s") 'orgrr-show-sequence)
+(global-set-key (kbd "M-s-p") 'orgrr-open-previous-zettel)
+(global-set-key (kbd "M-s-n") 'orgrr-open-next-zettel)
+(global-set-key (kbd "M-s-N") 'orgrr-no-find-zettel)
+```
+
+This IMHO works best for linux and the command line:
+
+```org
+(global-set-key (kbd "C-o") nil)
+(global-set-key (kbd "C-o f") 'orgrr-find)
+(global-set-key (kbd "C-o l") 'orgrr-show-backlinks)
+(global-set-key (kbd "C-o i") 'orgrr-insert)
+(global-set-key (kbd "C-o I") 'orgrr-insert-project)
+(global-set-key (kbd "C-o A") 'orgrr-add-to-project)
+(global-set-key (kbd "C-o P") 'orgrr-open-project)
+(global-set-key (kbd "C-o r") 'orgrr-show-related-notes)
+(global-set-key (kbd "C-o ö") 'orgrr-change-container)
+(global-set-key (kbd "C-o a") 'orgrr-add-zettel)
+(global-set-key (kbd "C-o z") 'orgrr-find-zettel)
+(global-set-key (kbd "C-o s") 'orgrr-show-sequence)
+(global-set-key (kbd "C-o p") 'orgrr-open-previous-zettel)
+(global-set-key (kbd "C-o n") 'orgrr-open-next-zettel)
+(global-set-key (kbd "C-o N") 'orgrr-no-find-zettel)
 ```
 
 Hint: orgrr's functions also work great from a [Hydra setup](https://github.com/abo-abo/hydra). 
+
+### straight.el
+
+```org
+(use-package orgrr
+  :straight (:host github :repo "rtrppl/orgrr"
+		   :branch "main")
+  :config
+  (global-set-key (kbd "C-o") nil)
+  (global-set-key (kbd "C-o f") 'orgrr-find)
+  (global-set-key (kbd "C-o l") 'orgrr-show-backlinks)
+  (global-set-key (kbd "C-o i") 'orgrr-insert)
+  (global-set-key (kbd "C-o I") 'orgrr-insert-project)
+  (global-set-key (kbd "C-o A") 'orgrr-add-to-project)
+  (global-set-key (kbd "C-o P") 'orgrr-open-project)
+  (global-set-key (kbd "C-o r") 'orgrr-show-related-notes)
+  (global-set-key (kbd "C-o ö") 'orgrr-change-container)
+  (global-set-key (kbd "C-o a") 'orgrr-add-zettel)
+  (global-set-key (kbd "C-o z") 'orgrr-find-zettel)
+  (global-set-key (kbd "C-o s") 'orgrr-show-sequence)
+  (global-set-key (kbd "C-o p") 'orgrr-open-previous-zettel)
+  (global-set-key (kbd "C-o n") 'orgrr-open-next-zettel)
+  (global-set-key (kbd "C-o N") 'orgrr-no-find-zettel))
+```
+
+As above, if you don't already have done so,  you also should set an org-directory as the location for your notes.
+
+```org
+(setq org-directory "~/path/to/org-directory")
+```
+
 
 ## orgrr's way of dealing with notes
 
@@ -170,6 +234,8 @@ There are many different attempts to surface related notes in note-taking system
 
 ![orgrr-show-related-notes](/orgrr-show-related-notes.png)
 
+See also [orgrr-show-related-notes](#orgrr-show-related-notes).
+
 ### orgrr-containers
 
 Another feature that felt missing in orgrr (and org-roam v1) was the option to keep several different sets of data. [Obsidian](https://obsidian.md)'s [vaults](https://help.obsidian.md/Getting+started/Create+a+vault) is an example of this idea and has been the inspiration for orgrr-containers. Each orgrr-container is a folder containing org-files (that may have sub-folders with org-files of their own). 
@@ -192,9 +258,11 @@ This will search the org-directory (and all its subdirectories) for a note and t
 
 If the note does not exist, a new one with the same title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. The link to the new note will also be added at point. As above mentioned, you should use orgrr-find and orgrr-insert to create new notes and should use `kill-current-buffer` to abort.
 
+A special variant of this function is `orgrr-insert-project`, which allows to insert a link to any orgrr-project in the current container (see [orgrr-projects](#orgrr-projects)).
+
 ### orgrr-rename
 
-orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the #+title of a note (or any other meta-data about a note), however, will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
+orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the `#+title` of a note (or any other meta-data about a note), however, will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
 
 This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in the org-directory. Use it with caution!
 
@@ -244,7 +312,9 @@ This displays all backlinks for the note in the current buffer in a side-window.
 
 ### orgrr-show-related-notes
 
-This displays all related notes for the note in the current buffer in a side-window (see also [orgrr-related-notes](#orgrr-related-notes)). The buffer here is temporary. You can navigate it as you would with any other org buffer and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). Invoke the command again to close the side-window (while visiting this buffer).
+This displays all related notes for the note in the current buffer (see also [orgrr-related-notes](#orgrr-related-notes)). The orgmode buffer with the results is temporary. You can navigate it as you would with any other org buffer and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). Invoke the command again to close the side-window or buffer (while visiting this buffer).
+
+If called with C-u, backlinks of first and second order in all containers are considered. This may take a while, please be patient. 
 
 ## Functions for project management
 
@@ -260,15 +330,9 @@ This displays all related notes for the note in the current buffer in a side-win
 
 ## Quality of life functions
 
-### orgrr-toggle-single-window-mode
+### orgrr-toggle-window-mode
 
-This function activates `single-window-mode`, in which all links as well as the buffers for "backlinks", "related notes" and "sequence of notes" (for these three functions see above) are opened in the current window. Intended for devices with small displays, it might also be helpful for distraction-free writing or more predictable window management. If you want to start-up in this mode, you should add this to your init file:
-
-```org
-(orgrr-toggle-single-window-mode)
-```
-
-This is what I have done.
+This function switches between `multi-window` and `single-window-mode`, affecting the display of "backlinks", "related notes" and "sequence of notes" (and the way links are opened). Attention: In version 0.9 the default (now `single-window-mode`) and name of this function changed (from `orgrr-toggle-single-window-mode`).
 
 ### orgrr-fix-all-links-buffer and ogrr-fix-all-links-container
 
@@ -276,7 +340,7 @@ These functions were a byproduct of rewriting orgrr-move-note and correct links 
 
 ## orgrr extensions
 
-orgrr extensions are additions to the core functionality of orgrr that may introduce new dependencies to other packages or external software. orgrr will always run fine without them and if you want a minimalist setup, you don't need these. In order to use the extensions you will have to add this file to your load-path:
+orgrr extensions are additions to the core functionality of orgrr that may introduce new dependencies to other packages or external software. orgrr will always run fine without them and if you want a minimalist setup, you don't need these. In order to use the extensions you may have to add this file to your load-path (see above installation info):
 
 ```org
 (load "/path/to/orgrr/orgrr-extensions.el") 
