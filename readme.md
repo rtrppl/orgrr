@@ -18,9 +18,11 @@ These are the primary functions orgrr provides:
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
-Version 0.9  
+**Version 0.9**:  
 - Optimizing/Rewrite of code for straight package management (in preparation of an potential MELPA release)
-
+- Changes to orgrr-toggle-window-mode
+- C-u orgrr-show-related-backlinks now considers backlinks for all containers
+- Added install instructions for straight.el
 ------------------------------
 
 ## Table of Contents
@@ -62,6 +64,8 @@ Version 0.9
 
 ## Installation
 
+**In order to use orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine.** The easiest way to do so might be [homebrew](https://brew.sh), i.e. `brew install rg`.
+
 ### Manual install
 
 Clone the repository:
@@ -79,8 +83,6 @@ If you don't already have done so, you also should set an org-directory as the l
 ```org
 (setq org-directory "~/path/to/org-directory")
 ```
-
-**In order to use orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine.** The easiest way to do so might be [homebrew](https://brew.sh), i.e. `brew install rg`.
 
 Finally, you may also want to set keybindings for the main functions (I have bound the Mac-command key to super/s):
 
@@ -121,8 +123,6 @@ This IMHO works best for linux and the command line:
 (global-set-key (kbd "C-o N") 'orgrr-no-find-zettel)
 ```
 
-Hint: orgrr's functions also work great from a [Hydra setup](https://github.com/abo-abo/hydra). 
-
 ### straight.el
 
 ```org
@@ -153,16 +153,15 @@ As above, if you don't already have done so,  you also should set an org-directo
 (setq org-directory "~/path/to/org-directory")
 ```
 
-
 ## orgrr's way of dealing with notes
 
 ### Origin story
 
 orgrr began as a nearly feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1), built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. orgrr currently only works with [org-files](https://orgmode.org) (i.e. in a technical sense: files ending in .org).
 
-**A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files and their meta-data. The aim is to have as little dependencies as possible. A second difference is that orgrr sticks to the ideal of every note being a single file. The final difference is relative minimalism - orgrr should have all the features that are necessary and draw on org-mode/Emacs for everything else.**
+**A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files and their meta-data, which is stored in hashtables. The aim is to have no dependencies on sql or related software. A second difference is that orgrr sticks to the ideal of every note being a single file (no nodes!). The final difference is relative minimalism - orgrr should have all necessary features and draw on org-mode/Emacs for everything else.**
 
-This package primarily address my own needs and I have been using orgrr almost daily for a year now (February 2024). My main container has close to 4000 notes and the speed between org-roam and orgrr is comparable. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data (see below)!
+This package primarily address my own needs and I have been using orgrr almost daily for a year now (February 2024). My main container has close to 4000 notes and orgrr is much faster than org-roam. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest of the Zettelkasten packages available for Emacs.
 
 **As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions.** 
 
