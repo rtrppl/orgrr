@@ -6,7 +6,7 @@ orgrr is a minimalist but complete note-taking system for Emacs. Its intended pu
 
 These are the primary functions orgrr provides:
 
-- **orgrr-find** will find and open a note, i.e. an `.org` file with a #+title, in the `org-directory` ([see here](#orgrr-find)). If the title (or alias) entered does not exist, a new note is created. 
+- **orgrr-find** will find and open a note ([see here](#basic-design-of-a-note) in the `org-directory` ([see here](#orgrr-find)). If the title (or alias) entered does not exist, a new note is created. 
 
 - **orgrr-insert** will insert a link to another note in the `org-directory` ([see here](#orgrr-insert)). If the title (or alias) entered does not exist, a new note is created.
 
@@ -21,8 +21,10 @@ These are the primary functions orgrr provides:
 **Version 0.9**:  
 - Optimizing/Rewrite of code for straight package management (in preparation of an potential MELPA release)
 - Changes to orgrr-toggle-window-mode
-- C-u orgrr-show-related-backlinks now considers backlinks for all containers
+- `C-u orgrr-show-related-notes` now considers backlinks for all containers
+- `C-u orgrr-show-backlinks` now considers backlinks for all containers
 - Added install instructions for straight.el
+- Added `open-roam_key-ref-url`
 ------------------------------
 
 ## Table of Contents
@@ -167,9 +169,9 @@ This package primarily address my own needs and I have been using orgrr almost d
 
 ### Basic design of a note
 
-In orgrr, all (org-)notes are assumed to follow a certain logic regarding metadata. The design principles used here are similar to org-roam v1 and interoperation between orgrr and org-roam v1 is possible (and was intended). Hence filenames themselves are used as unique identifiers and changing them without adjusting backlinks will break the connection between two notes (see also [orgrr-rename](#orgrr-rename)).
+In orgrr, all notes are assumed to follow a certain logic regarding metadata. The design principles used here are similar to org-roam v1 and interoperation between orgrr and org-roam v1 is possible (and was intended). Filenames themselves are used as unique identifiers and changing them without adjusting backlinks will break the connection between two notes (see also [orgrr-rename](#orgrr-rename)).
 
-At the very minimum, a note file for orgrr is an .org file that includes the following line:
+At the very minimum, **a note file for orgrr is an .org file that includes the following line**:
 
 ```org
 #+title:       title of a note
@@ -180,6 +182,8 @@ One of the unique strengths of org-roam v1 was the inclusion of `alias`, a poten
 ```org
 #+roam_alias:  "alias 1" "alias 2"
 ```
+
+As demonstrated above, there can be more than one alias.
 
 orgrr also recognizes tags in the same way as org-roam v1 did, separate from regular [org-tags](https://orgmode.org/manual/Tags.html). In v2, org-roam began to use org-tags. I still prefer the approach of v1.
 
@@ -195,11 +199,20 @@ There is an ongoing debate on whether or not a true Zettelkasten-system also nee
 
 To be honest, initially, I did not see the need to add this. After all, didn't Luhmann use zettel IDs primarily for linking and this could be much more efficiently handled with org-links? Over time, however, the idea grew on me for a particular reason: This is another great way to show relationships between notes! It is also the only option to create a hierarchy of notes. Both aspects are very useful when you have more than a few hundred notes. 
 
-Values for zettel (i.e. zettel IDs) are added without quotation marks (and you should use [orgrr-add-zettel](#orgrr-add-zettel) for this). Using zettel values in orgrr makes most sense if you stick to [Luhmann's naming scheme](https://niklas-luhmann-archiv.de/bestand/zettelkasten/zettel/ZK_1_NB_1-5_V), e.g. 1a, 1a1, 1a2, 1a2a, 1a3, 1a3a....
+Values for zettel (i.e. zettel IDs) are added without quotation marks (and you should use [orgrr-add-zettel](#orgrr-add-zettel) for this). Using zettel values in orgrr makes most sense if you stick to [Luhmann's naming scheme](https://niklas-luhmann-archiv.de/bestand/zettelkasten/zettel/ZK_1_NB_1-5_V), e.g. 1a, 1a1, 1a2, 1a2a, 1a3, 1a3a...., as orgrr is using lexical sorting for these values.
 
 ```org
 #+zettel:   value
 ```
+
+A final piece of meta data also has roots in org-roam v1: 
+
+```org
+#+roam_key:   url
+```
+
+This is the place for link to a source webpage, a Zotero entry or any other URL that orgmode knows to open. If you visit a note with a value for `#+roam_key`, executing `M-x open-roam_key-ref-url` will directly open this link.
+
 
 In total, orgrr therefore recognizes these four lines of meta-data in an org-file:
 

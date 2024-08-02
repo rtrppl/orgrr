@@ -1160,6 +1160,33 @@ function, make sure to be in the correct container."
 	    (orgrr-adjust-backlinks-in-current-container filename)))
 	(message "All links in this container have been adjusted!"))))
 
+(defun orgrr-read-roam-key ()
+  "Reads out #+roam_key."
+  (let* ((current-entry nil)
+	 (roam-key nil)
+	 (buffer (buffer-substring-no-properties (point-min) (point-max)))
+	 (line)
+	 (key))
+    (with-temp-buffer
+      (insert buffer)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (setq current-entry (buffer-substring (line-beginning-position) (line-end-position)))
+        (when (string-match "\\(#\\+roam_key:\\|#+ROAM_KEY:\\)\\s-*\\(.+\\)" current-entry)
+          (let* ((line (split-string current-entry "\\: " t))
+                 (key (car (cdr line)))
+                 (key (string-trim-left key)))
+            (setq roam-key key)))
+        (forward-line)))
+    roam-key))
+
+  (defun orgrr-open-ref-url ()
+    "Opens the URL in the current note's ROAM_KEY property, if one exists."
+    (interactive)
+    (let ((roam-key (orgrr-read-roam-key)))
+      (browse-url roam-key)))
+
+
 (defun orgrr-initialize ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode 
 (which uses side-buffers). Also checks for org-directory and container
