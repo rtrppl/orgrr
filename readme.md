@@ -6,15 +6,15 @@ orgrr is a minimalist but complete note-taking system for Emacs. Its intended pu
 
 These are the primary functions orgrr provides:
 
-- **orgrr-find** will find and open a note ([see here](#basic-design-of-a-note) in the `org-directory` ([see here](#orgrr-find)). If the title (or alias) entered does not exist, a new note is created. 
+- **orgrr-find** will find and open a note ([see here](#basic-design-of-a-note)) in the `org-directory`. If the title (or alias) entered does not exist, a new note is created ([more on orgrr-find](#orgrr-find)). 
 
-- **orgrr-insert** will insert a link to another note in the `org-directory` ([see here](#orgrr-insert)). If the title (or alias) entered does not exist, a new note is created.
+- **orgrr-insert** will insert a link to another note in the `org-directory`. If the title (or alias) entered does not exist, a new note is created ([more on orgrr-insert](#orgrr-insert)).
 
-- **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note in a buffer ([see here](#orgrr-show-sequence)). 
+- **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note in a buffer ([more on orgrr-show-sequence](#orgrr-show-sequence)). 
 
-- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a buffer ([see here](#orgrr-show-backlinks)). This is what you see in the image above.
+- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a buffer ([more on orgrr-show-backlinks](#orgrr-show-backlinks)). This is what you see in the image above.
 
-- **orgrr-show-related-notes** will show all related notes in a buffer ([see here](#orgrr-show-related-notes)). For the underlying concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
+- **orgrr-show-related-notes** will show all related notes in a buffer ([more on orgrr-show-related-notes](#orgrr-show-related-notes)). For the underlying concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
