@@ -6,18 +6,25 @@ orgrr is a minimalist but complete note-taking system for Emacs. Its intended pu
 
 These are the primary functions orgrr provides:
 
-- **orgrr-find** will find and open a note, i.e. an `.org` file with a #+title, in the `org-directory` ([see here](#orgrr-find)). If the title (or alias) entered does not exist, a new note is created. 
+- **orgrr-find** will find and open a note ([more on the basic design on notes in orgrr](#basic-design-of-a-note)) in the `org-directory`. If the title (or alias) entered does not exist, a new note is created ([more on orgrr-find](#orgrr-find)). 
 
-- **orgrr-insert** will insert a link to another note in the `org-directory` ([see here](#orgrr-insert)). If the title (or alias) entered does not exist, a new note is created.
+- **orgrr-insert** will insert a link to another note in the `org-directory`. If the title (or alias) entered does not exist, a new note is created ([more on orgrr-insert](#orgrr-insert)).
 
-- **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note in a buffer ([see here](#orgrr-show-sequence)). 
+- **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note in a buffer ([more on orgrr-show-sequence](#orgrr-show-sequence)). 
 
-- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a buffer ([see here](#orgrr-show-backlinks)). This is what you see in the image above.
+- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a buffer ([more on orgrr-show-backlinks](#orgrr-show-backlinks)). This is what you see in the image above.
 
-- **orgrr-show-related-notes** will show all related notes in a buffer ([see here](#orgrr-show-related-notes)). For the underlying concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
+- **orgrr-show-related-notes** will show all related notes in a buffer ([more on orgrr-show-related-notes](#orgrr-show-related-notes)). For the underlying concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
+**Version 0.9**:  
+- Optimizing/Rewrite of code for straight package management (in preparation of an potential MELPA release)
+- Changes to orgrr-toggle-window-mode
+- `C-u orgrr-show-related-notes` now considers backlinks for all containers
+- `C-u orgrr-show-backlinks` now considers backlinks for all containers
+- Added install instructions for straight.el
+- Added `open-roam_key-ref-url`
 ------------------------------
 
 ## Table of Contents
@@ -59,6 +66,10 @@ These are the primary functions orgrr provides:
 
 ## Installation
 
+**In order to use orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine.** The easiest way to do so might be [homebrew](https://brew.sh), i.e. `brew install rg`.
+
+### Manual install
+
 Clone the repository:
 
 ```git clone https://github.com/rtrppl/orgrr```
@@ -69,26 +80,83 @@ To run orgrr, you need to load the package by adding it to your .emacs or init.e
 (load "/path/to/orgrr/orgrr.el") ;; You actually only need orgrr.el
 ```
 
-If you don't already have done so, you also have to set an org-directory.
+If you don't already have done so, you also should set an org-directory as the location for your notes.
 
 ```org
 (setq org-directory "~/path/to/org-directory")
 ```
 
-**In order to use orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine.** The easiest way to do so might be [homebrew](https://brew.sh), i.e. `brew install rg`.
-
 Finally, you may also want to set keybindings for the main functions (I have bound the Mac-command key to super/s):
 
 ```org
 (global-set-key (kbd "M-s-f") 'orgrr-find)
-(global-set-key (kbd "M-s-i") 'orgrr-insert)
 (global-set-key (kbd "M-s-l") 'orgrr-show-backlinks)
-(global-set-key (kbd "M-s-a") 'orgrr-add-to-project)
-(global-set-key (kbd "M-s-p") 'orgrr-open-project)
+(global-set-key (kbd "M-s-i") 'orgrr-insert)
+(global-set-key (kbd "M-s-I") 'orgrr-insert-project)
+(global-set-key (kbd "M-s-A") 'orgrr-add-to-project)
+(global-set-key (kbd "M-s-P") 'orgrr-open-project)
 (global-set-key (kbd "M-s-r") 'orgrr-show-related-notes)
+(global-set-key (kbd "M-s-o") 'orgrr-change-container)
+(global-set-key (kbd "M-s-a") 'orgrr-add-zettel)
+(global-set-key (kbd "M-s-z") 'orgrr-find-zettel)
+(global-set-key (kbd "M-s-s") 'orgrr-show-sequence)
+(global-set-key (kbd "M-s-p") 'orgrr-open-previous-zettel)
+(global-set-key (kbd "M-s-n") 'orgrr-open-next-zettel)
+(global-set-key (kbd "M-s-N") 'orgrr-no-find-zettel)
+(global-set-key (kbd "M-S-O") 'orgrr-open-ref-url)
 ```
 
-Hint: orgrr's functions also work great from a [Hydra setup](https://github.com/abo-abo/hydra). 
+This IMHO works best for linux and Emacs on the command line:
+
+```org
+(global-set-key (kbd "C-o") nil)
+(global-set-key (kbd "C-o f") 'orgrr-find)
+(global-set-key (kbd "C-o l") 'orgrr-show-backlinks)
+(global-set-key (kbd "C-o i") 'orgrr-insert)
+(global-set-key (kbd "C-o I") 'orgrr-insert-project)
+(global-set-key (kbd "C-o A") 'orgrr-add-to-project)
+(global-set-key (kbd "C-o P") 'orgrr-open-project)
+(global-set-key (kbd "C-o r") 'orgrr-show-related-notes)
+(global-set-key (kbd "C-o o") 'orgrr-change-container)
+(global-set-key (kbd "C-o a") 'orgrr-add-zettel)
+(global-set-key (kbd "C-o z") 'orgrr-find-zettel)
+(global-set-key (kbd "C-o s") 'orgrr-show-sequence)
+(global-set-key (kbd "C-o p") 'orgrr-open-previous-zettel)
+(global-set-key (kbd "C-o n") 'orgrr-open-next-zettel)
+(global-set-key (kbd "C-o N") 'orgrr-no-find-zettel)
+(global-set-key (kbd "C-o O") 'orgrr-open-ref-url)
+```
+
+### straight.el
+
+```org
+(use-package orgrr
+  :straight (:host github :repo "rtrppl/orgrr"
+		   :branch "main")
+  :config
+  (global-set-key (kbd "C-o") nil)
+  (global-set-key (kbd "C-o f") 'orgrr-find)
+  (global-set-key (kbd "C-o l") 'orgrr-show-backlinks)
+  (global-set-key (kbd "C-o i") 'orgrr-insert)
+  (global-set-key (kbd "C-o I") 'orgrr-insert-project)
+  (global-set-key (kbd "C-o A") 'orgrr-add-to-project)
+  (global-set-key (kbd "C-o P") 'orgrr-open-project)
+  (global-set-key (kbd "C-o r") 'orgrr-show-related-notes)
+  (global-set-key (kbd "C-o o") 'orgrr-change-container)
+  (global-set-key (kbd "C-o a") 'orgrr-add-zettel)
+  (global-set-key (kbd "C-o z") 'orgrr-find-zettel)
+  (global-set-key (kbd "C-o s") 'orgrr-show-sequence)
+  (global-set-key (kbd "C-o p") 'orgrr-open-previous-zettel)
+  (global-set-key (kbd "C-o n") 'orgrr-open-next-zettel)
+  (global-set-key (kbd "C-o N") 'orgrr-no-find-zettel)
+  (global-set-key (kbd "C-o O") 'orgrr-open-ref-url))
+```
+
+As above, if you don't already have done so, you also should set an org-directory as the location for your notes.
+
+```org
+(setq org-directory "~/path/to/org-directory")
+```
 
 ## orgrr's way of dealing with notes
 
@@ -96,17 +164,17 @@ Hint: orgrr's functions also work great from a [Hydra setup](https://github.com/
 
 orgrr began as a nearly feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1), built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. orgrr currently only works with [org-files](https://orgmode.org) (i.e. in a technical sense: files ending in .org).
 
-**A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files and their meta-data. The aim is to have as little dependencies as possible. A second difference is that orgrr sticks to the ideal of every note being a single file. The final difference is relative minimalism - orgrr should have all the features that are necessary and draw on org-mode/Emacs for everything else.**
+**A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files and their meta-data, which is stored in hashtables. The aim is to have no dependencies on sql or related software. A second difference is that orgrr sticks to the ideal of every note being a single file (no nodes!). The final difference is relative minimalism - orgrr should have all necessary features and draw on org-mode/Emacs for everything else.**
 
-This package primarily address my own needs and I have been using orgrr almost daily for a year now (February 2024). My main container has close to 4000 notes and the speed between org-roam and orgrr is comparable. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data (see below)!
+This package primarily address my own needs and I have been using orgrr almost daily for a year now (February 2024). My main container has close to 4000 notes and orgrr is much faster than org-roam. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest of the Zettelkasten packages available for Emacs.
 
 **As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions.** 
 
 ### Basic design of a note
 
-In orgrr, all (org-)notes are assumed to follow a certain logic regarding metadata. The design principles used here are similar to org-roam v1 and interoperation between orgrr and org-roam v1 is possible (and was intended). Hence filenames themselves are used as unique identifiers and changing them without adjusting backlinks will break the connection between two notes (see also [orgrr-rename](#orgrr-rename)).
+In orgrr, all notes are assumed to follow a certain logic regarding metadata. The design principles used here are similar to org-roam v1 and interoperation between orgrr and org-roam v1 is possible (and was intended). Filenames themselves are used as unique identifiers and changing them without adjusting backlinks will break the connection between two notes (see also [orgrr-rename](#orgrr-rename)).
 
-At the very minimum, a note file for orgrr is an .org file that includes the following line:
+At the very minimum, **a note file for orgrr is an .org file that includes the following line**:
 
 ```org
 #+title:       title of a note
@@ -117,6 +185,8 @@ One of the unique strengths of org-roam v1 was the inclusion of `alias`, a poten
 ```org
 #+roam_alias:  "alias 1" "alias 2"
 ```
+
+As demonstrated above, there can be more than one alias.
 
 orgrr also recognizes tags in the same way as org-roam v1 did, separate from regular [org-tags](https://orgmode.org/manual/Tags.html). In v2, org-roam began to use org-tags. I still prefer the approach of v1.
 
@@ -132,18 +202,27 @@ There is an ongoing debate on whether or not a true Zettelkasten-system also nee
 
 To be honest, initially, I did not see the need to add this. After all, didn't Luhmann use zettel IDs primarily for linking and this could be much more efficiently handled with org-links? Over time, however, the idea grew on me for a particular reason: This is another great way to show relationships between notes! It is also the only option to create a hierarchy of notes. Both aspects are very useful when you have more than a few hundred notes. 
 
-Values for zettel (i.e. zettel IDs) are added without quotation marks (and you should use [orgrr-add-zettel](#orgrr-add-zettel) for this). Using zettel values in orgrr makes most sense if you stick to [Luhmann's naming scheme](https://niklas-luhmann-archiv.de/bestand/zettelkasten/zettel/ZK_1_NB_1-5_V), e.g. 1a, 1a1, 1a2, 1a2a, 1a3, 1a3a....
+Values for zettel (i.e. zettel IDs) are added without quotation marks (and you should use [orgrr-add-zettel](#orgrr-add-zettel) for this). Using zettel values in orgrr makes most sense if you stick to [Luhmann's naming scheme](https://niklas-luhmann-archiv.de/bestand/zettelkasten/zettel/ZK_1_NB_1-5_V), e.g. 1a, 1a1, 1a2, 1a2a, 1a3, 1a3a...., as orgrr is using lexical sorting for these values.
 
 ```org
 #+zettel:   value
 ```
 
-In total, orgrr therefore recognizes these four lines of meta-data in an org-file:
+A final piece of official meta-data also has its roots in org-roam v1: 
+
+```org
+#+roam_key:   url
+```
+
+This is the place to store a link to a source webpage, a Zotero entry or any other URL that orgmode knows to open. If you visit a note with a value for `#+roam_key`, executing `M-x open-roam_key-ref-url` will directly open this link.
+
+In total, orgrr therefore recognizes these five lines of meta-data in an org-file:
 
 ```org
 #+title:       title of a note
 #+roam_alias:  "alias 1" "alias 2"
 #+roam_tags:   tag1 tag2 tag3
+#+roam_key:    URL
 #+zettel:      value
 ```
 
@@ -170,6 +249,8 @@ There are many different attempts to surface related notes in note-taking system
 
 ![orgrr-show-related-notes](/orgrr-show-related-notes.png)
 
+See also [orgrr-show-related-notes](#orgrr-show-related-notes).
+
 ### orgrr-containers
 
 Another feature that felt missing in orgrr (and org-roam v1) was the option to keep several different sets of data. [Obsidian](https://obsidian.md)'s [vaults](https://help.obsidian.md/Getting+started/Create+a+vault) is an example of this idea and has been the inspiration for orgrr-containers. Each orgrr-container is a folder containing org-files (that may have sub-folders with org-files of their own). 
@@ -192,9 +273,11 @@ This will search the org-directory (and all its subdirectories) for a note and t
 
 If the note does not exist, a new one with the same title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. The link to the new note will also be added at point. As above mentioned, you should use orgrr-find and orgrr-insert to create new notes and should use `kill-current-buffer` to abort.
 
+A special variant of this function is `orgrr-insert-project`, which allows to insert a link to any orgrr-project in the current container (see [orgrr-projects](#orgrr-projects)).
+
 ### orgrr-rename
 
-orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the #+title of a note (or any other meta-data about a note), however, will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
+orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the `#+title` of a note (or any other meta-data about a note), however, will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
 
 This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in the org-directory. Use it with caution!
 
@@ -244,7 +327,9 @@ This displays all backlinks for the note in the current buffer in a side-window.
 
 ### orgrr-show-related-notes
 
-This displays all related notes for the note in the current buffer in a side-window (see also [orgrr-related-notes](#orgrr-related-notes)). The buffer here is temporary. You can navigate it as you would with any other org buffer and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). Invoke the command again to close the side-window (while visiting this buffer).
+This displays all related notes for the note in the current buffer (see also [orgrr-related-notes](#orgrr-related-notes)). The orgmode buffer with the results is temporary. You can navigate it as you would with any other org buffer and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). Invoke the command again to close the side-window or buffer (while visiting this buffer).
+
+If called with C-u, backlinks of first and second order in all containers are considered. This may take a while, please be patient. 
 
 ## Functions for project management
 
@@ -260,15 +345,9 @@ This displays all related notes for the note in the current buffer in a side-win
 
 ## Quality of life functions
 
-### orgrr-toggle-single-window-mode
+### orgrr-toggle-window-mode
 
-This function activates `single-window-mode`, in which all links as well as the buffers for "backlinks", "related notes" and "sequence of notes" (for these three functions see above) are opened in the current window. Intended for devices with small displays, it might also be helpful for distraction-free writing or more predictable window management. If you want to start-up in this mode, you should add this to your init file:
-
-```org
-(orgrr-toggle-single-window-mode)
-```
-
-This is what I have done.
+This function switches between `multi-window` and `single-window-mode`, affecting the display of "backlinks", "related notes" and "sequence of notes" (and the way links are opened). Attention: In version 0.9 the default (now `single-window-mode`) and name of this function changed (from `orgrr-toggle-single-window-mode`).
 
 ### orgrr-fix-all-links-buffer and ogrr-fix-all-links-container
 
@@ -276,7 +355,7 @@ These functions were a byproduct of rewriting orgrr-move-note and correct links 
 
 ## orgrr extensions
 
-orgrr extensions are additions to the core functionality of orgrr that may introduce new dependencies to other packages or external software. orgrr will always run fine without them and if you want a minimalist setup, you don't need these. In order to use the extensions you will have to add this file to your load-path:
+orgrr extensions are additions to the core functionality of orgrr that may introduce new dependencies to other packages or external software. orgrr will always run fine without them and if you want a minimalist setup, you don't need these. In order to use the extensions you may have to add this file to your load-path (see above installation info):
 
 ```org
 (load "/path/to/orgrr/orgrr-extensions.el") 

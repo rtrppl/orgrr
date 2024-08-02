@@ -1,3 +1,5 @@
+;; orgrr-extensions.el -*- lexical-binding: t -*-
+;;
 ;; orgrr-extensions.el includes nice-to-have additions to orgrr,
 ;; that depend on external packages or binaries. The core functions
 ;; of orgrr do not require these functions. 
@@ -6,10 +8,16 @@
 ;;
 
 ;; change the following to your liking
+
+(require 'orgrr)
+(require 'org-element)
+(require 'org-web-tools)
+
 (defvar orgrr-save-website-tags "website orgrr-project")
 
 (cl-defun orgrr-save-website ()
-  "Adds a website as an org-file to the current org-directory. Works on links, org-links or via entry of an URL."
+  "Adds a website as an org-file to the current org-directory. Works on links, 
+org-links or via entry of an URL."
   (interactive) 
   (let ((url (or 
               (thing-at-point-url-at-point)
@@ -38,12 +46,12 @@
 	      (orgrr-get-meta)
 	      (let ((filename (if (equal major-mode 'dired-mode)
 				  default-directory
-				(buffer-file-name))))
-		(pcase (org-collect-keywords '("TITLE"))
-		  (`(("TITLE" . ,val))
-		   (setq title (car val))))
-		(setq findlikelinks 0)
-		(setq orgrr-counter-filename (make-hash-table :test 'equal))
+				(buffer-file-name)))
+		     (title (pcase (org-collect-keywords '("TITLE"))
+		    (`(("TITLE" . ,val)) (car val))))
+		     (findlikelinks 0)
+		     (entry)
+		     (orgrr-counter-filename (make-hash-table :test 'equal)))
 		(with-temp-buffer
 		  (insert (shell-command-to-string (concat "findlike -R -d " org-directory " " filename)))
 		  (let ((lines (split-string (buffer-string) "\n" t)))
@@ -72,10 +80,8 @@
 		(when window
 		  (select-window window)
 		  (setq default-directory org-directory)
-		  (beginning-of-buffer)
-		  (next-line 2)))
-	      (clrhash orgrr-counter-filename)
-	      (clrhash orgrr-filename-title))
+		  (goto-char (point-min))
+		  (forward-line 2))))
 	  (delete-window)))
     (message "findlike is not installed. See https://github.com/brunoarine/findlike for instructions.")))
 
@@ -83,3 +89,5 @@
   "Check whether exa is installed in the system path."
   (let ((findlike-exe (executable-find "findlike")))
     (and findlike-exe (file-executable-p findlike-exe))))
+
+(provide 'orgrr-extensions)
