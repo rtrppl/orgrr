@@ -6,7 +6,7 @@ orgrr is a minimalist but complete note-taking system for Emacs. Its intended pu
 
 These are the primary functions orgrr provides:
 
-- **orgrr-find** will find and open a note ([see here](#basic-design-of-a-note)) in the `org-directory`. If the title (or alias) entered does not exist, a new note is created ([more on orgrr-find](#orgrr-find)). 
+- **orgrr-find** will find and open a note ([more on the basic design on notes in orgrr](#basic-design-of-a-note)) in the `org-directory`. If the title (or alias) entered does not exist, a new note is created ([more on orgrr-find](#orgrr-find)). 
 
 - **orgrr-insert** will insert a link to another note in the `org-directory`. If the title (or alias) entered does not exist, a new note is created ([more on orgrr-insert](#orgrr-insert)).
 
@@ -96,16 +96,17 @@ Finally, you may also want to set keybindings for the main functions (I have bou
 (global-set-key (kbd "M-s-A") 'orgrr-add-to-project)
 (global-set-key (kbd "M-s-P") 'orgrr-open-project)
 (global-set-key (kbd "M-s-r") 'orgrr-show-related-notes)
-(global-set-key (kbd "M-s-ö") 'orgrr-change-container)
+(global-set-key (kbd "M-s-o") 'orgrr-change-container)
 (global-set-key (kbd "M-s-a") 'orgrr-add-zettel)
 (global-set-key (kbd "M-s-z") 'orgrr-find-zettel)
 (global-set-key (kbd "M-s-s") 'orgrr-show-sequence)
 (global-set-key (kbd "M-s-p") 'orgrr-open-previous-zettel)
 (global-set-key (kbd "M-s-n") 'orgrr-open-next-zettel)
 (global-set-key (kbd "M-s-N") 'orgrr-no-find-zettel)
+(global-set-key (kbd "M-S-O") 'orgrr-open-ref-url)
 ```
 
-This IMHO works best for linux and the command line:
+This IMHO works best for linux and Emacs on the command line:
 
 ```org
 (global-set-key (kbd "C-o") nil)
@@ -116,13 +117,14 @@ This IMHO works best for linux and the command line:
 (global-set-key (kbd "C-o A") 'orgrr-add-to-project)
 (global-set-key (kbd "C-o P") 'orgrr-open-project)
 (global-set-key (kbd "C-o r") 'orgrr-show-related-notes)
-(global-set-key (kbd "C-o ö") 'orgrr-change-container)
+(global-set-key (kbd "C-o o") 'orgrr-change-container)
 (global-set-key (kbd "C-o a") 'orgrr-add-zettel)
 (global-set-key (kbd "C-o z") 'orgrr-find-zettel)
 (global-set-key (kbd "C-o s") 'orgrr-show-sequence)
 (global-set-key (kbd "C-o p") 'orgrr-open-previous-zettel)
 (global-set-key (kbd "C-o n") 'orgrr-open-next-zettel)
 (global-set-key (kbd "C-o N") 'orgrr-no-find-zettel)
+(global-set-key (kbd "C-o O") 'orgrr-open-ref-url)
 ```
 
 ### straight.el
@@ -140,16 +142,17 @@ This IMHO works best for linux and the command line:
   (global-set-key (kbd "C-o A") 'orgrr-add-to-project)
   (global-set-key (kbd "C-o P") 'orgrr-open-project)
   (global-set-key (kbd "C-o r") 'orgrr-show-related-notes)
-  (global-set-key (kbd "C-o ö") 'orgrr-change-container)
+  (global-set-key (kbd "C-o o") 'orgrr-change-container)
   (global-set-key (kbd "C-o a") 'orgrr-add-zettel)
   (global-set-key (kbd "C-o z") 'orgrr-find-zettel)
   (global-set-key (kbd "C-o s") 'orgrr-show-sequence)
   (global-set-key (kbd "C-o p") 'orgrr-open-previous-zettel)
   (global-set-key (kbd "C-o n") 'orgrr-open-next-zettel)
-  (global-set-key (kbd "C-o N") 'orgrr-no-find-zettel))
+  (global-set-key (kbd "C-o N") 'orgrr-no-find-zettel)
+  (global-set-key (kbd "C-o O") 'orgrr-open-ref-url))
 ```
 
-As above, if you don't already have done so,  you also should set an org-directory as the location for your notes.
+As above, if you don't already have done so, you also should set an org-directory as the location for your notes.
 
 ```org
 (setq org-directory "~/path/to/org-directory")
