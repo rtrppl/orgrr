@@ -205,21 +205,21 @@ Values for zettel (i.e. zettel IDs) are added without quotation marks (and you s
 #+zettel:   value
 ```
 
-A final piece of meta data also has roots in org-roam v1: 
+A final piece of official meta-data also has its roots in org-roam v1: 
 
 ```org
 #+roam_key:   url
 ```
 
-This is the place for link to a source webpage, a Zotero entry or any other URL that orgmode knows to open. If you visit a note with a value for `#+roam_key`, executing `M-x open-roam_key-ref-url` will directly open this link.
+This is the place to store a link to a source webpage, a Zotero entry or any other URL that orgmode knows to open. If you visit a note with a value for `#+roam_key`, executing `M-x open-roam_key-ref-url` will directly open this link.
 
-
-In total, orgrr therefore recognizes these four lines of meta-data in an org-file:
+In total, orgrr therefore recognizes these five lines of meta-data in an org-file:
 
 ```org
 #+title:       title of a note
 #+roam_alias:  "alias 1" "alias 2"
 #+roam_tags:   tag1 tag2 tag3
+#+roam_key:    URL
 #+zettel:      value
 ```
 
