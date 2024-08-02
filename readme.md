@@ -24,7 +24,7 @@ These are the primary functions orgrr provides:
 - `C-u orgrr-show-related-notes` now considers backlinks for all containers
 - `C-u orgrr-show-backlinks` now considers backlinks for all containers
 - Added install instructions for straight.el
-- Added `open-roam_key-ref-url`
+- Added `orgrr-open-ref-url`
 ------------------------------
 
 ## Table of Contents
