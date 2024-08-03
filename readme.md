@@ -214,7 +214,7 @@ A final piece of official meta-data also has its roots in org-roam v1:
 #+roam_key:   url
 ```
 
-This is the place to store a link to a source webpage, a Zotero entry or any other URL that orgmode knows to open. If you visit a note with a value for `#+roam_key`, executing `M-x open-roam_key-ref-url` will directly open this link.
+This is the place to store a link to a source webpage, a Zotero entry or any other URL that orgmode knows to open. If you visit a note with a value for `#+roam_key`, executing `M-x orgrr-open-ref-url` will directly open this link.
 
 In total, orgrr therefore recognizes these five lines of meta-data in an org-file:
 
