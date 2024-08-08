@@ -18,6 +18,11 @@ These are the primary functions orgrr provides:
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
+
+**Version 0.9.1**:
+- better use-package config
+- bug fix for orgrr-check-for-container-file
+
 **Version 0.9**:  
 - Optimizing/Rewrite of code for straight package management (in preparation of an potential MELPA release)
 - Changes to orgrr-toggle-window-mode
@@ -129,27 +134,32 @@ This IMHO works best for linux and Emacs on the command line:
 
 ### straight.el
 
+Via use-package and straight a typical configuration of orgrr could look like this:
+
 ```org
+
 (use-package orgrr
   :straight (:host github :repo "rtrppl/orgrr"
 		   :branch "main")
-  :config
-  (global-set-key (kbd "C-o") nil)
-  (global-set-key (kbd "C-o f") 'orgrr-find)
-  (global-set-key (kbd "C-o l") 'orgrr-show-backlinks)
-  (global-set-key (kbd "C-o i") 'orgrr-insert)
-  (global-set-key (kbd "C-o I") 'orgrr-insert-project)
-  (global-set-key (kbd "C-o A") 'orgrr-add-to-project)
-  (global-set-key (kbd "C-o P") 'orgrr-open-project)
-  (global-set-key (kbd "C-o r") 'orgrr-show-related-notes)
-  (global-set-key (kbd "C-o o") 'orgrr-change-container)
-  (global-set-key (kbd "C-o a") 'orgrr-add-zettel)
-  (global-set-key (kbd "C-o z") 'orgrr-find-zettel)
-  (global-set-key (kbd "C-o s") 'orgrr-show-sequence)
-  (global-set-key (kbd "C-o p") 'orgrr-open-previous-zettel)
-  (global-set-key (kbd "C-o n") 'orgrr-open-next-zettel)
-  (global-set-key (kbd "C-o N") 'orgrr-no-find-zettel)
-  (global-set-key (kbd "C-o O") 'orgrr-open-ref-url))
+  :bind
+  (:map global-map
+	("C-o" . nil)
+	("C-o f" . orgrr-find)
+	("C-o l" . orgrr-show-backlinks)
+	("C-o i" . orgrr-insert)
+	("C-o I" . orgrr-insert-project)
+	("C-o A" . orgrr-add-to-project)
+	("C-o P" . orgrr-open-project)
+	("C-o r" . orgrr-show-related-notes)
+	("C-o o" . orgrr-change-container)
+	("C-o a" . orgrr-add-zettel)
+	("C-o z" . orgrr-find-zettel)
+	("C-o s" . orgrr-show-sequence)
+	("C-o p" . orgrr-open-previous-zettel)
+	("C-o n" . orgrr-open-next-zettel)
+	("C-o N" . orgrr-no-find-zettel)
+	("C-o O" . orgrr-open-ref-url)))
+	
 ```
 
 As above, if you don't already have done so, you also should set an org-directory as the location for your notes.

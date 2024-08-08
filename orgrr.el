@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.9
+;; Version: 0.9.1
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -31,14 +31,12 @@
 ;;
 ;;; News
 ;;
+;; 0.9.1
+;; - Bug fix for orgrr-check-for-container-file
+;;
 ;; 0.9 
 ;; - Optimizations for straight.el; change of orgrr-window-management default
 ;;
-;; 0.8.12
-;; - Added orgrr-insert-project, which allows to qickly link to an orgrr-project.
-;;
-;; 0.8.11
-;; - orgrr-info now shows number of org-files considered
 ;;
 ;;; Code:
 
@@ -1038,6 +1036,7 @@ orgrr-change-container can be called with a specific container."
 (defun orgrr-check-for-container-file ()
   "Creates a container file in ~/.orgrr-container-list in case one does 
   not yet exist."
+  (interactive)
   (when (not (file-exists-p "~/.orgrr-container-list"))
     (let ((orgrr-name-container (make-hash-table :test 'equal)))
        (when org-directory
@@ -1045,21 +1044,21 @@ orgrr-change-container can be called with a specific container."
        (with-temp-buffer
          (let ((json-data (json-encode orgrr-name-container)))
            (insert json-data)
-           (write-file "~/.orgrr-container-list")))))
+           (write-file "~/.orgrr-container-list"))))))
   (when (file-exists-p "~/.orgrr-container-list")
-     (let ((orgrr-name-container (make-hash-table :test 'equal))
-	   (containers)
-	   (containers-folders))
+    (let ((orgrr-name-container (make-hash-table :test 'equal))
+	  (containers)
+	  (containers-folders))
        (with-temp-buffer
 	 (insert-file-contents "~/.orgrr-container-list")
 	 (if (fboundp 'json-parse-buffer)
 	     (setq orgrr-name-container (json-parse-buffer))))
        (setq containers (nreverse (hash-table-keys orgrr-name-container)))
        (setq containers-folders (hash-table-values orgrr-name-container))
-       (when (or (not org-directory) (not (member org-directory containers-folders)))
+       (when (not (member org-directory containers-folders))
 	 (if (member "main" containers)
              (setq org-directory (gethash "main" orgrr-name-container))
-           (setq org-directory (gethash (car containers) orgrr-name-container))))))))
+           (setq org-directory (gethash (car containers) orgrr-name-container)))))))
 
 (defun orgrr-get-list-of-containers ()
  "Return orgrr-name-container, a hashtable that includes a list of names and 
