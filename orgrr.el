@@ -157,7 +157,7 @@ require NCD-formating."
 			  (value (gethash counter orgrr-counter-quote)))
                       (when (stringp value)
 			(let* ((short_filename (file-name-nondirectory key))
-			       (full-filename (gethash (concat "\\" short_filename) orgrr-short_filename-filename))
+			       (full-filename key)
 			       (result (gethash (concat "\\" short_filename) orgrr-short_filename-title)))
 			  (string-match "^\\(.*?\\):\\(.*\\)$" value)
 			  (let* ((line-number (match-string 1 value))
