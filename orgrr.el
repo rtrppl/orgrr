@@ -1185,6 +1185,45 @@ function, make sure to be in the correct container."
     (let ((roam-key (orgrr-read-roam-key)))
       (browse-url roam-key)))
 
+(defun orgrr-compile-draft (arg)
+  "Creates a temporary buffer with all zettels between two selected zettels
+(e.g. between two notes with values for zettel). This feature is intended 
+for drafting chapters based on notes. Clicking on the headlines of all
+imported notes will open the original note in the mode other-window.
+
+If called with C-u the buffer is created without headlines."
+  (interactive "P")
+  (let* ((current-zettel (orgrr-read-current-zettel))
+	 (orgrr-selection-list (orgrr-prepare-zettel-selection-list))
+	 (orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
+	 (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
+	 (orgrr-zettel-list (sort orgrr-zettel-list 'dictionary-lessp))
+	 (starting-point)
+	 (end-point)
+	 (draft-buffer "*compiled draft*"))
+    (if current-zettel
+	(setq starting-point (completing-read "Select starting point for draft: " orgrr-selection-list-completion nil nil current-zettel))
+      (setq starting-point (completing-read "Select starting point for draft: " orgrr-selection-list-completion)))
+    (if (string-match "^\\[\\(.*?\\)\\]" starting-point)
+      	(setq starting-point (replace-regexp-in-string "\\[.*?\\]\\s-*" "" starting-point)))
+    (let*  ((zettel-filename (gethash starting-point orgrr-title-filename))
+	    (selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel)))
+      (dolist (element orgrr-zettel-list)
+	(when (string-match (concat "^" selection-zettel) element)
+	 (if (not (equal element selection-zettel))
+	     (progn 
+	       (setq end-point element)))))
+    (setq end-point (completing-read "Select end point point for draft: " orgrr-selection-list-completion nil nil end-point)))
+    (with-current-buffer (get-buffer-create draft-buffer)
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+	(insert (concat "* draft buffer\n\n"))
+	(dolist (element orgrr-zettel-list) 
+	    (when (string-match (concat "^" selection-zettel) element)
+	      (if (and (not (equal element selection-zettel))
+		       (not (equal element end-point)))
+		  (insert (concat "** " (orgrr-return-fullzettel-linked element) "\n")))))))))
+
 
 (defun orgrr-initialize ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode 
