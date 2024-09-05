@@ -548,11 +548,30 @@ title to the note."
 	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
     (setq zettel (concat "\[" zettel "\]\t\[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]"))))
 
+(defun orgrr-return-zettel-linked (zettel)
+  "Returns the zettel as an org-link."
+  (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename)))
+    (setq zettel (concat "\[\[file:" matched-zettel-filename "\]\["  zettel "\]\]"))))
+
+
 (defun orgrr-return-fullzettel-linked-head (zettel)
   "A version of orgrr-return-fullzettel-linked in a special format."
   (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename))
 	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
     (setq zettel (concat "*\[" zettel "\]*\t\[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]"))))
+
+(defun orgrr-return-fullzettel-content (zettel)
+  "Returns the full content of a zettel without meta-data."
+  (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename)))
+    (with-temp-buffer 
+      (insert-file-contents matched-zettel-filename)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let ((current-entry (thing-at-point 'line t)))
+          (if (string-prefix-p "#+" current-entry)
+              (delete-region (line-beginning-position) (1+ (line-end-position)))
+            (forward-line 1))))
+      (buffer-string))))     
 
 (defun orgrr-open-previous-zettel ()
   "Opens the previous zettel."
@@ -1200,6 +1219,7 @@ If called with C-u the buffer is created without headlines."
 	 (orgrr-zettel-list (sort orgrr-zettel-list 'dictionary-lessp))
 	 (starting-point)
 	 (end-point)
+	 (end-point-zettel)
 	 (draft-buffer "*compiled draft*"))
     (if current-zettel
 	(setq starting-point (completing-read "Select starting point for draft: " orgrr-selection-list-completion nil nil current-zettel))
@@ -1212,18 +1232,31 @@ If called with C-u the buffer is created without headlines."
 	(when (string-match (concat "^" selection-zettel) element)
 	 (if (not (equal element selection-zettel))
 	     (progn 
-	       (setq end-point element)))))
-    (setq end-point (completing-read "Select end point point for draft: " orgrr-selection-list-completion nil nil end-point)))
+	       (setq end-point element)
+	       (setq end-point-zettel element)))))
+    (setq end-point (completing-read "Select end point point for draft: " orgrr-selection-list-completion nil nil end-point))
     (with-current-buffer (get-buffer-create draft-buffer)
       (let ((inhibit-read-only t))
         (erase-buffer)
-	(insert (concat "* draft buffer\n\n"))
+	(insert (concat draft-buffer " " (orgrr-return-zettel-linked selection-zettel) " - " (orgrr-return-zettel-linked end-point-zettel) "\n\n"))
 	(dolist (element orgrr-zettel-list) 
 	    (when (string-match (concat "^" selection-zettel) element)
 	      (if (and (not (equal element selection-zettel))
 		       (not (equal element end-point)))
-		  (insert (concat "** " (orgrr-return-fullzettel-linked element) "\n")))))))))
-
+		  (progn
+		    (insert (concat "*" (orgrr-return-fullzettel-linked element)"*" "\n"))
+		    (insert (concat (orgrr-return-fullzettel-content element) "\n"))))))		    
+;;Starting here it is only window-management
+	(orgrr-open-buffer draft-buffer)
+	(with-current-buffer draft-buffer
+	  (org-mode))
+	(let ((window (get-buffer-window draft-buffer)))
+	      (when window
+		(select-window window)
+		(setq default-directory org-directory)
+		(goto-char (point-min))
+		(org-next-visible-heading 1)
+		(deactivate-mark))))))))
 
 (defun orgrr-initialize ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode 
