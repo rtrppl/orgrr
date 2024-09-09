@@ -10,7 +10,7 @@ These are the primary functions orgrr provides:
 
 - **orgrr-insert** will insert a link to another note in the `org-directory`. If the title (or alias) entered does not exist, a new note is created ([more on orgrr-insert](#orgrr-insert)).
 
-- **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note in a buffer ([more on orgrr-show-sequence](#orgrr-show-sequence)). 
+- **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note in a buffer ([more on orgrr-show-sequence](#orgrr-show-sequence)). Use **orgrr-compile-sequence** to create a temporary buffer with the content from a sequence of notes.
 
 - **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a buffer ([more on orgrr-show-backlinks](#orgrr-show-backlinks)). This is what you see in the image above.
 
@@ -18,10 +18,12 @@ These are the primary functions orgrr provides:
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
+**Version 0.9.2**:
+- Added `orgrr-compile-sequence`
 
 **Version 0.9.1**:
-- better use-package config
-- bug fix for orgrr-check-for-container-file
+- Better use-package config
+- Bug fix for orgrr-check-for-container-file
 
 **Version 0.9**:  
 - Optimizing/Rewrite of code for straight package management (in preparation of an potential MELPA release)
@@ -58,8 +60,9 @@ These are the primary functions orgrr provides:
   - [orgrr-show-sequence](#orgrr-show-sequence)
   - [orgrr-show-backlinks](#orgrr-show-backlinks)
   - [orgrr-show-related-notes](#orgrr-show-related-notes)	
-- [Functions for project management](#functions-for-project-managemant)
+- [Functions for project management and writing](#functions-for-project-managemant)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
+  - [orgrr-compile-sequence](#orgrr-compile-sequence)
   - [orgrr-container-commands](#orgrr-container-commands)
 - [Quality of life functions](#quality-of-life-functions)
   - [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)
@@ -109,6 +112,7 @@ Finally, you may also want to set keybindings for the main functions (I have bou
 (global-set-key (kbd "M-s-n") 'orgrr-open-next-zettel)
 (global-set-key (kbd "M-s-N") 'orgrr-no-find-zettel)
 (global-set-key (kbd "M-S-O") 'orgrr-open-ref-url)
+(global-set-key (kbd "M-S-c") 'orgrr-compile-sequence)
 ```
 
 This IMHO works best for linux and Emacs on the command line:
@@ -130,6 +134,7 @@ This IMHO works best for linux and Emacs on the command line:
 (global-set-key (kbd "C-o n") 'orgrr-open-next-zettel)
 (global-set-key (kbd "C-o N") 'orgrr-no-find-zettel)
 (global-set-key (kbd "C-o O") 'orgrr-open-ref-url)
+(global-set-key (kbd "C-o c") 'orgrr-compile-sequence)
 ```
 
 ### straight.el
@@ -158,7 +163,8 @@ Via use-package and straight a typical configuration of orgrr could look like th
 	("C-o p" . orgrr-open-previous-zettel)
 	("C-o n" . orgrr-open-next-zettel)
 	("C-o N" . orgrr-no-find-zettel)
-	("C-o O" . orgrr-open-ref-url)))
+	("C-o O" . orgrr-open-ref-url)
+	("C-o c" . orgrr-compile-sequence)))
 	
 ```
 
@@ -174,9 +180,9 @@ As above, if you don't already have done so, you also should set an org-director
 
 orgrr began as a nearly feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1), built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. orgrr currently only works with [org-files](https://orgmode.org) (i.e. in a technical sense: files ending in .org).
 
-**A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files and their meta-data, which is stored in hashtables. The aim is to have no dependencies on sql or related software. A second difference is that orgrr sticks to the ideal of every note being a single file (no nodes!). The final difference is relative minimalism - orgrr should have all necessary features and draw on org-mode/Emacs for everything else.**
+**A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files and their meta-data, which is stored in hashtables. The aim is to have no dependencies on sql or related software. A second difference is that orgrr sticks to the ideal of every note being a single file (no nodes!). The final difference is relative minimalism - orgrr should have all necessary features to write, analyze, and manage notes - and draw on org-mode/Emacs for everything else.**
 
-This package primarily address my own needs and I have been using orgrr almost daily for a year now (February 2024). My main container has close to 4000 notes and orgrr is much faster than org-roam. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest of the Zettelkasten packages available for Emacs.
+This package primarily address my own needs and I have been using orgrr almost daily for more than a year now (September 2024). My main container has more than 4000 notes and orgrr is much faster than org-roam. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest of the Zettelkasten packages available for Emacs.
 
 **As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions.** 
 
@@ -329,7 +335,7 @@ Opens the note/zettel coming before the current one. The notes' order is in acco
 
 ### orgrr-show-sequence
 
-One of the main benefits of adding zettel values to notes becomes the ability to explore a sequence of notes. After you have selected a starting point, this functions displays a sequence of notes in a buffer (in accordance with your settings for orgrr-window-management, see [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)). 
+One of the main benefits of adding zettel values to notes becomes the ability to explore a sequence of notes. After you have selected a starting point, this functions displays a sequence of notes in a buffer (in accordance with your settings for orgrr-window-management, see [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)). [orgrr-compile-sequence](#orgrr-compile-sequence) has a somewhat similar functionality but also collects the content of all notes of the sequence.
 
 ### orgrr-show-backlinks
 
@@ -348,6 +354,12 @@ If called with C-u, backlinks of first and second order in all containers are co
 `orgrr-add-to-project` appends the current line to an orgrr-project and includes a source-link to allow for follow-up. All links within this snippet are corrected to work in the new location. This function works for all org-files and the `orgrr-backlinks` buffer.
 
 `orgrr-open-project` provides quick access to all orgrr-projects.
+
+### orgrr-compile-sequence
+
+`orgrr-compile-sequence` creates a temporary buffer with the content of a sequence of notes. It relies on the values for `#+zettel`in these notes. Start- and end-point are set by the user. See also [orgrr-show-sequence](#orgrr-show-sequence) for related functionality. If called with `C-u`, i.e. `C-u orgrr-compile-sequence`, the temporary buffer is created without the titles of the individual notes as headlines. The intention behind this function was to not only create a quick view on a stack of notes but also to facilitate long-form writing.
+
+Clicking on the headlines or any other link in the temporary buffer will open the linked note in `other-window` (can be turned off by setting `orgrr-compile-open-link-other-window` to `nil`).
 
 ### orgrr-container-commands
 

@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.9.1
+;; Version: 0.9.2
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -31,6 +31,9 @@
 ;;
 ;;; News
 ;;
+;; 0.9.2
+;; - Adds compile sequence feature (orgrr-compile-sequence)
+;;
 ;; 0.9.1
 ;; - Bug fix for orgrr-check-for-container-file
 ;;
@@ -45,6 +48,9 @@
 (require 'json)
 
 (defvar orgrr-window-management "single-window")
+(defvar orgrr-compile-open-link-other-window t) ;; set this to nil if orgrr-compile-draft should respect orgrr-window-management settings
+
+
 ;; The following list of hashtables create the data structure in which orgrr stores notes.
 (defvar orgrr-title-filename (make-hash-table :test 'equal) "Hashtable with the key title and the value filename.")
 (defvar orgrr-filename-title (make-hash-table :test 'equal) "Hashtable with the the key filename and the value title.")
@@ -548,11 +554,41 @@ title to the note."
 	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
     (setq zettel (concat "\[" zettel "\]\t\[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]"))))
 
+(defun orgrr-return-fullzettel-linked-starred (zettel)
+  "Returns the full name of a zettel (as in orgrr-zettel-list) and links the 
+title to the note. Adds stars for org-bolding."
+  (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename))
+	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
+    (setq zettel (concat "*" zettel "* \[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]"))))
+
+(defun orgrr-return-zettel-linked (zettel)
+  "Returns the zettel as an org-link."
+  (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename)))
+    (setq zettel (concat "\[\[file:" matched-zettel-filename "\]\["  zettel "\]\]"))))
+
+
 (defun orgrr-return-fullzettel-linked-head (zettel)
   "A version of orgrr-return-fullzettel-linked in a special format."
   (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename))
 	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
     (setq zettel (concat "*\[" zettel "\]*\t\[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]"))))
+
+(defun orgrr-return-fullzettel-content (zettel)
+  "Returns the full content of a zettel without meta-data."
+  (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename)))
+    (with-temp-buffer 
+      (insert-file-contents matched-zettel-filename)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let ((current-entry (thing-at-point 'line t)))
+          (if (or (string-prefix-p "#+title" current-entry t)
+		  (string-prefix-p "#+roam_alias" current-entry t)
+		  (string-prefix-p "#+roam_key" current-entry t)
+		  (string-prefix-p "#+roam_tags" current-entry t)
+		  (string-prefix-p "#+zettel" current-entry t))	       
+              (delete-region (line-beginning-position) (1+ (line-end-position)))
+            (forward-line 1))))
+      (string-trim (buffer-string)))))     
 
 (defun orgrr-open-previous-zettel ()
   "Opens the previous zettel."
@@ -1185,6 +1221,73 @@ function, make sure to be in the correct container."
     (let ((roam-key (orgrr-read-roam-key)))
       (browse-url roam-key)))
 
+(defun orgrr-compile-sequence (arg)
+  "Creates a temporary buffer with all notes between two selected zettels
+(e.g. between two notes with values for zettel). Sequencing works similar
+as in orgrr-show-sequence. 
+
+This feature has two main use-cases. First, it does allow to look at a 
+stack of notes at once. It is, therefore, not unlike orgrr-show-sequence
+but includes the content of each zettel. Second, this also allows for 
+drafting chapters based on notes. 
+
+Clicking on the headlines or any other link will open the linked note in 
+the mode other-window (can be turned off).
+
+If called with C-u the buffer is created without headlines."
+  (interactive "P")
+  (let ((call-with-arg nil))
+    (when (equal arg '(4))
+      (setq call-with-arg 1))
+    (when (not (string-match-p "*compiled sequence*" (buffer-name (current-buffer))))
+      (let* ((current-zettel (orgrr-read-current-zettel))
+	     (orgrr-selection-list (orgrr-prepare-zettel-selection-list))
+	     (orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
+	     (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
+	     (orgrr-zettel-list (sort orgrr-zettel-list 'dictionary-lessp))
+	     (starting-point)
+	     (end-point)
+	     (end-point-zettel)
+	     (draft-buffer "*compiled sequence*"))
+	(if current-zettel
+	    (setq starting-point (completing-read "Select starting point: " orgrr-selection-list-completion nil nil current-zettel))
+	  (setq starting-point (completing-read "Select starting point: " orgrr-selection-list-completion)))
+	(if (string-match "^\\[\\(.*?\\)\\]" starting-point)
+      	    (setq starting-point (replace-regexp-in-string "\\[.*?\\]\\s-*" "" starting-point)))
+	(let*  ((zettel-filename (gethash starting-point orgrr-title-filename))
+		(selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel)))
+	  (dolist (element orgrr-zettel-list)
+	    (when (string-match (concat "^" selection-zettel) element)
+	      (if (not (equal element selection-zettel))
+		  (progn 
+		    (setq end-point element)
+		    (setq end-point-zettel element)))))
+	  (setq end-point (completing-read "Select end point: " orgrr-selection-list-completion nil nil end-point))
+	  (with-current-buffer (get-buffer-create draft-buffer)
+	    (let ((inhibit-read-only t))
+              (erase-buffer)
+	      (insert (concat draft-buffer " " (orgrr-return-zettel-linked selection-zettel) " - " (orgrr-return-zettel-linked end-point-zettel) "\n\n"))
+	      (dolist (element orgrr-zettel-list) 
+		(when (string-match (concat "^" selection-zettel) element)
+		  (if (not (equal element end-point))
+		      (progn
+			(when (not call-with-arg) 
+			  (insert (concat "* " (orgrr-return-fullzettel-linked-starred element) "\n\n")))
+			(insert (concat (orgrr-return-fullzettel-content element) "\n\n"))))))
+;;Starting here it is only window-management
+	      (orgrr-open-buffer draft-buffer)
+	      (with-current-buffer draft-buffer
+		(org-mode))
+	      (let ((window (get-buffer-window draft-buffer)))
+		(when window
+		  (select-window window)
+		  (setq default-directory org-directory)
+		  (if orgrr-compile-open-link-other-window
+		      (setq-local org-link-frame-setup '((file . find-file-other-window)))) 
+		  (goto-char (point-min))
+		  (deactivate-mark))))))))
+    (when (string-match-p "*compiled sequence*" (buffer-name (current-buffer)))
+      (orgrr-close-buffer))))
 
 (defun orgrr-initialize ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode 
