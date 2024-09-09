@@ -590,6 +590,13 @@ title to the note. Adds stars for org-bolding."
             (forward-line 1))))
       (string-trim (buffer-string)))))     
 
+(defun orgrr-return-zettel-from-title (title)
+  "Returns the zettel from a title."
+  (let* ((matched-title-filename (gethash title orgrr-title-filename))
+	 (matched-zettel (gethash (concat "\\" matched-title-filename) orgrr-filename-zettel))
+	 (zettel))
+    (setq zettel matched-zettel)))
+
 (defun orgrr-open-previous-zettel ()
   "Opens the previous zettel."
   (interactive)
@@ -1247,7 +1254,7 @@ If called with C-u the buffer is created without headlines."
 	     (orgrr-zettel-list (sort orgrr-zettel-list 'dictionary-lessp))
 	     (starting-point)
 	     (end-point)
-	     (end-point-zettel)
+	     (end-flag)
 	     (draft-buffer "*compiled sequence*"))
 	(if current-zettel
 	    (setq starting-point (completing-read "Select starting point: " orgrr-selection-list-completion nil nil current-zettel))
@@ -1259,21 +1266,24 @@ If called with C-u the buffer is created without headlines."
 	  (dolist (element orgrr-zettel-list)
 	    (when (string-match (concat "^" selection-zettel) element)
 	      (if (not (equal element selection-zettel))
-		  (progn 
-		    (setq end-point element)
-		    (setq end-point-zettel element)))))
+		    (setq end-point element))))
 	  (setq end-point (completing-read "Select end point: " orgrr-selection-list-completion nil nil end-point))
+	  (if (string-match "^\\[\\(.*?\\)\\]" end-point)
+	      (progn
+      		(setq end-point (replace-regexp-in-string "\\[.*?\\]\\s-*" "" end-point))
+		(setq end-point (orgrr-return-zettel-from-title end-point))))
 	  (with-current-buffer (get-buffer-create draft-buffer)
 	    (let ((inhibit-read-only t))
               (erase-buffer)
-	      (insert (concat draft-buffer " " (orgrr-return-zettel-linked selection-zettel) " - " (orgrr-return-zettel-linked end-point-zettel) "\n\n"))
+	      (insert (concat draft-buffer " " (orgrr-return-zettel-linked selection-zettel) " - " (orgrr-return-zettel-linked end-point) "\n\n"))
 	      (dolist (element orgrr-zettel-list) 
-		(when (string-match (concat "^" selection-zettel) element)
-		  (if (not (equal element end-point))
-		      (progn
-			(when (not call-with-arg) 
-			  (insert (concat "* " (orgrr-return-fullzettel-linked-starred element) "\n\n")))
-			(insert (concat (orgrr-return-fullzettel-content element) "\n\n"))))))
+		(when (and (string-match (concat "^" selection-zettel) element)
+			   (not end-flag))
+		  (when (not call-with-arg) 
+		    (insert (concat "* " (orgrr-return-fullzettel-linked-starred element) "\n\n"))
+		    (insert (concat (orgrr-return-fullzettel-content element) "\n\n")))
+		  (when (equal element end-point)
+		      (setq end-flag t)))))
 ;;Starting here it is only window-management
 	      (orgrr-open-buffer draft-buffer)
 	      (with-current-buffer draft-buffer
@@ -1285,7 +1295,7 @@ If called with C-u the buffer is created without headlines."
 		  (if orgrr-compile-open-link-other-window
 		      (setq-local org-link-frame-setup '((file . find-file-other-window)))) 
 		  (goto-char (point-min))
-		  (deactivate-mark))))))))
+		  (deactivate-mark)))))))
     (when (string-match-p "*compiled sequence*" (buffer-name (current-buffer)))
       (orgrr-close-buffer))))
 
