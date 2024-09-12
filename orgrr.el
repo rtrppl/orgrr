@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.9.2
+;; Version: 0.9.3
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -137,8 +137,8 @@ require NCD-formating."
 	     (dolist (container containers)
 	       (erase-buffer)
 	       (if (on-macos-p)
-		(insert (shell-command-to-string (concat "rg -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' " container " -n --sort accessed -g \"*.org\"")))
-		(insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' " container " -n --sort accessed -g \"*.org\""))))
+		(insert (shell-command-to-string (concat "rg -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' '" (expand-file-name container) "' -n --sort accessed -g \"*.org\"")))
+		(insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' '" (expand-file-name container) "' -n --sort accessed -g \"*.org\""))))
 	    (let ((lines (split-string (buffer-string) "\n" t)))
 	      (dolist (line lines)
 		(when (string-match "^\\(.*?\\):\\(.*\\)$" line)
@@ -188,7 +188,7 @@ org-files and adds them to hashtables."
   (clrhash orgrr-zettel-filename)
   (clrhash orgrr-filename-zettel)
   (with-temp-buffer
-    (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)|(zettel:.*)\" " org-directory " -g \"*.org\"")))
+    (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)|(zettel:.*)\" '" (expand-file-name org-directory) "' -g \"*.org\"")))
     (goto-char (point-min))
     (while (not (eobp))
       (let ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
@@ -317,7 +317,7 @@ current zettel ID, which allows you to search within a context."
 	(orgrr-open-file filename)))
     (when (not (member selection (hash-table-keys orgrr-title-filename)))
       (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-	     (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
+	     (filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
 	(orgrr-open-file (concat filename ".org"))
 	(insert (concat "#+title: " selection "\n"))))))
 
@@ -622,7 +622,9 @@ selected file name does not exist, a new one is created."
     (setq filename (gethash selection orgrr-title-filename))
     (orgrr-open-file filename))
   (when (not (member selection (hash-table-keys orgrr-title-filename)))
-    (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection)))
+    (setq filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection)))
+    (when (on-macos-p)
+	(setq filename (ucs-normalize-HFS-NFD-string filename)))
     (orgrr-open-file (concat filename ".org"))
     (insert (concat "#+title: " selection "\n")))))
 
@@ -644,8 +646,8 @@ If the selected title does not exist, a new note is created."
 	  (kill-region (region-beginning) (region-end)))
       (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
     (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-         (filename (concat org-directory time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
-      (if (on-macos-p)
+           (filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
+      (when (on-macos-p)
 	  (setq filename (ucs-normalize-HFS-NFD-string filename)))
       (if (region-active-p)
 	  (kill-region (region-beginning) (region-end)))
@@ -672,8 +674,8 @@ If the selected title does not exist, a new note is created."
 	      (rename-file old-filename new-filename)
 	      (set-visited-file-name new-filename)
 	       (if (on-macos-p)
-		   (shell-command-to-string (concat "rg -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory old-filename)) "' " org-directory "-r " (ucs-normalize-HFS-NFD-string (file-name-nondirectory new-filename))))
-		 (shell-command-to-string (concat "rg -e '" (file-name-nondirectory old-filename) "' " org-directory "-r " (file-name-nondirectory new-filename)))))))
+		   (shell-command-to-string (concat "rg -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory old-filename)) "' '" (expand-file-name org-directory) "' -r " (ucs-normalize-HFS-NFD-string (file-name-nondirectory new-filename))))
+		 (shell-command-to-string (concat "rg -e '" (file-name-nondirectory old-filename) "' '" (expand-file-name org-directory) "' -r " (file-name-nondirectory new-filename)))))))
 
 (defun orgrr-delete ()
   "Delete current note and show the previous buffer."
@@ -730,7 +732,7 @@ If the selected title does not exist, a new note is created."
       (setq filename (gethash selection orgrr-title-filename))
       (org-open-file filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S")))
-         (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org")))
+         (setq filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org")))
 	 (with-current-buffer (orgrr-open-file filename)
 	 (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n"))))))
 
@@ -791,7 +793,7 @@ an existing project."
       (find-file-noselect filename))
   (when (not (member selection titles))
      (let ((time (format-time-string "%Y%m%d%H%M%S")))
-       (setq filename (concat org-directory time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org"))
+       (setq filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org"))
        (find-file-noselect filename)
        (insert (concat "#+title: " selection "\n#+roam_tags: orgrr-project\n"))))
     (with-current-buffer (find-file-noselect filename)
@@ -808,7 +810,7 @@ create a new one. Returns a project."
 	 (orgrr-project_filename-title (make-hash-table :test 'equal))
 	 (selection))
      (with-temp-buffer
-       (insert (shell-command-to-string (concat "rg -i --sort modified -l -e  \"^\\#\\+roam_tags:.+orgrr-project\" " org-directory)))
+       (insert (shell-command-to-string (concat "rg -i --sort modified -l -e  \"^\\#\\+roam_tags:.+orgrr-project\" '" (expand-file-name org-directory) "'")))
        (let ((lines (split-string (buffer-string) "\n" t)))
 	 (dolist (line lines)
 	   (let ((title (gethash (concat "\\" line) orgrr-filename-title)))
@@ -861,7 +863,7 @@ if they are not in the same container."
 	 (containers (nreverse (hash-table-values orgrr-name-container))))
     (dolist (container containers) 
       (with-temp-buffer
-	(insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)\" " container " -g \"*.org\"")))
+	(insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)\" '" (expand-file-name container) "' -g \"*.org\"")))
 	(goto-char (point-min))
 	(while (not (eobp))
 	  (let* ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
@@ -900,7 +902,7 @@ collect this information."
                   (progn
                     (orgrr-get-meta))))
        (titles (hash-table-keys orgrr-title-filename))
-       (number-of-files (shell-command-to-string (concat "find " org-directory "  -type f -name \"*.org\" | wc -l"))))
+       (number-of-files (shell-command-to-string (concat "find '" (expand-file-name org-directory) "'  -type f -name \"*.org\" | wc -l"))))
    (message "Orgrr considers %d titles and alias in %s org-files in this container. Collecting all titles took %s seconds to complete." (length titles) (string-trim number-of-files) (format "%.5f" (car result)))))
     
 (defun orgrr-show-related-notes (arg)
@@ -968,8 +970,8 @@ patient."
     (dolist (container containers)
       (with-temp-buffer
        (if (on-macos-p)
-	   (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' " container " -n -g \"*.org\"")))
-	 (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " container " -n -g \"*.org\""))))
+	   (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' '" (expand-file-name container) "' -n -g \"*.org\"")))
+	 (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' '" (expand-file-name container) "' -n -g \"*.org\""))))
       (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (line lines)
 	  (let* ((short-filename (file-name-nondirectory line)))
@@ -991,8 +993,8 @@ patient."
     (setq filename (substring entry 1))
     (with-temp-buffer
       (if (on-macos-p)
-	  (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' " container " -n -g \"*.org\"")))
-	(insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " container " -n -g \"*.org\""))))
+	  (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' '" (expand-file-name container) "' -n -g \"*.org\"")))
+	(insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' '" (expand-file-name container) "' -n -g \"*.org\""))))
       (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (line lines)
 	  (let* ((short-filename (file-name-nondirectory line)))
@@ -1175,8 +1177,8 @@ This one of the very few functions where orgrr is directly changing your data
     ;; Add all files that mention filename to the list orgrr-backlinks.
     (with-temp-buffer
        (if (on-macos-p)
-	   (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' " org-directory " -n -g \"*.org\"")))
-	 (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' " org-directory " -n -g \"*.org\""))))
+	   (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' '" (expand-file-name org-directory) "' -n -g \"*.org\"")))
+	 (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' '" (expand-file-name org-directory) "' -n -g \"*.org\""))))
        (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (line lines)
 	  (if (string-match "\\.org$" line)
