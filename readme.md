@@ -264,7 +264,7 @@ orgrr-projects thereby enable rapid access to a set of paragraphs and are the ma
 
 There are many different attempts to surface related notes in note-taking systems in Emacs (and outside of it). Most of them draw on some variation of text-analysis and algorithmic determination of proximity. I always felt that the links one personally adds to notes are an underused asset for assessing the proximity between notes. This function collects all notes related (via links) to the current note to the second degree - it collects the backlinks for the backlinks and the outgoing links mentioned by outgoing links. Using a family as analogy, orgrr considers all parents and grandparents as well as all children and grandchildren of a note. All links to a specific note are counted and the resulting list is ranked by frequency. This is much quicker (about 10 times) than the excellent [org-similarity](https://github.com/brunoarine/org-similarity) and still produces very interesting results. See the example below:
 
-![orgrr-show-related-notes](/orgrr-show-related-notes.png)
+![orgrr-show-related-notes](/2024-orgrr-show-related-notes.gif)
 
 See also [orgrr-show-related-notes](#orgrr-show-related-notes).
 
