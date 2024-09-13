@@ -1,7 +1,5 @@
 # orgrr
 
-![orgrr-show-backlinks](/orgrr-show-backlinks.png)
-
 orgrr is a minimalist but complete note-taking system for Emacs. Its intended purpose is to write, analyze, and manage notes. 
 
 These are the primary functions orgrr provides:
@@ -12,7 +10,7 @@ These are the primary functions orgrr provides:
 
 - **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note in a buffer ([more on orgrr-show-sequence](#orgrr-show-sequence)). Use **orgrr-compile-sequence** to create a temporary buffer with the content from a sequence of notes  ([more on orgrr-compile-sequence](#orgrr-compile-sequence)).
 
-- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a buffer ([more on orgrr-show-backlinks](#orgrr-show-backlinks)). This is what you see in the image above.
+- **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a buffer ([more on orgrr-show-backlinks](#orgrr-show-backlinks)). This is what you see in the GIF below.
 
 - **orgrr-show-related-notes** will show all related notes in a buffer ([more on orgrr-show-related-notes](#orgrr-show-related-notes)). For the underlying concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
 
@@ -341,6 +339,8 @@ Opens the note/zettel coming before the current one. The notes' order is in acco
 One of the main benefits of adding zettel values to notes becomes the ability to explore a sequence of notes. After you have selected a starting point, this functions displays a sequence of notes in a buffer (in accordance with your settings for orgrr-window-management, see [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)). [orgrr-compile-sequence](#orgrr-compile-sequence) has a somewhat similar functionality but also collects the content of all notes of the sequence.
 
 ### orgrr-show-backlinks
+
+![orgrr-show-backlinks](/2024-orgrr-show-backlinks.gif)
 
 This displays all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate it as you would with any other org buffer and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the line of the snippet in the source document. Invoke the command again to close the side-window (while visiting this buffer).
 
