@@ -2,7 +2,7 @@
 
 ![orgrr-show-backlinks](/orgrr-show-backlinks.png)
 
-orgrr is a minimalist but complete note-taking system for Emacs. Its intended purpose is to write, analyze, and manage notes [inspired by Zettelkasten-like systems](https://www.youtube.com/watch?v=qRSCKSPMuDc). 
+orgrr is a minimalist but complete note-taking system for Emacs. Its intended purpose is to write, analyze, and manage notes. 
 
 These are the primary functions orgrr provides:
 
