@@ -31,6 +31,9 @@
 ;;
 ;;; News
 ;;
+;; 0.9.3
+;; - Fixes to better deal with spaces in directory names
+;;
 ;; 0.9.2
 ;; - Adds compile sequence feature (orgrr-compile-sequence)
 ;;

@@ -2,7 +2,7 @@
 
 ![orgrr-show-backlinks](/orgrr-show-backlinks.png)
 
-orgrr is a minimalist but complete note-taking system for Emacs. Its intended purpose is the creation and management of a [Zettelkasten-like system](https://www.youtube.com/watch?v=qRSCKSPMuDc). 
+orgrr is a minimalist but complete note-taking system for Emacs. Its intended purpose is to write, analyze, and manage notes [inspired by Zettelkasten-like systems](https://www.youtube.com/watch?v=qRSCKSPMuDc). 
 
 These are the primary functions orgrr provides:
 
@@ -10,13 +10,16 @@ These are the primary functions orgrr provides:
 
 - **orgrr-insert** will insert a link to another note in the `org-directory`. If the title (or alias) entered does not exist, a new note is created ([more on orgrr-insert](#orgrr-insert)).
 
-- **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note in a buffer ([more on orgrr-show-sequence](#orgrr-show-sequence)). Use **orgrr-compile-sequence** to create a temporary buffer with the content from a sequence of notes.
+- **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note in a buffer ([more on orgrr-show-sequence](#orgrr-show-sequence)). Use **orgrr-compile-sequence** to create a temporary buffer with the content from a sequence of notes  ([more on orgrr-compile-sequence](#orgrr-compile-sequence)).
 
 - **orgrr-show-backlinks** will show all backlinks (=links from other notes to the note in the current buffer) in a buffer ([more on orgrr-show-backlinks](#orgrr-show-backlinks)). This is what you see in the image above.
 
 - **orgrr-show-related-notes** will show all related notes in a buffer ([more on orgrr-show-related-notes](#orgrr-show-related-notes)). For the underlying concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
+
+**Version 0.9.3**:
+- Fixes to better deal with spaces in directory names
 
 **Version 0.9.2**:
 - Added `orgrr-compile-sequence`
@@ -180,7 +183,7 @@ As above, if you don't already have done so, you also should set an org-director
 
 orgrr began as a nearly feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1), built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. orgrr currently only works with [org-files](https://orgmode.org) (i.e. in a technical sense: files ending in .org).
 
-**A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files and their meta-data, which is stored in hashtables. The aim is to have no dependencies on sql or related software. A second difference is that orgrr sticks to the ideal of every note being a single file (no nodes!). The final difference is relative minimalism - orgrr should have all necessary features to write, analyze, and manage notes - and draw on org-mode/Emacs for everything else.**
+**A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files, which is stored in hashtables. The aim is to have no dependencies on sql or related software. A second difference is that orgrr sticks to the ideal of every note being a single file (no nodes!). The final difference is relative minimalism - orgrr should have all necessary features to write, analyze, and manage notes - and draw on org-mode/Emacs for everything else.**
 
 This package primarily address my own needs and I have been using orgrr almost daily for more than a year now (September 2024). My main container has more than 4000 notes and orgrr is much faster than org-roam. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest of the Zettelkasten packages available for Emacs.
 
@@ -405,7 +408,7 @@ This is what I did for a long time. But every time I (re-)installed my setup, e.
 
 - Is that all?
 
-No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only about 1000 lines of code are necessary to write a note-taking system that is not too far off from Denote or org-roam. That this thing works provides me with independence from trends and operating systems, which is one of the reasons I don't see myself stopping to work on this project.
+No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only about 1000 lines of code are necessary to write a note-taking system that is not too far off from Denote or org-roam. That this thing works, provides me with independence from note-taking trends or specific operating systems, which is one of the reasons I don't see myself stopping to work on this project.
 
 - What does orgrr stand for?
 
