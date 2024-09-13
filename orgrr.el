@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.9.3
+;; Version: 0.9.4
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -30,6 +30,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.4 
+;; - Bug fix for end-of-sequence issue
 ;;
 ;; 0.9.3
 ;; - Fixes to better deal with spaces in directory names
@@ -451,9 +454,14 @@ orgrr-window-management."
           (erase-buffer)
 	  (insert (concat (orgrr-return-fullzettel-linked-head selection-zettel) "\n\n"))
 	  (dolist (element orgrr-zettel-list) 
-	    (when (string-match (concat "^" selection-zettel) element)
+	    (let* ((last-char (substring selection-zettel -1))
+		    (is-last-char-num (string-match-p "[0-9]" last-char))
+		    (regex (if is-last-char-num
+			       (concat "^" selection-zettel "[a-zA-Z]")
+			     (concat "^" selection-zettel))))
+	    (when (string-match regex element)
 	      (if (not (equal element selection-zettel))
-		  (insert (concat "** " (orgrr-return-fullzettel-linked element) "\n"))))))
+		  (insert (concat "** " (orgrr-return-fullzettel-linked element) "\n")))))))
 ;;Starting here it is only window-management
 	    (orgrr-open-buffer sequence-buffer)
 	    (with-current-buffer sequence-buffer
@@ -1269,9 +1277,14 @@ If called with C-u the buffer is created without headlines."
 	(let*  ((zettel-filename (gethash starting-point orgrr-title-filename))
 		(selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel)))
 	  (dolist (element orgrr-zettel-list)
-	    (when (string-match (concat "^" selection-zettel) element)
+	    (let* ((last-char (substring selection-zettel -1))
+		   (is-last-char-num (string-match-p "[0-9]" last-char))
+		   (regex (if is-last-char-num
+			      (concat "^" selection-zettel "[a-zA-Z]")
+			    (concat "^" selection-zettel))))
+	    (when (string-match regex element)
 	      (if (not (equal element selection-zettel))
-		    (setq end-point element))))
+		    (setq end-point element)))))
 	  (setq end-point (completing-read "Select end point: " orgrr-selection-list-completion nil nil end-point))
 	  (if (string-match "^\\[\\(.*?\\)\\]" end-point)
 	      (progn
@@ -1282,10 +1295,15 @@ If called with C-u the buffer is created without headlines."
               (erase-buffer)
 	      (insert (concat draft-buffer " " (orgrr-return-zettel-linked selection-zettel) " - " (orgrr-return-zettel-linked end-point) "\n\n"))
 	      (dolist (element orgrr-zettel-list) 
-		(when (and (string-match (concat "^" selection-zettel) element)
-			   (not end-flag))
-		  (when (not call-with-arg) 
-		    (insert (concat "* " (orgrr-return-fullzettel-linked-starred element) "\n\n"))
+		(let* ((last-char (substring selection-zettel -1))
+		       (is-last-char-num (string-match-p "[0-9]" last-char))
+		       (regex (if is-last-char-num
+				  (concat "^" selection-zettel "[a-zA-Z]")
+				(concat "^" selection-zettel))))
+		  (when (and (string-match regex element)
+			     (not end-flag))
+		    (when (not call-with-arg) 
+		      (insert (concat "* " (orgrr-return-fullzettel-linked-starred element) "\n\n")))
 		    (insert (concat (orgrr-return-fullzettel-content element) "\n\n")))
 		  (when (equal element end-point)
 		      (setq end-flag t)))))
