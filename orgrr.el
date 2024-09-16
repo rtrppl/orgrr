@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.9.4
+;; Version: 0.9.5
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -32,7 +32,7 @@
 ;;; News
 ;;
 ;; 0.9.5
-;; - Adds orgrr-insert-global
+;; - Adds global orgrr-insert and orgrr-find
 ;;
 ;; 0.9.4 
 ;; - Bug fix for end-of-sequence issue
@@ -57,7 +57,7 @@
 (defvar orgrr-compile-open-link-other-window t) ;; set this to nil if orgrr-compile-draft should respect orgrr-window-management settings
 
 
-;; The following list of hashtables create the data structure in which orgrr stores notes.
+;; The following list of hashtables create the data structure in which orgrr stores metadata on notes.
 (defvar orgrr-title-filename (make-hash-table :test 'equal) "Hashtable with the key title and the value filename.")
 (defvar orgrr-filename-title (make-hash-table :test 'equal) "Hashtable with the the key filename and the value title.")
 (defvar orgrr-filename-tags (make-hash-table :test 'equal) "Hashtable with the key filename and the value tags.")
@@ -645,8 +645,10 @@ selected file name does not exist, a new one is created."
 	(time (format-time-string "%Y%m%d%H%M%S")))
     (when (equal arg '(4))
        (setq selection (orgrr-global-selection))
-       (when (member selection (hash-table-keys orgrr-title-short_filename))))
-
+       (when (member selection (hash-table-keys orgrr-title-short_filename))
+	 (setq filename (gethash selection orgrr-title-short_filename))
+	 (setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename))
+	 (orgrr-open-file filename)))
     (when (not (equal arg '(4)))  
       (setq selection (orgrr-selection))
       (when (member selection (hash-table-keys orgrr-title-filename))
@@ -657,7 +659,12 @@ selected file name does not exist, a new one is created."
 	(when (on-macos-p)
 	  (setq filename (ucs-normalize-HFS-NFD-string filename)))
 	(orgrr-open-file (concat filename ".org"))
-	(insert (concat "#+title: " selection "\n")))))
+	(insert (concat "#+title: " selection "\n"))))))
+
+(defun orgrr-global-find ()
+  "A simple wrapper for a global orgrr-find."
+  (interactive)
+  (orgrr-find '(4)))
 
 (defun orgrr-insert (arg)
   "Insert links to an org-file in `org-directory' via mini-buffer completion. 
@@ -694,6 +701,11 @@ If the selected title does not exist, a new note is created."
 	    (insert (concat "\[\[file:" (file-relative-name filename path-of-current-note) ".org" "\]\[" selection "\]\]"))
 	    (orgrr-open-file (concat filename ".org"))
 	    (insert (concat "#+title: " selection "\n"))))))))
+
+(defun orgrr-global-insert ()
+  "A simple wrapper for a global orgrr-insert."
+  (interactive)
+  (orgrr-insert '(4)))
 
 (defun orgrr-random-note ()
   "Opens random org-file in `org-directory'."

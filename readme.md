@@ -16,17 +16,27 @@ These are the primary functions orgrr provides:
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
-**Version 0.9.3**:
+## Changelog
+
+**0.9.5**
+- Adds global orgrr-insert and orgrr-find
+- `C-u orgrr-insert` or `orgrr-global-insert` for orgrr-insert drawing from all containers
+- `C-u orgrr-find` or `orgrr-global-find` for orgrr-find for notes in all containers
+
+**0.9.4.**
+- Bug fix for end-of-sequence issue
+
+**0.9.3**:
 - Fixes to better deal with spaces in directory names
 
-**Version 0.9.2**:
+**0.9.2**:
 - Added `orgrr-compile-sequence`
 
-**Version 0.9.1**:
+**0.9.1**:
 - Better use-package config
 - Bug fix for orgrr-check-for-container-file
 
-**Version 0.9**:  
+**0.9**:  
 - Optimizing/Rewrite of code for straight package management (in preparation of an potential MELPA release)
 - Changes to orgrr-toggle-window-mode
 - `C-u orgrr-show-related-notes` now considers backlinks for all containers
@@ -284,11 +294,15 @@ This function searches the org-directory (and all its subdirectories) for a note
 
 If the note does not exist, then a new one with the chosen title will be created in the `org-directory`, i.e. the current container. The naming scheme of the new file is similar to org-roam v1. In other words, you should use orgrr-find and orgrr-insert to create new notes. If you want to abort the creation process you should invoke `kill-current-buffer`.
 
+If called with `C-u` (`C-u orgrr-find`) or via `orgrr-global-find` notes from all containers are considered (i.e. their titles and alias but not their tags or zettel numbers).
+
 ### orgrr-insert
 
 This will search the org-directory (and all its subdirectories) for a note and then inserts a link to this note at point. You can search for any combination of tags, zettel ID and title (or alias). A marked region is recognized to narrow search.
 
 If the note does not exist, a new one with the same title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. The link to the new note will also be added at point. As above mentioned, you should use orgrr-find and orgrr-insert to create new notes and should use `kill-current-buffer` to abort.
+
+If called with `C-u` (`C-u orgrr-insert`) or via `orgrr-global-insert` notes from all containers are considered (i.e. their titles and alias but not their tags or zettel numbers).
 
 A special variant of this function is `orgrr-insert-project`, which allows to insert a link to any orgrr-project in the current container (see [orgrr-projects](#orgrr-projects)).
 
