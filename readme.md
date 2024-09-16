@@ -20,8 +20,8 @@ These are the primary functions orgrr provides:
 
 **0.9.5**
 - Adds global orgrr-insert and orgrr-find
-- `C-u orgrr-insert` or `orgrr-global-insert` for orgrr-insert drawing from all containers
-- `C-u orgrr-find` or `orgrr-global-find` for orgrr-find for notes in all containers
+- `C-u orgrr-insert` or `orgrr-global-insert` to insert a link to notes from all containers
+- `C-u orgrr-find` or `orgrr-global-find` to find notes in all containers
 
 **0.9.4.**
 - Bug fix for end-of-sequence issue
@@ -358,11 +358,13 @@ One of the main benefits of adding zettel values to notes becomes the ability to
 
 This displays all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate it as you would with any other org buffer and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the line of the snippet in the source document. Invoke the command again to close the side-window (while visiting this buffer).
 
+If called with `C-u`, backlinks from all containers are considered.
+
 ### orgrr-show-related-notes
 
 This displays all related notes for the note in the current buffer (see also [orgrr-related-notes](#orgrr-related-notes)). The orgmode buffer with the results is temporary. You can navigate it as you would with any other org buffer and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). Invoke the command again to close the side-window or buffer (while visiting this buffer).
 
-If called with C-u, backlinks of first and second order in all containers are considered. This may take a while, please be patient. 
+If called with `C-u`, backlinks of first and second order in all containers are considered. This may take a while, please be patient. 
 
 ## Functions for project management
 
