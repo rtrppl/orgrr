@@ -121,10 +121,9 @@ require NCD-formating."
   (let ((call-with-arg nil))
     (when (equal arg '(4))
       (setq call-with-arg 1))
-  (orgrr-get-all-meta)
   (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
       (progn
-	(orgrr-get-meta)
+	(orgrr-get-all-meta)
 	(let* ((filename (if (equal major-mode 'dired-mode)
                          default-directory
 			 (buffer-file-name)))
