@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.9.4
+;; Version: 0.9.5
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -31,6 +31,9 @@
 ;;
 ;;; News
 ;;
+;; 0.9.5
+;; - Adds global orgrr-insert and orgrr-find
+;;
 ;; 0.9.4 
 ;; - Bug fix for end-of-sequence issue
 ;;
@@ -43,9 +46,6 @@
 ;; 0.9.1
 ;; - Bug fix for orgrr-check-for-container-file
 ;;
-;; 0.9 
-;; - Optimizations for straight.el; change of orgrr-window-management default
-;;
 ;;
 ;;; Code:
 
@@ -57,7 +57,7 @@
 (defvar orgrr-compile-open-link-other-window t) ;; set this to nil if orgrr-compile-draft should respect orgrr-window-management settings
 
 
-;; The following list of hashtables create the data structure in which orgrr stores notes.
+;; The following list of hashtables create the data structure in which orgrr stores metadata on notes.
 (defvar orgrr-title-filename (make-hash-table :test 'equal) "Hashtable with the key title and the value filename.")
 (defvar orgrr-filename-title (make-hash-table :test 'equal) "Hashtable with the the key filename and the value title.")
 (defvar orgrr-filename-tags (make-hash-table :test 'equal) "Hashtable with the key filename and the value tags.")
@@ -67,7 +67,8 @@
 (defvar orgrr-zettelrank-zettel (make-hash-table :test 'equal) "Hashtable with the key rank of a zettel and the value zettel.") ;; rank means how a zettel value of a note relates to other notes
 (defvar orgrr-zettel-zettelrank (make-hash-table :test 'equal) "Hashtable with the key zettel and the value rank of a zettel.")
 (defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable containing all org-files accross all containers.")
-(defvar orgrr-short_filename-title (make-hash-table :test 'equal) "Hashtable containing titles for all org-files accross all containers.")
+(defvar orgrr-short_filename-title (make-hash-table :test 'equal) "Hashtable containing filenames-titles for all org-files accross all containers.")
+(defvar orgrr-title-short_filename (make-hash-table :test 'equal) "Hashtable containing titles-filenames for all org-files accross all containers.")
 (defvar orgrr-filename-mentions (make-hash-table :test 'equal) "Hashtable necessary for orgrr-show-related-notes.") 
 
 (defun orgrr-open-file (filename)
@@ -250,7 +251,6 @@ orgrr-selection-list-completion))
   "Prepare the symbol orgrr-selection for completing-read and send the result 
 in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front 
 of title and alias."
-  (interactive)
   (orgrr-get-meta)
   (let* ((orgrr-selection-list ())
 	 (orgrr-selection-list-completion)
@@ -278,6 +278,20 @@ of title and alias."
 	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))  
     (if (string-match "^\(" selection)
 	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
+  selection)) ;; this line ensures that the value of selection is returned when this function is called
+
+(defun orgrr-global-selection ()
+  "Use data from all containers to prepare the symbol orgrr-selection for 
+completing-read and send the result in selection to orgrr-find and orgrr-insert. 
+Does not prepend tags and zettel in front of title and alias."
+  (orgrr-get-all-meta)
+  (let* ((orgrr-selection-list-completion)
+	 (selection)
+	 (orgrr-selection-list (hash-table-keys orgrr-title-short_filename)))
+    (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
+    (if (region-active-p)
+	(setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
+      (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
   selection)) ;; this line ensures that the value of selection is returned when this function is called
 
 (defun orgrr-selection-zettel ()
@@ -622,49 +636,77 @@ title to the note. Adds stars for org-bolding."
     (when (not current-zettel)
       (message "This note has no value for zettel, so there is no next zettel!"))))
 
-(defun orgrr-find ()
+(defun orgrr-find (arg)
   "Find org-file in `org-directory' via mini-buffer completion. If the 
 selected file name does not exist, a new one is created."
-  (interactive)
-  (let ((selection (orgrr-selection))
+  (interactive "P")
+  (let ((selection)
 	(filename)
-	(time (format-time-string "%Y%m%d%H%M%S")))
-  (when (member selection (hash-table-keys orgrr-title-filename))
-    (setq filename (gethash selection orgrr-title-filename))
-    (orgrr-open-file filename))
-  (when (not (member selection (hash-table-keys orgrr-title-filename)))
-    (setq filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection)))
-    (when (on-macos-p)
-	(setq filename (ucs-normalize-HFS-NFD-string filename)))
-    (orgrr-open-file (concat filename ".org"))
-    (insert (concat "#+title: " selection "\n")))))
+	(time))
+    (when (equal arg '(4))
+       (setq selection (orgrr-global-selection))
+       (when (member selection (hash-table-keys orgrr-title-short_filename))
+	 (setq filename (gethash selection orgrr-title-short_filename))
+	 (setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename))
+	 (orgrr-open-file filename)))
+    (when (not (equal arg '(4)))  
+      (setq selection (orgrr-selection))
+      (when (member selection (hash-table-keys orgrr-title-filename))
+	(setq filename (gethash selection orgrr-title-filename))
+	(orgrr-open-file filename))
+      (when (not (member selection (hash-table-keys orgrr-title-filename)))
+	(setq time (format-time-string "%Y%m%d%H%M%S"))
+	(setq filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection)))
+	(when (on-macos-p)
+	  (setq filename (ucs-normalize-HFS-NFD-string filename)))
+	(orgrr-open-file (concat filename ".org"))
+	(insert (concat "#+title: " selection "\n"))))))
 
-(defun orgrr-insert ()
+(defun orgrr-global-find ()
+  "A simple wrapper for a global orgrr-find."
+  (interactive)
+  (orgrr-find '(4)))
+
+(defun orgrr-insert (arg)
   "Insert links to an org-file in `org-directory' via mini-buffer completion. 
 If the selected title does not exist, a new note is created."
-  (interactive)
+  (interactive "P")
   (let ((path-of-current-note
 	 (if (buffer-file-name)
              (file-name-directory (buffer-file-name))
            default-directory))
-	(selection (orgrr-selection))
+	(selection)
 	(filename))
-  (if (member selection (hash-table-keys orgrr-title-filename))
-    (progn
-      (setq filename (gethash selection orgrr-title-filename))
-      (setq filename (file-relative-name filename path-of-current-note))
-      (if (region-active-p)
-	  (kill-region (region-beginning) (region-end)))
-      (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
-    (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-           (filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
-      (when (on-macos-p)
-	  (setq filename (ucs-normalize-HFS-NFD-string filename)))
-      (if (region-active-p)
-	  (kill-region (region-beginning) (region-end)))
-      (insert (concat "\[\[file:" (file-relative-name filename path-of-current-note) ".org" "\]\[" selection "\]\]"))
-      (orgrr-open-file (concat filename ".org"))
-      (insert (concat "#+title: " selection "\n"))))))
+    (when (equal arg '(4))
+	(setq selection (orgrr-global-selection))
+	(setq filename (gethash selection orgrr-title-short_filename))
+	(setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename)) 
+	(setq filename (file-relative-name filename path-of-current-note))
+	(insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
+    (when (not (equal arg '(4)))  
+      (setq selection (orgrr-selection))
+      (if (member selection (hash-table-keys orgrr-title-filename))
+	  (progn
+	    (setq filename (gethash selection orgrr-title-filename))
+	    (setq filename (file-relative-name filename path-of-current-note))
+	    (if (region-active-p)
+		(kill-region (region-beginning) (region-end)))
+	    (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
+	(progn
+	  (let* ((time (format-time-string "%Y%m%d%H%M%S"))
+		 (filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
+	    (when (on-macos-p)
+	      (setq filename (ucs-normalize-HFS-NFD-string filename)))
+	    (if (region-active-p)
+		(kill-region (region-beginning) (region-end)))
+	    (insert (concat "\[\[file:" (file-relative-name filename path-of-current-note) ".org" "\]\[" selection "\]\]"))
+	    (orgrr-open-file (concat filename ".org"))
+	    (insert (concat "#+title: " selection "\n"))))))))
+
+(defun orgrr-global-insert ()
+  "A simple wrapper for a global orgrr-insert."
+  (interactive)
+  (orgrr-insert '(4)))
 
 (defun orgrr-random-note ()
   "Opens random org-file in `org-directory'."
@@ -858,10 +900,11 @@ create a new one. Returns a project."
   (setq snippet (concat "\n\"" (string-trim (orgrr-adjust-links project-snippet)) "\"" "\t" "(Source: \[\[file:" (concat footnote "::" (number-to-string footnote-line)) "\]\[" footnote-description "\]\]" ")")))))
 
 (defun orgrr-get-all-meta ()
-  "Collects the filenames and titles all of org-files across all containers 
-and adds them to the hashtables orgrr-short_filename-filename and 
-orgrr-short_filename-title. This is needed to correct the links of a snippet 
-created in one container for use in another via orgrr-add-to-project. 
+  "Collects the filenames, titles and alias all of org-files across all
+containers and adds them to the hashtables orgrr-short_filename-filename,
+orgrr-short_filename-title, and orgrr-title-short_filename. This is needed
+to correct the links of a snippet created in one container for use in another
+via orgrr-add-to-project. 
 
 An intended use case for orgrr-add-to-project is to add snippets to a writing 
 project, which is located in a different container than the main database.
@@ -870,21 +913,30 @@ This also allows orgrr-show-related-notes to refer linked documents even
 if they are not in the same container."
   (clrhash orgrr-short_filename-filename)
   (clrhash orgrr-short_filename-title)
+  (clrhash orgrr-title-short_filename)
   (let* ((orgrr-name-container (orgrr-get-list-of-containers))
 	 (containers (nreverse (hash-table-values orgrr-name-container))))
     (dolist (container containers) 
       (with-temp-buffer
-	(insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)\" '" (expand-file-name container) "' -g \"*.org\"")))
+	(insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)|(roam_alias.*)\" '" (expand-file-name container) "' -g \"*.org\"")))
 	(goto-char (point-min))
 	(while (not (eobp))
 	  (let* ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
-	    (if (string-match "\\(.*\\):#\\+\\(title\\|TITLE\\):\\s-*\\(.+\\)" current-entry)
-		(progn
-		  (let* ((filename (match-string 1 current-entry))
-			 (title (match-string 3 current-entry)))
-		    (puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)
-		    (puthash (concat "\\" (file-name-nondirectory filename)) title orgrr-short_filename-title)))))
-	  (forward-line))))))
+	    (when (string-match "\\(.*\\):#\\+\\(title\\|TITLE\\):\\s-*\\(.+\\)" current-entry)
+	      (let* ((filename (match-string 1 current-entry))
+		     (title (match-string 3 current-entry)))
+		(puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)
+		(puthash (concat "\\" (file-name-nondirectory filename)) title orgrr-short_filename-title)
+		(puthash title (file-name-nondirectory filename) orgrr-title-short_filename)))
+	    (when (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
+	      (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
+		     (filename (car line)))
+		(with-temp-buffer
+		  (insert current-entry)
+		  (goto-char (point-min))
+		  (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
+		    (puthash (match-string 1) (file-name-nondirectory filename) orgrr-title-short_filename)))))
+	  (forward-line)))))))
 	 
 (defun orgrr-adjust-links (string)
   "Adjusts/corrects all links of STRING relative to the position of the note. 
