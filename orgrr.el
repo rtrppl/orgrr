@@ -120,8 +120,8 @@ require NCD-formating."
   (interactive "P")
   (let ((call-with-arg nil))
     (when (equal arg '(4))
-      (setq call-with-arg 1))
-  (orgrr-get-all-meta)
+      (setq call-with-arg 1)
+      (orgrr-get-all-meta))
   (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
       (progn
 	(orgrr-get-meta)
@@ -1373,6 +1373,14 @@ If called with C-u the buffer is created without headlines."
 		  (deactivate-mark)))))))
     (when (string-match-p "*compiled sequence*" (buffer-name (current-buffer)))
       (orgrr-close-buffer))))
+
+(defun orgrr-search (arg)
+ "Search function for orgrr. When called with C-u all containers will be
+searched."
+ (interactive "P")
+  (let ((call-with-arg nil))
+    (when (equal arg '(4))
+      (setq call-with-arg 1))
 
 (defun orgrr-initialize ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode 
