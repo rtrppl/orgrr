@@ -186,13 +186,14 @@ require NCD-formating."
 
 (defun orgrr-get-meta ()
   "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all 
-org-files and adds them to hashtables."
+org-files and adds them to hashtables.
+
+Updates the following hashtables: orgrr-title-filename, orgrr-filename-title, orgrr-zettel-filename, orgrr-filename-zettel, orgrr-filename-tags."
   (clrhash orgrr-filename-title)
   (clrhash orgrr-title-filename)
-  (clrhash orgrr-filename-tags)
-  (clrhash orgrr-short_filename-filename) 
   (clrhash orgrr-zettel-filename)
   (clrhash orgrr-filename-zettel)
+  (clrhash orgrr-filename-tags)
   (with-temp-buffer
     (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)|(zettel:.*)\" '" (expand-file-name org-directory) "' -g \"*.org\"")))
     (goto-char (point-min))
@@ -205,8 +206,7 @@ org-files and adds them to hashtables."
 		   (line (split-string current-entry "^.+\\(#\\+title:\\|:#+TITLE:\\)\\s-*" t))
 		   (title (car line)))
 		(puthash title filename orgrr-title-filename)
-		(puthash (concat "\\" filename) title orgrr-filename-title)
-		(puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)))
+		(puthash (concat "\\" filename) title orgrr-filename-title)))
 	;; The following checks if this is a #+roam_alias line and if so, adds all alias to orgrr-title-filename.
 	(when (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
 	  (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
