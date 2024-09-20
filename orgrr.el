@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.9.5
+;; Version: 0.9.6
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -30,6 +30,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.6
+;; - Adds orgrr-search
 ;;
 ;; 0.9.5
 ;; - Adds global orgrr-insert and orgrr-find
@@ -1381,6 +1384,75 @@ searched."
   (let ((call-with-arg nil))
     (when (equal arg '(4))
       (setq call-with-arg 1))
+    (if (not (string-match-p "search for *" (buffer-name (current-buffer))))
+      (progn
+	(orgrr-get-meta)
+	(let* ((filename (if (equal major-mode 'dired-mode)
+                         default-directory
+			 (buffer-file-name)))
+	       (search (read-from-minibuffer "Search for: ")) 
+	       (search-buffer (concat "search for *" search "*"))
+	       (hits 0)
+	       (orgrr-counter-quote (make-hash-table :test 'equal))
+	       (orgrr-counter-filename (make-hash-table :test 'equal))
+	       (orgrr-name-container (orgrr-get-list-of-containers))
+	       (containers (nreverse (hash-table-values orgrr-name-container))))
+    ;; collect all hits
+	  (with-temp-buffer
+	     (when (not call-with-arg)
+	       (setq containers ())
+	       (setq containers (cons org-directory containers)))
+	     (dolist (container containers)
+	       (erase-buffer)
+	       (if (on-macos-p)
+		(insert (shell-command-to-string (concat "rg -i -e '" search "' '" (expand-file-name container) "' -n --sort accessed -g \"*.org\"")))
+		(insert (shell-command-to-string (concat "rg -i -e '" search "' '" (expand-file-name container) "' -n --sort accessed -g \"*.org\""))))
+	    (let ((lines (split-string (buffer-string) "\n" t)))
+	      (dolist (line lines)
+		(when (string-match "^\\(.*?\\):\\(.*\\)$" line)
+ 		  (setq hits (+ hits 1))
+		  (puthash hits (match-string 1 line) orgrr-counter-filename)
+		  (puthash hits (match-string 2 line) orgrr-counter-quote))))))
+	  ;; match-string 2 includes the line number!
+      (with-current-buffer (get-buffer-create search-buffer)
+              (erase-buffer)
+	      (orgrr-open-buffer search-buffer)
+	      (org-mode)
+              (insert (concat "*" search "*\n\n"))
+              (if (= hits 1)
+		  (insert "* 1 Result\n\n")
+		(insert (concat "* " (number-to-string hits) " Results\n\n")))
+	      ;; Going through the search results
+              (dolist (counter (hash-table-keys orgrr-counter-filename))
+		(let ((entry (gethash counter orgrr-counter-filename)))
+		  (when (and (stringp entry)
+                             (not (string= entry filename)))
+		    (let ((key entry)
+			  (value (gethash counter orgrr-counter-quote)))
+                      (when (stringp value)
+			(let* ((short_filename (file-name-nondirectory key))
+			       (full-filename key)
+			       (result (gethash (concat "\\" short_filename) orgrr-short_filename-title)))
+			  (string-match "^\\(.*?\\):\\(.*\\)$" value)
+			  (let* ((line-number (match-string 1 value))
+				 (snippet (match-string 2 value))
+				 (snippet (orgrr-adjust-links snippet))
+				 (snippet (string-trim-left (string-trim-left snippet "*"))))
+			    (insert (concat "\*\* \[\[file:" full-filename "::" line-number "\]" "\[" result "\]\]:\n\n"  snippet "\n\n")))))))))
+	      (let ((window (get-buffer-window search-buffer)))
+		(select-window window)
+		(goto-char (point-min))
+		(org-next-visible-heading 2)
+		(deactivate-mark)))))
+      (orgrr-close-buffer))))
+
+
+(defun orgrr-global-search ()
+  "A simple wrapper for a global orgrr-search."
+  (interactive)
+  (orgrr-search '(4)))
+
+
 
 (defun orgrr-initialize ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode 
