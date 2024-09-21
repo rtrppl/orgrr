@@ -1377,17 +1377,14 @@ containers will be searched. Regex don't need to be escaped."
     (when (equal arg '(4))
       (setq call-with-arg 1))
     (when (not (string-match-p "search for *" (buffer-name (current-buffer))))
-	(orgrr-get-all-meta)
-	(let* ((filename (if (equal major-mode 'dired-mode)
-                         default-directory
-			 (buffer-file-name)))
-	       (search (read-from-minibuffer "Search for: ")) 
-	       (search-buffer (concat "search for *" search "*"))
-	       (hits 0)
-	       (orgrr-counter-quote (make-hash-table :test 'equal))
-	       (orgrr-counter-filename (make-hash-table :test 'equal))
-	       (orgrr-name-container (orgrr-get-list-of-containers))
-	       (containers (nreverse (hash-table-values orgrr-name-container))))
+      (orgrr-get-all-meta)
+      (let* ((search (read-from-minibuffer "Search for: ")) 
+	     (search-buffer (concat "search for *" search "*"))
+	     (hits 0)
+	     (orgrr-counter-quote (make-hash-table :test 'equal))
+	     (orgrr-counter-filename (make-hash-table :test 'equal))
+	     (orgrr-name-container (orgrr-get-list-of-containers))
+	     (containers (nreverse (hash-table-values orgrr-name-container))))
     ;; collect all hits
 	  (with-temp-buffer
 	     (when (not call-with-arg)
@@ -1416,8 +1413,7 @@ containers will be searched. Regex don't need to be escaped."
 	      ;; Going through the search results
               (dolist (counter (hash-table-keys orgrr-counter-filename))
 		(let ((entry (gethash counter orgrr-counter-filename)))
-		  (when (and (stringp entry)
-                             (not (string= entry filename)))
+		  (when (stringp entry)
 		    (let ((key entry)
 			  (value (gethash counter orgrr-counter-quote)))
                       (when (stringp value)
@@ -1434,14 +1430,10 @@ containers will be searched. Regex don't need to be escaped."
       (when (string-match-p "search for *" (buffer-name (current-buffer)))
 	(orgrr-close-buffer))))
 
-
-
 (defun orgrr-global-search ()
   "A simple wrapper for a global orgrr-search."
   (interactive)
   (orgrr-search '(4)))
-
-
 
 (defun orgrr-initialize ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode 
