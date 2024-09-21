@@ -92,9 +92,9 @@
 
 (defun orgrr-close-buffer ()
    "A wrapper to close BUFFER according to orgrr-window-management settings."
-  (if (equal orgrr-window-management "multi-window")
-      (delete-window))
-  (if (equal orgrr-window-management "single-window")
+  (when (equal orgrr-window-management "multi-window")
+      (kill-buffer))
+  (when (equal orgrr-window-management "single-window")
       (kill-buffer)))
 
 (defun orgrr-toggle-window-mode ()
