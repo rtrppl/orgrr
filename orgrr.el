@@ -95,7 +95,7 @@
   (if (equal orgrr-window-management "multi-window")
       (delete-window))
   (if (equal orgrr-window-management "single-window")
-      (previous-buffer)))
+      (kill-buffer)))
 
 (defun orgrr-toggle-window-mode ()
   "Switch between single-window-mode and multi-window mode (which uses 
