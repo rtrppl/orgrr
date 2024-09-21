@@ -14,9 +14,15 @@ These are the primary functions orgrr provides:
 
 - **orgrr-show-related-notes** will show all related notes in a buffer ([more on orgrr-show-related-notes](#orgrr-show-related-notes)). For the underlying concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
 
+- **orgrr-search** and **orgrr-global-search** use ripgrep to either search the local container or all containers for a specified term. Regex is welcome. 
+
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
 ## Changelog
+
+**0.9.6**
+- Adds orgrr-search
+- Use `C-u orgrr-search` or `orgrr-global-search` to search all containers
 
 **0.9.5**
 - Adds global orgrr-insert and orgrr-find
@@ -57,6 +63,7 @@ These are the primary functions orgrr provides:
 - [Basic functions](#basic-functions)
   - [orgrr-find](#orgrr-find)
   - [orgrr-insert](#orgrr-insert)
+  - [orgrr-search](#orgrr-search)
   - [orgrr-rename](#orgrr-rename)
   - [orgrr-delete](#orgrr-delete)
   - [orgrr-move-note](#orgrr-move-note)
@@ -119,6 +126,7 @@ Finally, you may also want to set keybindings for the main functions (I have bou
 (global-set-key (kbd "M-s-a") 'orgrr-add-zettel)
 (global-set-key (kbd "M-s-z") 'orgrr-find-zettel)
 (global-set-key (kbd "M-s-s") 'orgrr-show-sequence)
+(global-set-key (kbd "M-s-S") 'orgrr-global-search)
 (global-set-key (kbd "M-s-p") 'orgrr-open-previous-zettel)
 (global-set-key (kbd "M-s-n") 'orgrr-open-next-zettel)
 (global-set-key (kbd "M-s-N") 'orgrr-no-find-zettel)
@@ -141,6 +149,7 @@ This IMHO works best for linux and Emacs on the command line:
 (global-set-key (kbd "C-o a") 'orgrr-add-zettel)
 (global-set-key (kbd "C-o z") 'orgrr-find-zettel)
 (global-set-key (kbd "C-o s") 'orgrr-show-sequence)
+(global-set-key (kbd "C-o S") 'orgrr-global-search)
 (global-set-key (kbd "C-o p") 'orgrr-open-previous-zettel)
 (global-set-key (kbd "C-o n") 'orgrr-open-next-zettel)
 (global-set-key (kbd "C-o N") 'orgrr-no-find-zettel)
@@ -305,6 +314,11 @@ If the note does not exist, a new one with the same title will be created in the
 If called with `C-u` (`C-u orgrr-insert`) or via `orgrr-global-insert` notes from all containers are considered (i.e. their titles and alias but not their tags or zettel numbers).
 
 A special variant of this function is `orgrr-insert-project`, which allows to insert a link to any orgrr-project in the current container (see [orgrr-projects](#orgrr-projects)).
+
+### orgrr-search
+
+For a long time I used different packages to search my notes, a separate function seemed unnecessary. With the advent of containers in orgrr this began to change. There seemed to be no package that allows to search a number of specified folders (which is what containers in orgrr are, see [orgrr-containers](#orgrr-containers)) at the same time. `orgrr-search` searches the current container, whereas `C-u orgrr-search` or `orgrr-global-search` searches all containers. The search string entered here is directly passed to `ripgrep`, so all `regex` that ripgrep understands should also work here. Search in orgrr is not case sensitive (i.e. `rg -i` is set). 
+
 
 ### orgrr-rename
 
