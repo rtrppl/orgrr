@@ -1378,14 +1378,13 @@ If called with C-u the buffer is created without headlines."
       (orgrr-close-buffer))))
 
 (defun orgrr-search (arg)
- "Search function for orgrr. When called with C-u all containers will be
-searched."
+ "Search function for orgrr based on ripgrep. When called with C-u all 
+containers will be searched. Regex don't need to be escaped."
  (interactive "P")
   (let ((call-with-arg nil))
     (when (equal arg '(4))
       (setq call-with-arg 1))
-    (if (not (string-match-p "search for *" (buffer-name (current-buffer))))
-      (progn
+    (when (not (string-match-p "search for *" (buffer-name (current-buffer))))
 	(orgrr-get-all-meta)
 	(let* ((filename (if (equal major-mode 'dired-mode)
                          default-directory
@@ -1444,7 +1443,9 @@ searched."
 		(goto-char (point-min))
 		(org-next-visible-heading 2)
 		(deactivate-mark)))))
-      (orgrr-close-buffer))))
+      (when (string-match-p "search for *" (buffer-name (current-buffer)))
+	(orgrr-close-buffer))))
+
 
 
 (defun orgrr-global-search ()
