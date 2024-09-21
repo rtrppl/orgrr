@@ -90,6 +90,16 @@
  (when (equal orgrr-window-management "single-window")
    (switch-to-buffer buffer)))
 
+(defun orgrr-prepare-findings-buffer (buffer)
+ "Preparing the orgrr findings buffer."
+ (with-current-buffer buffer
+   (org-mode))
+ (let ((window (get-buffer-window buffer)))
+   (select-window window)
+   (goto-char (point-min))
+   (org-next-visible-heading 2)
+   (deactivate-mark)))
+
 (defun orgrr-close-buffer ()
    "A wrapper to close BUFFER according to orgrr-window-management settings."
   (when (equal orgrr-window-management "multi-window")
@@ -155,11 +165,10 @@ require NCD-formating."
       (with-current-buffer (get-buffer-create backlink-buffer)
               (erase-buffer)
 	      (orgrr-open-buffer backlink-buffer)
-	      (org-mode)
               (insert (concat "\*\[\[file:" filename "\]\[" title "\]\]\*\n\n"))
               (if (= backlinks 1)
-		  (insert "* 1 Backlink\n\n")
-		(insert (concat "* " (number-to-string backlinks) " Backlinks\n\n")))
+		  (insert "* 1 backlink\n\n")
+		(insert (concat "* " (number-to-string backlinks) " backlinks\n\n")))
 	      ;; Going through the backlinks
               (dolist (counter (hash-table-keys orgrr-counter-filename))
 		(let ((entry (gethash counter orgrr-counter-filename)))
@@ -177,12 +186,8 @@ require NCD-formating."
 				 (snippet (orgrr-adjust-links snippet))
 				 (snippet (string-trim-left (string-trim-left snippet "*"))))
 			    (insert (concat "\*\* \[\[file:" full-filename "::" line-number "\]" "\[" result "\]\]:\n\n"  snippet "\n\n")))))))))
-	(let ((window (get-buffer-window backlink-buffer)))
-	  (select-window window)
-	  (goto-char (point-min))
-	  (org-next-visible-heading 2)
-	  (deactivate-mark)))))
-    (orgrr-close-buffer))))
+	      (orgrr-prepare-findings-buffer backlink-buffer))))
+	      (orgrr-close-buffer))))
 
 (defun orgrr-get-meta ()
   "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all 
@@ -466,6 +471,7 @@ orgrr-window-management."
 	(let ((inhibit-read-only t))
           (erase-buffer)
 	  (insert (concat (orgrr-return-fullzettel-linked-head selection-zettel) "\n\n"))
+	  (insert "* Sequence:\n\n")
 	  (dolist (element orgrr-zettel-list) 
 	    (let* ((last-char (substring selection-zettel -1))
 		    (is-last-char-num (string-match-p "[0-9]" last-char))
@@ -476,16 +482,8 @@ orgrr-window-management."
 	      (if (not (equal element selection-zettel))
 		  (insert (concat "** " (orgrr-return-fullzettel-linked element) "\n")))))))
 ;;Starting here it is only window-management
-	    (orgrr-open-buffer sequence-buffer)
-	    (with-current-buffer sequence-buffer
-	      (org-mode))
-	    (let ((window (get-buffer-window sequence-buffer)))
-	      (when window
-		(select-window window)
-		(setq default-directory org-directory)
-		(goto-char (point-min))
-		(org-next-visible-heading 1)
-		(deactivate-mark))))))
+	    (orgrr-open-buffer sequence-buffer) 
+	    (orgrr-prepare-findings-buffer sequence-buffer))))
   (when (string-match-p "sequence for *" (buffer-name (current-buffer)))
     (orgrr-close-buffer)))
 
@@ -584,6 +582,12 @@ title to the note. Adds stars for org-bolding."
   (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename))
 	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
     (setq zettel (concat "*" zettel "* \[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]"))))
+
+(defun orgrr-return-fullnote-linked-starred (title)
+  "Returns the full name of a zettel (as in orgrr-zettel-list) and links the 
+title to the note. Adds stars for org-bolding."
+  (let* ((filename (gethash title orgrr-title-filename)))
+    (setq title (concat "*\[\[file:" filename "\]\[" title "\]\]*"))))
 
 (defun orgrr-return-zettel-linked (zettel)
   "Returns the zettel as an org-link."
@@ -997,7 +1001,8 @@ patient."
 	   (erase-buffer)
 	   (orgrr-open-buffer relatednotes-buffer)
 	   (org-mode)
-	   (insert (concat "* " (number-to-string related-notes) " connections for *" title "*\n\n"))
+	   (insert (concat (orgrr-return-fullnote-linked-starred title) "\n\n"))
+	   (insert (concat "* " (number-to-string related-notes) " related notes\n\n"))
 	   (maphash (lambda (key value)
 		      (push (cons value key) sorted-values))
 		    orgrr-filename-mentions)
@@ -1007,11 +1012,7 @@ patient."
 		    (list-filename (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-filename))
 		    (list-title (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-title)))
 	       (insert (concat "** " "\[\[file:" list-filename "\]\[" list-title "\]\]: " connections "\n"))))
-	   (let ((win (get-buffer-window relatednotes-buffer)))
-	     (select-window win)
-	     (goto-char (point-min))
-	     (org-next-visible-heading 1)
-	     (deactivate-mark)))))
+	  (orgrr-prepare-findings-buffer relatednotes-buffer))))
     (when (string-match-p "related notes for *" (buffer-name (current-buffer)))
       (orgrr-close-buffer))))
   
@@ -1344,11 +1345,13 @@ If called with C-u the buffer is created without headlines."
 	  (with-current-buffer (get-buffer-create draft-buffer)
 	    (let ((inhibit-read-only t))
               (erase-buffer)
-	      (insert (concat draft-buffer " " (orgrr-return-zettel-linked selection-zettel) " - " (orgrr-return-zettel-linked end-point) "\n\n"))
-	      (dolist (element orgrr-zettel-list) 
+	      (insert (concat (orgrr-return-fullzettel-linked-starred selection-zettel) " - " (orgrr-return-fullzettel-linked-starred end-point) "\n\n"))
+	      (insert "* compiled sequence:\n\n")
+	      (dolist (element orgrr-zettel-list)
 		(let* ((last-char (substring selection-zettel -1))
 		       (is-last-char-num (string-match-p "[0-9]" last-char))
-		       (regex (if is-last-char-num
+		       (regex (if (and is-last-char-num
+				       (not (string-equal element selection-zettel)))
 				  (concat "^" selection-zettel "[a-zA-Z]")
 				(concat "^" selection-zettel))))
 		  (when (and (string-match regex element)
@@ -1360,16 +1363,7 @@ If called with C-u the buffer is created without headlines."
 		      (setq end-flag t)))))
 ;;Starting here it is only window-management
 	      (orgrr-open-buffer draft-buffer)
-	      (with-current-buffer draft-buffer
-		(org-mode))
-	      (let ((window (get-buffer-window draft-buffer)))
-		(when window
-		  (select-window window)
-		  (setq default-directory org-directory)
-		  (if orgrr-compile-open-link-other-window
-		      (setq-local org-link-frame-setup '((file . find-file-other-window)))) 
-		  (goto-char (point-min))
-		  (deactivate-mark)))))))
+	      (orgrr-prepare-findings-buffer draft-buffer)))))
     (when (string-match-p "*compiled sequence*" (buffer-name (current-buffer)))
       (orgrr-close-buffer))))
 
