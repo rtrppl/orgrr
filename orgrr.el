@@ -1406,7 +1406,9 @@ containers will be searched. Regex don't need to be escaped."
               (erase-buffer)
 	      (orgrr-open-buffer search-buffer)
 	      (org-mode)
-              (insert (concat "*" search "*\n\n"))
+	      (if call-with-arg
+		  (insert (concat "Global search for: *" search "*\n\n"))
+		(insert (concat "Local search for: *" search "*\n\n")))
               (if (= hits 1)
 		  (insert "* 1 result\n\n")
 		(insert (concat "* " (number-to-string hits) " results\n\n")))
