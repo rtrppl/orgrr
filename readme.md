@@ -236,7 +236,7 @@ Tags are added without quotation marks, separated by space.
 
 There is an ongoing debate on whether or not a true Zettelkasten-system also needs to respect Luhmann's emphasis on the importance of the sequence of notes ("Folgezettel"). For an in-depth discussion of the topic see [here](https://zettelkasten.de/folgezettel/).
 
-To be honest, initially, I did not see the need to add this. After all, didn't Luhmann use zettel IDs primarily for linking and this could be much more efficiently handled with org-links? Over time, however, the idea grew on me for a particular reason: This is another great way to show relationships between notes! It is also the only option to create a hierarchy of notes. Both aspects are very useful when you have more than a few hundred notes. 
+To be honest, initially, I did not see the need to add this. After all, didn't Luhmann use zettel IDs primarily for linking? Would'd this be much more efficiently handled with org-links? Over time, however, the idea grew on me for a particular reason: This is another great way to show relationships between notes! It is also the only option to create a hierarchy of notes. Both aspects are very useful when you have more than a few hundred notes. 
 
 Values for zettel (i.e. zettel IDs) are added without quotation marks (and you should use [orgrr-add-zettel](#orgrr-add-zettel) for this). Using zettel values in orgrr makes most sense if you stick to [Luhmann's naming scheme](https://niklas-luhmann-archiv.de/bestand/zettelkasten/zettel/ZK_1_NB_1-5_V), e.g. 1a, 1a1, 1a2, 1a2a, 1a3, 1a3a...., as orgrr is using lexical sorting for these values.
 

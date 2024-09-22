@@ -1408,8 +1408,8 @@ containers will be searched. Regex don't need to be escaped."
 	      (org-mode)
               (insert (concat "*" search "*\n\n"))
               (if (= hits 1)
-		  (insert "* 1 Result\n\n")
-		(insert (concat "* " (number-to-string hits) " Results\n\n")))
+		  (insert "* 1 result\n\n")
+		(insert (concat "* " (number-to-string hits) " results\n\n")))
 	      ;; Going through the search results
               (dolist (counter (hash-table-keys orgrr-counter-filename))
 		(let ((entry (gethash counter orgrr-counter-filename)))
