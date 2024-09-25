@@ -1,6 +1,6 @@
 # orgrr
 
-orgrr is a minimalist but complete note-taking system for Emacs. Its intended purpose is to write, analyze, and manage notes. 
+orgrr aims to facilitate the writing, analyzing, and managing of (org-)notes in Emacs. 
 
 These are the primary functions orgrr provides:
 
