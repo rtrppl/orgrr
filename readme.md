@@ -1,6 +1,6 @@
 # orgrr
 
-orgrr aims to facilitate the writing, analyzing, and managing of (org-)notes in Emacs. 
+orgrr aims to facilitate the writing, analyzing, and managing of (org-)notes in Emacs. It is inspired by [Zettelkasten-like](https://www.youtube.com/watch?v=qRSCKSPMuDc) systems.
 
 These are the primary functions orgrr provides:
 
@@ -440,12 +440,12 @@ This is what I did for a long time. But every time I (re-)installed my setup, e.
 
 - Is that all?
 
-No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only about 1000 lines of code are necessary to write a note-taking system that is not too far off from Denote or org-roam. That this thing works, provides me with independence from note-taking trends or specific operating systems, which is one of the reasons I don't see myself stopping to work on this project.
+No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only about 1500 lines of code (September 2024) are necessary to write a note-taking system that is not too far off from Denote or org-roam. That this thing works, provides me with independence from note-taking trends or specific operating systems, which is one of the reasons I don't see myself stopping to work on this project.
 
 - What does orgrr stand for?
 
 orgrr started as an acronym for "org-roam ripgrep" or "org-roam replica", as org-roam calls itself a [roam-research](https://roamresearch.com) replica. After many months of very slow but steady additions, the differences between orgrr and its inspiration are growing.
 
-- Is this a subtle criticism direct at the org-roam approach?
+- Is this a subtle criticism directed at the org-roam approach?
 
 Not at all! The project was born out of admiration for the pioneering work done by Jethro Kuan and others. You should check out the real org-roam. 
