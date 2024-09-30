@@ -196,7 +196,8 @@ require NCD-formating."
   "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all 
 org-files and adds them to hashtables.
 
-Updates the following hashtables: orgrr-title-filename, orgrr-filename-title, orgrr-zettel-filename, orgrr-filename-zettel, orgrr-filename-tags."
+Updates the following hashtables: orgrr-title-filename, orgrr-filename-title, 
+orgrr-zettel-filename, orgrr-filename-zettel, orgrr-filename-tags."
   (clrhash orgrr-filename-title)
   (clrhash orgrr-title-filename)
   (clrhash orgrr-zettel-filename)
@@ -289,7 +290,9 @@ of title and alias."
 
 (defun orgrr-global-selection ()
   "Use data from all containers to prepare the symbol orgrr-selection for 
-completing-read and send the result in selection to orgrr-find and orgrr-insert. 
+completing-read and send the result in selection to orgrr-find and 
+orgrr-insert. 
+
 Does not prepend tags and zettel in front of title and alias."
   (orgrr-get-all-meta)
   (let* ((orgrr-selection-list-completion)
@@ -688,6 +691,8 @@ If the selected title does not exist, a new note is created."
 	(setq filename (gethash selection orgrr-title-short_filename))
 	(setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename)) 
 	(setq filename (file-relative-name filename path-of-current-note))
+	(if (region-active-p)
+	    (kill-region (region-beginning) (region-end)))
 	(insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
     (when (not (equal arg '(4)))  
       (setq selection (orgrr-selection))
@@ -1450,5 +1455,6 @@ file."
 (orgrr-initialize)
 
 (provide 'orgrr)
+
 
 ;;; orgrr.el ends here
