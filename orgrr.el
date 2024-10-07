@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL:
-;; Version: 0.9.6
+;; Version: 0.9.7
 ;; Package-Requires: emacs "26", rg
 ;; Keywords: org-roam notes zettelkasten
 
@@ -30,6 +30,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.7
+;; - An optional search query can now be passed to orgrr-search
 ;;
 ;; 0.9.6
 ;; - Adds orgrr-search
@@ -1374,7 +1377,7 @@ If called with C-u the buffer is created without headlines."
     (when (string-match-p "*compiled sequence*" (buffer-name (current-buffer)))
       (orgrr-close-buffer))))
 
-(defun orgrr-search (arg)
+(defun orgrr-search (arg &optional search-string)
  "Search function for orgrr based on ripgrep. When called with C-u all 
 containers will be searched. Regex don't need to be escaped."
  (interactive "P")
@@ -1383,7 +1386,9 @@ containers will be searched. Regex don't need to be escaped."
       (setq call-with-arg 1))
     (when (not (string-match-p "search for *" (buffer-name (current-buffer))))
       (orgrr-get-all-meta)
-      (let* ((search (read-from-minibuffer "Search for: ")) 
+      (let* ((search (if (not search-string) 
+			 (read-from-minibuffer "Search for: ")
+		       search-string)) 
 	     (search-buffer (concat "search for *" search "*"))
 	     (hits 0)
 	     (orgrr-counter-quote (make-hash-table :test 'equal))

@@ -14,11 +14,15 @@ These are the primary functions orgrr provides:
 
 - **orgrr-show-related-notes** will show all related notes in a buffer ([more on orgrr-show-related-notes](#orgrr-show-related-notes)). For the underlying concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
 
-- **orgrr-search** and **orgrr-global-search** use ripgrep to either search the local container or all containers for a specified term. Regex is welcome. 
+- **orgrr-search** and **orgrr-global-search** use ripgrep to either 
+search the local container or all containers for a specified term. Regex is welcome. 
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
 ## Changelog
+
+**0.9.7**
+- An optional search query can now be passed to orgrr-search
 
 **0.9.6**
 - Adds orgrr-search
