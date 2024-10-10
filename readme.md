@@ -1,6 +1,6 @@
 # orgrr
 
-orgrr aims to facilitate the writing, analyzing, and managing of (org-)notes in Emacs. It is inspired by [Zettelkasten-like](https://www.youtube.com/watch?v=qRSCKSPMuDc) systems.
+orgrr aims to facilitate the writing, analyzing, and managing of Orgmode notes in Emacs. It is inspired by [Zettelkasten-like](https://www.youtube.com/watch?v=qRSCKSPMuDc) systems.
 
 These are the primary functions orgrr provides:
 
@@ -208,7 +208,7 @@ orgrr began as a nearly feature-complete replica of the core functionality of [o
 
 This package primarily address my own needs and I have been using orgrr almost daily for more than a year now (September 2024). My main container has more than 4000 notes and orgrr is much faster than org-roam. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest of the Zettelkasten packages available for Emacs.
 
-**As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions.** 
+**As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions. If you are using a Git repository, a great solution for iOS access is [Working Copy](https://workingcopy.app/) due to its native support for Orgmode. In a related manner (and as a reminder), the [Github website](https://github.com/) also has good support for Orgmode.** 
 
 ### Basic design of a note
 
