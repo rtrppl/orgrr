@@ -1,10 +1,12 @@
 ;; Copyright (C) 2024 Free Software Foundation, Inc.
 
+;;; orgrr.el --- A fast and feature-complete Zettelkasten 
+
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
-;; URL:
+;; URL: https://github.com/rtrppl/orgrr
 ;; Version: 0.9.7
-;; Package-Requires: emacs "26", rg
-;; Keywords: org-roam notes zettelkasten
+;; Package-Requires: ((emacs "27.2"))
+;; Keywords: comm wp outlines 
 
 ;; This file is not part of GNU Emacs.
 
@@ -125,7 +127,7 @@ side-buffers)."
       (setq orgrr-window-management "multi-window")
       (setq org-link-frame-setup '((file . find-file-other-window))))))
 
-(defun on-macos-p ()
+(defun orgrr-on-macos-p ()
   "Check if Emacs is running on macOS. This became necessary due to some 
 normalization issues with filenames that contain non-ascii characters and 
 require NCD-formating."
@@ -158,7 +160,7 @@ require NCD-formating."
 	       (setq containers (cons org-directory containers)))
 	     (dolist (container containers)
 	       (erase-buffer)
-	       (if (on-macos-p)
+	       (if (orgrr-on-macos-p)
 		(insert (shell-command-to-string (concat "rg -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' '" (expand-file-name container) "' -n --sort accessed -g \"*.org\"")))
 		(insert (shell-command-to-string (concat "rg -e '" (file-name-nondirectory filename) "' '" (expand-file-name container) "' -n --sort accessed -g \"*.org\""))))
 	    (let ((lines (split-string (buffer-string) "\n" t)))
@@ -474,7 +476,7 @@ orgrr-window-management."
 	   (zettel-filename (gethash zettel-title orgrr-title-filename))
 	   (selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel))
 	   (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
-	   (orgrr-zettel-list (sort orgrr-zettel-list 'dictionary-lessp))
+	   (orgrr-zettel-list (sort orgrr-zettel-list 'orgrr-dictionary-lessp))
 	   (sequence-buffer (concat "sequence for *[" selection-zettel "]*")))
       (with-current-buffer (get-buffer-create sequence-buffer)
 	(let ((inhibit-read-only t))
@@ -499,14 +501,14 @@ orgrr-window-management."
 
 ;; The following three functions have been taken from https://stackoverflow.com/questions/1942045/natural-order-sort-for-emacs-lisp. They work really well for dictionary compare.
 
-(defun dictionary-lessp (str1 str2)
+(defun orgrr-dictionary-lessp (str1 str2)
   "Return t if STR1 is < STR2 when doing a dictionary compare
 (splitting the string at numbers and doing numeric compare with them)"
-  (let ((str1-components (dict-split str1))
-        (str2-components (dict-split str2)))
-    (dict-lessp str1-components str2-components)))
+  (let ((str1-components (orgrr-dict-split str1))
+        (str2-components (orgrr-dict-split str2)))
+    (orgrr-dict-lessp str1-components str2-components)))
 
-(defun dict-lessp (slist1 slist2)
+(defun orgrr-dict-lessp (slist1 slist2)
   "Compare the two lists of strings & numbers"
   (cond ((null slist1)
          (not (null slist2)))
@@ -522,13 +524,13 @@ orgrr-window-management."
               (numberp (car slist2)))
          (or (< (car slist1) (car slist2))
              (and (= (car slist1) (car slist2))
-                  (dict-lessp (cdr slist1) (cdr slist2)))))
+                  (orgrr-dict-lessp (cdr slist1) (cdr slist2)))))
         (t
          (or (string-lessp (car slist1) (car slist2))
              (and (string-equal (car slist1) (car slist2))
-                  (dict-lessp (cdr slist1) (cdr slist2)))))))
+                  (orgrr-dict-lessp (cdr slist1) (cdr slist2)))))))
 
-(defun dict-split (str)
+(defun orgrr-dict-split (str)
   "split a string into a list of number and non-number components"
   (save-match-data 
     (let ((res nil))
@@ -564,7 +566,7 @@ orgrr-window-management."
   (orgrr-get-meta)
   (let* ((zettelrank 0)	 
 	 (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
-	 (orgrr-zettel-list (sort orgrr-zettel-list 'dictionary-lessp)))
+	 (orgrr-zettel-list (sort orgrr-zettel-list 'orgrr-dictionary-lessp)))
     (clrhash orgrr-zettelrank-zettel)
     (clrhash orgrr-zettel-zettelrank)
     (dolist (zettel orgrr-zettel-list)
@@ -623,7 +625,7 @@ title to the note. Adds stars for org-bolding."
 		  (string-prefix-p "#+roam_key" current-entry t)
 		  (string-prefix-p "#+roam_tags" current-entry t)
 		  (string-prefix-p "#+zettel" current-entry t))	       
-              (delete-region (line-beginning-position) (1+ (line-end-position)))
+              (delete-region (line-beginning-position) (line-end-position))
             (forward-line 1))))
       (string-trim (buffer-string)))))     
 
@@ -669,7 +671,7 @@ selected file name does not exist, a new one is created."
       (when (not (member selection (hash-table-keys orgrr-title-filename)))
 	(setq time (format-time-string "%Y%m%d%H%M%S"))
 	(setq filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection)))
-	(when (on-macos-p)
+	(when (orgrr-on-macos-p)
 	  (setq filename (ucs-normalize-HFS-NFD-string filename)))
 	(orgrr-open-file (concat filename ".org"))
 	(insert (concat "#+title: " selection "\n"))))))
@@ -709,7 +711,7 @@ If the selected title does not exist, a new note is created."
 	(progn
 	  (let* ((time (format-time-string "%Y%m%d%H%M%S"))
 		 (filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" selection))))
-	    (when (on-macos-p)
+	    (when (orgrr-on-macos-p)
 	      (setq filename (ucs-normalize-HFS-NFD-string filename)))
 	    (if (region-active-p)
 		(kill-region (region-beginning) (region-end)))
@@ -740,7 +742,7 @@ If the selected title does not exist, a new note is created."
     (let ((new-filename (read-from-minibuffer "Filename to change: " old-filename)))
 	      (rename-file old-filename new-filename)
 	      (set-visited-file-name new-filename)
-	       (if (on-macos-p)
+	       (if (orgrr-on-macos-p)
 		   (shell-command-to-string (concat "rg -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory old-filename)) "' '" (expand-file-name org-directory) "' -r " (ucs-normalize-HFS-NFD-string (file-name-nondirectory new-filename))))
 		 (shell-command-to-string (concat "rg -e '" (file-name-nondirectory old-filename) "' '" (expand-file-name org-directory) "' -r " (file-name-nondirectory new-filename)))))))
 
@@ -1042,7 +1044,7 @@ patient."
       (setq containers (cons org-directory containers)))
     (dolist (container containers)
       (with-temp-buffer
-       (if (on-macos-p)
+       (if (orgrr-on-macos-p)
 	   (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' '" (expand-file-name container) "' -n -g \"*.org\"")))
 	 (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' '" (expand-file-name container) "' -n -g \"*.org\""))))
       (let ((lines (split-string (buffer-string) "\n" t)))
@@ -1065,7 +1067,7 @@ patient."
   (dolist (entry (hash-table-keys orgrr-filename-mentions))
     (setq filename (substring entry 1))
     (with-temp-buffer
-      (if (on-macos-p)
+      (if (orgrr-on-macos-p)
 	  (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' '" (expand-file-name container) "' -n -g \"*.org\"")))
 	(insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' '" (expand-file-name container) "' -n -g \"*.org\""))))
       (let ((lines (split-string (buffer-string) "\n" t)))
@@ -1249,7 +1251,7 @@ This one of the very few functions where orgrr is directly changing your data
 	 (original-filename filename))
     ;; Add all files that mention filename to the list orgrr-backlinks.
     (with-temp-buffer
-       (if (on-macos-p)
+       (if (orgrr-on-macos-p)
 	   (insert (shell-command-to-string (concat "rg -l -e '" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "' '" (expand-file-name org-directory) "' -n -g \"*.org\"")))
 	 (insert (shell-command-to-string (concat "rg -l -e '" (file-name-nondirectory filename) "' '" (expand-file-name org-directory) "' -n -g \"*.org\""))))
        (let ((lines (split-string (buffer-string) "\n" t)))
@@ -1326,7 +1328,7 @@ If called with C-u the buffer is created without headlines."
 	     (orgrr-selection-list (orgrr-prepare-zettel-selection-list))
 	     (orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
 	     (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
-	     (orgrr-zettel-list (sort orgrr-zettel-list 'dictionary-lessp))
+	     (orgrr-zettel-list (sort orgrr-zettel-list 'orgrr-dictionary-lessp))
 	     (starting-point)
 	     (end-point)
 	     (end-flag)
@@ -1402,7 +1404,7 @@ containers will be searched. Regex don't need to be escaped."
 	       (setq containers (cons org-directory containers)))
 	     (dolist (container containers)
 	       (erase-buffer)
-	       (if (on-macos-p)
+	       (if (orgrr-on-macos-p)
 		(insert (shell-command-to-string (concat "rg -i -e '" search "' '" (expand-file-name container) "' -n --sort accessed -g \"*.org\"")))
 		(insert (shell-command-to-string (concat "rg -i -e '" search "' '" (expand-file-name container) "' -n --sort accessed -g \"*.org\""))))
 	    (let ((lines (split-string (buffer-string) "\n" t)))
@@ -1460,6 +1462,5 @@ file."
 (orgrr-initialize)
 
 (provide 'orgrr)
-
 
 ;;; orgrr.el ends here
