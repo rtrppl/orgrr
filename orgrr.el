@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 0.9.7
+;; Version: 0.9.8
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -32,6 +32,10 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.8
+;; - orgrr-show-sequence can now be called with an optional title of a note
+;;   to directly start a sequence
 ;;
 ;; 0.9.7
 ;; - An optional search query can now be passed to orgrr-search
@@ -464,7 +468,7 @@ file)."
             (forward-line)))))
       current-zettel))
     
-(defun orgrr-show-sequence ()
+(defun orgrr-show-sequence (&optional zettel-title)
   "Shows a sequence of notes for any given zettel value. If run while visiting 
 a buffer that has a value for zettel, this is taken as the starting value for 
 zettel. Results are presented in a different buffer in accordance with 
@@ -472,7 +476,7 @@ orgrr-window-management."
   (interactive)
   (when (not (string-match-p "sequence for *" (buffer-name (current-buffer))))
     (orgrr-prepare-zettelrank)
-    (let* ((zettel-title (orgrr-selection-zettel))
+    (let* ((zettel-title (or zettel-title (orgrr-selection-zettel)))
 	   (zettel-filename (gethash zettel-title orgrr-title-filename))
 	   (selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel))
 	   (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))

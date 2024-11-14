@@ -21,6 +21,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**0.9.8**
+- `orgrr-show-sequence` can now be called with an optional title of a note to directly start a sequence 
+
 **0.9.7**
 - An optional search query can now be passed to orgrr-search
 
@@ -106,19 +109,19 @@ Clone the repository:
 
 To run orgrr, you need to load the package by adding it to your .emacs or init.el:
 
-```org
+```elisp
 (load "/path/to/orgrr/orgrr.el") ;; You actually only need orgrr.el
 ```
 
 If you don't already have done so, you also should set an org-directory as the location for your notes.
 
-```org
+```elisp
 (setq org-directory "~/path/to/org-directory")
 ```
 
 Finally, you may also want to set keybindings for the main functions (I have bound the Mac-command key to super/s):
 
-```org
+```elisp
 (global-set-key (kbd "M-s-f") 'orgrr-find)
 (global-set-key (kbd "M-s-l") 'orgrr-show-backlinks)
 (global-set-key (kbd "M-s-i") 'orgrr-insert)
@@ -140,7 +143,7 @@ Finally, you may also want to set keybindings for the main functions (I have bou
 
 This IMHO works best for linux and Emacs on the command line:
 
-```org
+```elisp
 (global-set-key (kbd "C-o") nil)
 (global-set-key (kbd "C-o f") 'orgrr-find)
 (global-set-key (kbd "C-o l") 'orgrr-show-backlinks)
@@ -165,7 +168,7 @@ This IMHO works best for linux and Emacs on the command line:
 
 Via use-package and straight a typical configuration of orgrr could look like this:
 
-```org
+```elisp
 
 (use-package orgrr
   :straight (:host github :repo "rtrppl/orgrr"
@@ -371,6 +374,15 @@ Opens the note/zettel coming before the current one. The notes' order is in acco
 ### orgrr-show-sequence
 
 One of the main benefits of adding zettel values to notes becomes the ability to explore a sequence of notes. After you have selected a starting point, this functions displays a sequence of notes in a buffer (in accordance with your settings for orgrr-window-management, see [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)). [orgrr-compile-sequence](#orgrr-compile-sequence) has a somewhat similar functionality but also collects the content of all notes of the sequence.
+
+Starting with version 0.9.8, `orgrr-show-sequence` can be called with an optional note as starting point. For example, if a sequence that you frequently look at starts with the note "my favorite topic 1", then a function to call that sequence (and for which you could create a keybinding) could look like this:
+
+```elisp
+(defun my-favorite-sequence ()
+ "A function to invoke my favorite sequence."
+ (interactive)
+ (orgrr-show-sequence "my favorite topic 1"))
+```
 
 ### orgrr-show-backlinks
 
