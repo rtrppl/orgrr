@@ -21,6 +21,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**0.9.9** 
+- Fixing how rg is called (necessary for Win10, which does not like ` ` `)
+
 **0.9.8**
 - `orgrr-show-sequence` can now be called with an optional title of a note to directly start a sequence 
 
