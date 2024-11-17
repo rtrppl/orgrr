@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 0.9.9
+;; Version: 0.9.10
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -32,6 +32,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.10 
+;; - Fix for orgrr-rename (thx Dasein1998)
 ;;
 ;; 0.9.9 
 ;; - Fixing how rg is called (necessary for Win10)
@@ -743,15 +746,30 @@ If the selected title does not exist, a new note is created."
 (defun orgrr-rename ()
   "Rename current file. Does not work across directories."
   (interactive)
-  (let ((old-filename (if (equal major-mode 'dired-mode)
+  (let* ((old-filename (if (equal major-mode 'dired-mode)
                         default-directory
-                      (buffer-file-name))))
-    (let ((new-filename (read-from-minibuffer "Filename to change: " old-filename)))
-	      (rename-file old-filename new-filename)
-	      (set-visited-file-name new-filename)
-	       (if (orgrr-on-macos-p)
-		   (shell-command-to-string (concat "rg -e \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory old-filename)) "\" \"" (expand-file-name org-directory) "\" -r " (ucs-normalize-HFS-NFD-string (file-name-nondirectory new-filename))))
-		 (shell-command-to-string (concat "rg -e \"" (file-name-nondirectory old-filename) "\" \"" (expand-file-name org-directory) "\" -r " (file-name-nondirectory new-filename)))))))
+			(buffer-file-name)))
+	(new-filename (read-from-minibuffer "Filename to change: " old-filename))
+	(old-filename-mentions '())) 
+    (rename-file old-filename new-filename)
+    (set-visited-file-name new-filename)
+    (save-some-buffers t)  ;; necessary, as we are working directly with the files 
+;; Add all files that mention filename to the list old-filename-mentions.
+    (with-temp-buffer
+      (if (orgrr-on-macos-p)
+	  (insert (shell-command-to-string (concat "rg -l -e \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory old-filename)) "\" \"" (expand-file-name org-directory) "\" -n -g \"*.org\"")))
+	(insert (shell-command-to-string (concat "rg -l -e \"" (file-name-nondirectory old-filename) "\" \"" (expand-file-name org-directory) "\" -n -g \"*.org\""))))
+      (let ((lines (split-string (buffer-string) "\n" t)))
+	(dolist (line lines)
+	  (if (string-match "\\.org$" line)
+	      (push line old-filename-mentions)))))
+;; This corrects the links. Please be aware that this is an intrusive action and might affect your data. 
+  (dolist (filename old-filename-mentions)
+    (with-current-buffer (find-file-noselect filename)
+      (goto-char (point-min))
+      (while (re-search-forward (file-name-nondirectory old-filename) nil t)
+	(replace-match (file-name-nondirectory new-filename))))))
+  (save-some-buffers t))
 
 (defun orgrr-delete ()
   "Delete current note and show the previous buffer."

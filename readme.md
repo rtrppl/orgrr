@@ -21,6 +21,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**0.9.10** 
+- Fix for orgrr-rename (thx Dasein1998)
+
 **0.9.9** 
 - Fixing how rg is called (necessary for Win10, which does not like `'`)
 
