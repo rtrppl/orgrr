@@ -4,7 +4,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 0.9.10
+;; Version: 0.9.11
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -26,12 +26,16 @@
 ;;; Commentary:
 
 ;; Orgrr is a minimalist but complete note-taking system for Emacs. Its
-;; intended purpose is the creation and management of a Zettelkasten-like system,
-;; e.g. many small notes that can easily be linked together.
+;; intended purpose is the creation and management of a Zettelkasten-like 
+;; system, e.g. many small notes that can easily be linked together.
 ;;
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.11
+;; - orgrr-rename does now not only change the filename but also adjusts all 
+;;   links to said file in all containers
 ;;
 ;; 0.9.10 
 ;; - Fix for orgrr-rename (thx Dasein1998)
@@ -509,7 +513,9 @@ orgrr-window-management."
     (orgrr-close-buffer)))
 
 
-;; The following three functions have been taken from https://stackoverflow.com/questions/1942045/natural-order-sort-for-emacs-lisp. They work really well for dictionary compare.
+;; The following three functions have been taken from 
+;; https://stackoverflow.com/questions/1942045/natural-order-sort-for-emacs-lisp
+;; They work really well for dictionary compare.
 
 (defun orgrr-dictionary-lessp (str1 str2)
   "Return t if STR1 is < STR2 when doing a dictionary compare
@@ -744,32 +750,35 @@ If the selected title does not exist, a new note is created."
     (orgrr-open-file filename)))
 
 (defun orgrr-rename ()
-  "Rename current file. Does not work across directories."
+  "Rename current file and adjust all mentions of said file in other org-files in all containers. Does work across directories."
   (interactive)
   (let* ((old-filename (if (equal major-mode 'dired-mode)
                         default-directory
 			(buffer-file-name)))
 	(new-filename (read-from-minibuffer "Filename to change: " old-filename))
-	(old-filename-mentions '())) 
-    (rename-file old-filename new-filename)
+	(old-filename-mentions '())
+	(orgrr-name-container (orgrr-get-list-of-containers))
+	(containers (nreverse (hash-table-values orgrr-name-container)))
+	(lines))
     (set-visited-file-name new-filename)
     (save-some-buffers t)  ;; necessary, as we are working directly with the files 
 ;; Add all files that mention filename to the list old-filename-mentions.
-    (with-temp-buffer
-      (if (orgrr-on-macos-p)
-	  (insert (shell-command-to-string (concat "rg -l -e \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory old-filename)) "\" \"" (expand-file-name org-directory) "\" -n -g \"*.org\"")))
-	(insert (shell-command-to-string (concat "rg -l -e \"" (file-name-nondirectory old-filename) "\" \"" (expand-file-name org-directory) "\" -n -g \"*.org\""))))
-      (let ((lines (split-string (buffer-string) "\n" t)))
-	(dolist (line lines)
-	  (if (string-match "\\.org$" line)
-	      (push line old-filename-mentions)))))
+    (dolist (container containers)   
+      (with-temp-buffer
+	(if (orgrr-on-macos-p)
+	    (insert (shell-command-to-string (concat "rg -l -e \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory old-filename)) "\" \"" (expand-file-name container) "\" -n -g \"*.org\"")))
+	  (insert (shell-command-to-string (concat "rg -l -e \"" (file-name-nondirectory old-filename) "\" \"" (expand-file-name container) "\" -n -g \"*.org\""))))
+	(setq lines (split-string (buffer-string) "\n" t)))
+	  (dolist (line lines)
+	    (if (string-match "\\.org$" line)
+		(push line old-filename-mentions))))
 ;; This corrects the links. Please be aware that this is an intrusive action and might affect your data. 
-  (dolist (filename old-filename-mentions)
-    (with-current-buffer (find-file-noselect filename)
-      (goto-char (point-min))
-      (while (re-search-forward (file-name-nondirectory old-filename) nil t)
-	(replace-match (file-name-nondirectory new-filename))))))
-  (save-some-buffers t))
+      (dolist (filename old-filename-mentions)
+	(with-current-buffer (find-file-noselect filename)
+	  (goto-char (point-min))
+	  (while (re-search-forward (file-name-nondirectory old-filename) nil t)
+	    (replace-match (file-name-nondirectory new-filename)))))
+  (save-some-buffers t)))
 
 (defun orgrr-delete ()
   "Delete current note and show the previous buffer."
