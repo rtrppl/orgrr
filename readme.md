@@ -21,6 +21,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**0.9.11**
+- orgrr-rename does now not only change the filename but also adjusts all links to said file in all containers
+
 **0.9.10** 
 - Fix for orgrr-rename (thx Dasein1998)
 
@@ -339,7 +342,7 @@ For a long time I used different packages to search my notes (see, for example, 
 
 orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the `#+title` of a note (or any other meta-data about a note), however, will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
 
-This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in the org-directory. Use it with caution!
+This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in all containers. Use with caution!
 
 ### orgrr-delete
 
