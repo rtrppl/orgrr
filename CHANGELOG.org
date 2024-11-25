@@ -1,0 +1,43 @@
+#+title: orgrr CHANGELOG
+
+**0.9.10** 
+- Fix for orgrr-rename (thx Dasein1998)
+
+**0.9.9** 
+- Fixing how rg is called (necessary for Win10, which does not like `'`)
+
+**0.9.8**
+- `orgrr-show-sequence` can now be called with an optional title of a note to directly start a sequence 
+
+**0.9.7**
+- An optional search query can now be passed to orgrr-search
+
+**0.9.6**
+- Adds orgrr-search
+- Use `C-u orgrr-search` or `orgrr-global-search` to search all containers
+
+**0.9.5**
+- Adds global orgrr-insert and orgrr-find
+- `C-u orgrr-insert` or `orgrr-global-insert` to insert a link to notes from all containers
+- `C-u orgrr-find` or `orgrr-global-find` to find notes in all containers
+
+**0.9.4.**
+- Bug fix for end-of-sequence issue
+
+**0.9.3**:
+- Fixes to better deal with spaces in directory names
+
+**0.9.2**:
+- Added `orgrr-compile-sequence`
+
+**0.9.1**:
+- Better use-package config
+- Bug fix for orgrr-check-for-container-file
+
+**0.9**:  
+- Optimizing/Rewrite of code for straight package management (in preparation of a potential MELPA release)
+- Changes to orgrr-toggle-window-mode
+- `C-u orgrr-show-related-notes` now considers backlinks for all containers
+- `C-u orgrr-show-backlinks` now considers backlinks for all containers
+- Added install instructions for straight.el
+- Added `orgrr-open-ref-url`

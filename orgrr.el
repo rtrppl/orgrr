@@ -1,10 +1,8 @@
-;; Copyright (C) 2024 Free Software Foundation, Inc.
-
-;;; orgrr.el --- A fast and feature-complete Zettelkasten 
+;;; orgrr.el --- A fast and feature-complete Zettelkasten -*- lexical-binding: t; -*-
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 0.9.11
+;; Version: 0.9.12
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -32,6 +30,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.12
+;; - Removed the orgrr-extensions
 ;;
 ;; 0.9.11
 ;; - orgrr-rename does now not only change the filename but also adjusts all 

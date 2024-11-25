@@ -21,50 +21,15 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**0.9.12** 
+- Removed the orgrr-extensions, see the [FAQ](#faq) for more information
+
 **0.9.11**
 - orgrr-rename does now not only change the filename but also adjusts all links to said file in all containers
 
-**0.9.10** 
-- Fix for orgrr-rename (thx Dasein1998)
 
-**0.9.9** 
-- Fixing how rg is called (necessary for Win10, which does not like `'`)
+See a a more complete version of the changelog [here](./changelog.org).
 
-**0.9.8**
-- `orgrr-show-sequence` can now be called with an optional title of a note to directly start a sequence 
-
-**0.9.7**
-- An optional search query can now be passed to orgrr-search
-
-**0.9.6**
-- Adds orgrr-search
-- Use `C-u orgrr-search` or `orgrr-global-search` to search all containers
-
-**0.9.5**
-- Adds global orgrr-insert and orgrr-find
-- `C-u orgrr-insert` or `orgrr-global-insert` to insert a link to notes from all containers
-- `C-u orgrr-find` or `orgrr-global-find` to find notes in all containers
-
-**0.9.4.**
-- Bug fix for end-of-sequence issue
-
-**0.9.3**:
-- Fixes to better deal with spaces in directory names
-
-**0.9.2**:
-- Added `orgrr-compile-sequence`
-
-**0.9.1**:
-- Better use-package config
-- Bug fix for orgrr-check-for-container-file
-
-**0.9**:  
-- Optimizing/Rewrite of code for straight package management (in preparation of a potential MELPA release)
-- Changes to orgrr-toggle-window-mode
-- `C-u orgrr-show-related-notes` now considers backlinks for all containers
-- `C-u orgrr-show-backlinks` now considers backlinks for all containers
-- Added install instructions for straight.el
-- Added `orgrr-open-ref-url`
 ------------------------------
 
 ## Table of Contents
@@ -101,9 +66,6 @@ search the local container or all containers for a specified term. Regex is welc
 - [Quality of life functions](#quality-of-life-functions)
   - [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)
   - [orgrr-fix-all-links-buffer and orgrr-fix-all-links-container](#orgrr-fix-all-links-buffer-and-orgrr-fix-all-links-container)
-- [orgrr extensions](#orgrr-extensions)
-  - [orgrr-save-website](#orgrr-save-website)
-  - [orgrr-show-findlike](#orgrr-show-findlike)
 - [FAQ](#faq)
 
 ## Installation
@@ -210,7 +172,7 @@ As above, if you don't already have done so, you also should set an org-director
 (setq org-directory "~/path/to/org-directory")
 ```
 
-### Known Issues: Orgmode fontification glitch
+### Known Issue: Orgmode fontification glitch
 
 A new note in orgrr starts with a title (for details see [orgrr's way of dealing with notes](#orgrr's-way-of-dealing-with-notes)). That title is used as the source for the filename but special characters are replaced by underscores `_`. As you may know, Orgmode uses underscores for emphasis, e.g. subscript or underlining. While filenames in Orgmode links are usually ignored, sometimes they are not. Many links in the same paragrpah therefore may lead to some wild underlining. The links themselves, however, are not affected and will continue to work. Org-export is also not affected. 
 
@@ -445,22 +407,6 @@ This function switches between `multi-window` and `single-window-mode`, affectin
 
 These functions were a byproduct of rewriting orgrr-move-note and correct links either in the current buffer or the current container. Fixing hereby means: if you move org files to a different folder, org-links with hard-wired directories in them may cease to work. The functions will fix these links as long as there is a file with the same filename in the known containers. Even using the speedy rg, orgrr-fix-all-links-container may take a while to complete.
 
-## orgrr extensions
-
-orgrr extensions are additions to the core functionality of orgrr that may introduce new dependencies to other packages or external software. orgrr will always run fine without them and if you want a minimalist setup, you don't need these. In order to use the extensions you may have to add this file to your load-path (see above installation info):
-
-```org
-(load "/path/to/orgrr/orgrr-extensions.el") 
-```
-
-### orgrr-save-website
-
-This function saves a website as an org-file in the current org-directory (remember that the [orgrr-container-commands](#orgrr-container-commands) allow you to easily change the org-directory). It uses [org-web-tools](https://github.com/alphapapa/org-web-tools) and [Pandoc](https://pandoc.org/) to create these org-files. I use this to store primary source material (=websites) for later analysis. The function saves the website at point - if there is a URL or an org-link. If no such link is provided, it will prompt for an URL.
-
-### orgrr-show-findlike
-
-This function uses the command line tool [findlike](https://github.com/brunoarine/findlike) by [Bruno Arine](@brunoarine@hachyderm.io), which you need to install before, to create a list of ten related notes in a side-window. Invoke the command again to close the side-window (while visiting the "orgrr findlike" buffer).
-
 ## FAQ
 
 - Isn't this a ridiculous waste of time? Why bother?
@@ -484,3 +430,9 @@ orgrr started as an acronym for "org-roam ripgrep" or "org-roam replica", as org
 - Is this a subtle criticism directed at the org-roam approach?
 
 Not at all! The project was born out of admiration for the pioneering work done by Jethro Kuan and others. You should check out the real org-roam. 
+
+- Why did you remove orgrr-extensions.el?
+
+orgrr is a personal project and only includes functions that I actually use. Since writing `orgrr-save-website`, which draws on `org-web-tools` and `pandoc`, I discovered that the results for many pages were less than optimal. I wrote a little package to transform websites into minimal orgmode documents. The results were promising and I now exclusively use [website2org](https://github.com/rtrppl/website2org). Maybe it works for you as well.
+
+`orgrr-show-findlike` also produced increasingly suboptimal results and took way longer than `orgrr-show-related-notes`. It was a fun experiment but not really all that useful.
