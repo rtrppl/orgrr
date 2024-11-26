@@ -21,6 +21,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**0.9.13**
+- `orgrr-open-project`, `orgrr-add-to-project` and `orgrr-info` are now global, i.e. work across containers
+
 **0.9.12** 
 - Removed the orgrr-extensions, see the [FAQ](#faq) for more information
 
@@ -28,7 +31,7 @@ search the local container or all containers for a specified term. Regex is welc
 - orgrr-rename does now not only change the filename but also adjusts all links to said file in all containers
 
 
-See a a more complete version of the changelog [here](./changelog.org).
+Find a more complete version of the changelog [here](./changelog.org).
 
 ------------------------------
 

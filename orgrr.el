@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 0.9.12
+;; Version: 0.9.13
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -30,6 +30,10 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.13
+;; - `orgrr-open-project', `orgrr-add-to-project' and `orgrr-info' are now global and
+;; work across containers
 ;;
 ;; 0.9.12
 ;; - Removed the orgrr-extensions
@@ -829,11 +833,12 @@ If the selected title does not exist, a new note is created."
   "Find existing project or create a new one."
   (interactive)
   (let ((selection (orgrr-pick-project))
-	(titles (hash-table-keys orgrr-title-filename))
+	(titles (hash-table-keys orgrr-title-short_filename))
 	(filename))
   (if (member selection titles)
     (progn
-      (setq filename (gethash selection orgrr-title-filename))
+      (setq filename (gethash selection orgrr-title-short_filename))
+      (setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename))
       (org-open-file filename))
     (let* ((time (format-time-string "%Y%m%d%H%M%S")))
          (setq filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'\\\s\/]" "_" selection) ".org")))
@@ -848,52 +853,51 @@ If the selected title does not exist, a new note is created."
       (if (buffer-file-name)
           (file-name-directory (buffer-file-name))
         default-directory))
-	(titles (hash-table-keys orgrr-title-filename))
+	(titles (hash-table-keys orgrr-title-short_filename))
 	(filename))
   (if (member selection titles)
     (progn
-      (setq filename (gethash selection orgrr-title-filename))
+      (setq filename (gethash selection orgrr-title-short_filename))
+      (setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename))
       (setq filename (file-relative-name filename path-of-current-note))
       (insert (concat "\[\[file:" filename "\]\[" selection "\]\]"))))))
 
 (defun orgrr-collect-project-snippet ()
   "Prepare snippet for `orgrr-add-to-project'."
   (let ((snippet))
-    (if (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
-	(progn
-	  (save-excursion
-	    (let* ((line-number (line-number-at-pos))
-		   (filename (buffer-file-name))
-		   (title (pcase (org-collect-keywords '("TITLE"))
-		    (`(("TITLE" . ,val)) (car val)))))
-	      (beginning-of-line)
-	      (set-mark-command nil)
-	      (end-of-line)
-	      (setq snippet (buffer-substring-no-properties (region-beginning) (region-end)))
-	      (setq snippet (concat "\*\* \[\[file:" filename "::" (number-to-string line-number)  "\]" "\[" title "\]\]:\n" snippet))
-	      (deactivate-mark))))
-      (progn
-	(let ((start (save-excursion
-                       (org-back-to-heading)
-                       (point)))
-              (end (save-excursion
-		     (org-end-of-subtree)
-		     (point))))
-	(setq snippet (buffer-substring-no-properties start end)))))
+    (when (string-match-p "backlinks for *" (buffer-name (current-buffer)))
+      (let ((start (save-excursion
+                     (org-back-to-heading)
+                     (point)))
+            (end (save-excursion
+		   (org-end-of-subtree)
+		   (point))))
+	(setq snippet (buffer-substring-no-properties start end))))
+    (when (not (string-match-p "backlinks for *" (buffer-name (current-buffer))))
+      (save-excursion
+	(let* ((line-number (line-number-at-pos))
+	       (filename (buffer-file-name))
+	       (title (pcase (org-collect-keywords '("TITLE"))
+			(`(("TITLE" . ,val)) (car val)))))
+	  (beginning-of-line)
+	  (set-mark-command nil)
+	  (end-of-line)
+	  (setq snippet (buffer-substring-no-properties (region-beginning) (region-end)))
+	  (setq snippet (concat "\*\* \[\[file:" filename "::" (number-to-string line-number)  "\]" "\[" title "\]\]:\n" snippet))
+	  (deactivate-mark))))
     snippet))
 
 (defun orgrr-add-to-project ()
   "Add the current line at point (including when in orgrr-backlinks buffer) to 
 an existing project."
   (interactive)
-  (orgrr-get-meta)
-  (orgrr-get-all-meta)
   (let* ((snippet (orgrr-collect-project-snippet))
 	 (selection (orgrr-pick-project))
 	 (filename)
-         (titles (hash-table-keys orgrr-title-filename)))
+         (titles (hash-table-keys orgrr-title-short_filename)))
   (when (member selection titles)
-      (setq filename (gethash selection orgrr-title-filename))
+      (setq filename (gethash selection orgrr-title-short_filename))
+      (setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename))
       (find-file-noselect filename))
   (when (not (member selection titles))
      (let ((time (format-time-string "%Y%m%d%H%M%S")))
@@ -908,22 +912,25 @@ an existing project."
 (defun orgrr-pick-project ()
   "Provides a list of all projects to add the new snippet, with the option to 
 create a new one. Returns a project."
-  (orgrr-get-meta)
+  (orgrr-get-all-meta)
   (let* ((orgrr-selection-list ())
 	 (orgrr-selection-list-completion)
-	 (orgrr-project_filename-title (make-hash-table :test 'equal))
+	 (orgrr-name-container (orgrr-get-list-of-containers))
+	 (containers (nreverse (hash-table-values orgrr-name-container)))
 	 (selection))
-     (with-temp-buffer
-       (insert (shell-command-to-string (concat "rg -i --sort modified -l -e  \"^\\#\\+roam_tags:.+orgrr-project\" \"" (expand-file-name org-directory) "\"")))
+    (dolist (container containers) 
+      (with-temp-buffer
+       (insert (shell-command-to-string (concat "rg -i --sort modified -l -e  \"^\\#\\+roam_tags:.+orgrr-project\" \"" (expand-file-name container) "\"")))
        (let ((lines (split-string (buffer-string) "\n" t)))
+	 (print lines)
 	 (dolist (line lines)
-	   (let ((title (gethash (concat "\\" line) orgrr-filename-title)))
-	     (puthash (concat "\\" line) title orgrr-project_filename-title)
-	     (setq orgrr-selection-list (cons title orgrr-selection-list)))))
+	   (when line
+	     (let ((title (gethash (concat "\\" (file-name-nondirectory line)) orgrr-short_filename-title)))
+	       (setq orgrr-selection-list (cons title orgrr-selection-list))))))))
      (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
      (setq selection (completing-read "Select: " orgrr-selection-list))
      (if (string-match "^\(" selection)
-	 (setq selection (replace-regexp-in-string "\(.*?\) " "" selection))))
+	 (setq selection (replace-regexp-in-string "\(.*?\) " "" selection)))
      selection))
 
 (defun orgrr-format-project-snippet (snippet)
@@ -1014,10 +1021,16 @@ collect this information."
  (interactive)
  (let* ((result (benchmark-run-compiled 1
                   (progn
-                    (orgrr-get-meta))))
-       (titles (hash-table-keys orgrr-title-filename))
-       (number-of-files (shell-command-to-string (concat "find \"" (expand-file-name org-directory) "\"  -type f -name \"*.org\" | wc -l"))))
-   (message "Orgrr considers %d titles and alias in %s org-files in this container. Collecting all titles took %s seconds to complete." (length titles) (string-trim number-of-files) (format "%.5f" (car result)))))
+                    (orgrr-get-all-meta))))
+       (titles (hash-table-keys orgrr-title-short_filename))
+       (orgrr-name-container (orgrr-get-list-of-containers))
+       (containers (nreverse (hash-table-values orgrr-name-container)))
+       (container-number-of-files 0)
+       (global-number-of-files 0))
+ (dolist (container containers) 
+   (setq container-number-of-files (string-to-number (string-trim (shell-command-to-string (concat "find \"" (expand-file-name container) "\"  -type f -name \"*.org\" | wc -l")))))
+   (setq global-number-of-files (+ global-number-of-files container-number-of-files)))
+   (message "Orgrr considers %d titles and alias in %d org-files in %d containers. Collecting the titles took %s seconds to complete." (length titles) global-number-of-files (length containers) (format "%.5f" (car result)))))
     
 (defun orgrr-show-related-notes (arg)
   "Show all related notes in `org-directory' to the current org-file. Related 
