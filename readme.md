@@ -22,13 +22,13 @@ search the local container or all containers for a specified term. Regex is welc
 ## Changelog
 
 **0.9.13**
-- `orgrr-open-project`, `orgrr-add-to-project` and `orgrr-info` are now global, i.e. work across containers
+- `orgrr-open-project`, `orgrr-add-to-project` and `orgrr-info` are now global, i.e. work across all containers
 
 **0.9.12** 
-- Removed the orgrr-extensions, see the [FAQ](#faq) for more information
+- Removed orgrr-extensions, see the [FAQ](#faq) for more information
 
 **0.9.11**
-- orgrr-rename does now not only change the filename but also adjusts all links to said file in all containers
+- orgrr-rename does now not only change the filename but also adjusts all links to the new filename in all containers
 
 
 Find a more complete version of the changelog [here](./changelog.org).
@@ -388,7 +388,7 @@ If called with `C-u`, backlinks of first and second order in all containers are 
 
 `orgrr-add-to-project` appends the current line to an orgrr-project and includes a source-link to allow for follow-up. All links within this snippet are corrected to work in the new location. This function works for all org-files and the `orgrr-backlinks` buffer.
 
-`orgrr-open-project` provides quick access to all orgrr-projects.
+`orgrr-open-project` provides quick access to all orgrr-projects in all containers.
 
 ### orgrr-compile-sequence
 
