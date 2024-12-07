@@ -335,11 +335,11 @@ For a long time I used different packages to search my notes (see, for example, 
 
 ### orgrr-rename
 
-orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the `#+title` of a note (or any other meta-data about a note), however, will not cause any harm. In theory there should be no need to ever change the filename of a note. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
+orgrr uses the filename as an unique indentifier. Therefore randomly changing filenames will break the connection between notes - changing the `#+title` of a note (or any other meta-data about a note), however, will not cause any harm. In theory there should be no need to ever change the filename of a note. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
 
-This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in all containers. Use with caution!
+This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in all containers. It should be used whenever the need to rename a file within the orgrr universe arises! 
 
-`orgrr-rename-title-and-file` allows you to change title and filename of the current note in one go. It will, however, not change the creation date of the file (its first part). 
+`orgrr-rename-title-and-file` allows you to change title and filename of the current note in one go. It will, however, not change the creation date of the filename (the first part of the filename). 
 
 ### orgrr-delete
 
