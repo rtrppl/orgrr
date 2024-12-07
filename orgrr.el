@@ -1123,6 +1123,7 @@ patient."
 	      (related-notes (+ related-notes (orgrr-forwardlinks-first-and-second-order)))
 	      (sorted-values '())
 	      (current-zettel (orgrr-read-current-zettel))
+	      (parent-zettel (orgrr-read-zettel-parent current-zettel))
 	      (zettel-filename (gethash current-zettel orgrr-zettel-filename))
 	      (selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel))
 	      (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
@@ -1142,6 +1143,9 @@ patient."
 		    (list-title (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-title)))
 	       (insert (concat "** " "\[\[file:" list-filename "\]\[" list-title "\]\]: " connections "\n"))))
 	   (insert "\n* Sequence:\n\n")
+	   (if (not (string-equal parent-zettel ""))
+	       (insert (concat "** Parent: " (orgrr-return-fullzettel-linked parent-zettel) "\n\n"))
+	     (insert "** This is a root zettel with no parent.\n\n"))
 	   (dolist (element orgrr-zettel-list) 
 	     (let* ((last-char (substring selection-zettel -1))
 		    (is-last-char-num (string-match-p "[0-9]" last-char))
@@ -1155,6 +1159,11 @@ patient."
     (when (string-match-p "super related notes for *" (buffer-name (current-buffer)))
       (orgrr-close-buffer))))
 
+(defun orgrr-read-zettel-parent (zettel)
+  "Returns parent zettel of current-zettel."
+ (if (and zettel (string-match "\\(.*?\\)\\([0-9]+\\|[a-zA-Z]+\\)$" zettel))
+      (match-string 1 zettel)
+    zettel))
 
 (defun orgrr-backlinks-first-and-second-order (call-with-arg)
   "Gets backlinks first and second order."
