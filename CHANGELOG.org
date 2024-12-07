@@ -1,5 +1,11 @@
 #+title: orgrr CHANGELOG
 
+**0.9.12** 
+- Removed orgrr-extensions, see the [FAQ](#faq) for more information
+
+**0.9.11**
+- orgrr-rename does now not only change the filename but also adjusts all links to the new filename in all containers
+
 **0.9.10** 
 - Fix for orgrr-rename (thx Dasein1998)
 

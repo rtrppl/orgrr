@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 0.9.13
+;; Version: 0.9.14
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -31,48 +31,16 @@
 ;;
 ;;; News
 ;;
+;; 0.9.14
+;; - Added functions `orgrr-quick-add', `orgrr-global-quick-add', 
+;; `orgrr-rename-title-and-file', `orgrr-rename-and-move'; fixed bug in 
+;; `orgrr-rename' that could lead to duplicates when renaming
+;;
 ;; 0.9.13
 ;; - `orgrr-open-project', `orgrr-add-to-project' and `orgrr-info' are now global and
 ;; work across containers
 ;;
-;; 0.9.12
-;; - Removed the orgrr-extensions
-;;
-;; 0.9.11
-;; - orgrr-rename does now not only change the filename but also adjusts all 
-;;   links to said file in all containers
-;;
-;; 0.9.10 
-;; - Fix for orgrr-rename (thx Dasein1998)
-;;
-;; 0.9.9 
-;; - Fixing how rg is called (necessary for Win10)
-;;
-;; 0.9.8
-;; - orgrr-show-sequence can now be called with an optional title of a note
-;;   to directly start a sequence
-;;
-;; 0.9.7
-;; - An optional search query can now be passed to orgrr-search
-;;
-;; 0.9.6
-;; - Adds orgrr-search
-;;
-;; 0.9.5
-;; - Adds global orgrr-insert and orgrr-find
-;;
-;; 0.9.4 
-;; - Bug fix for end-of-sequence issue
-;;
-;; 0.9.3
-;; - Fixes to better deal with spaces in directory names
-;;
-;; 0.9.2
-;; - Adds compile sequence feature (orgrr-compile-sequence)
-;;
-;; 0.9.1
-;; - Bug fix for orgrr-check-for-container-file
-;;
+;; For more changes see the changelog.
 ;;
 ;;; Code:
 
@@ -81,6 +49,7 @@
 (require 'json)
 
 (defvar orgrr-window-management "single-window")
+(defvar orgrr-quick-add-token "quicknote")
 (defvar orgrr-compile-open-link-other-window t) ;; set this to nil if orgrr-compile-draft should respect orgrr-window-management settings
 
 
@@ -702,6 +671,34 @@ selected file name does not exist, a new one is created."
   (interactive)
   (orgrr-find '(4)))
 
+(defun orgrr-quick-add (&optional container)
+  "Create org-file in container or org-directory."
+  (interactive)
+  (let* ((save-org-directory org-directory)
+	 (filename)
+	 (orgrr-name-container (orgrr-get-list-of-containers))
+	 (containers (nreverse (hash-table-keys orgrr-name-container)))
+	 (time))
+    (if (member container containers)
+	(setq container (gethash container orgrr-name-container))
+       (setq container org-directory))
+    (setq time (format-time-string "%Y%m%d%H%M%S"))
+    (setq filename (concat (file-name-as-directory container) time "-" orgrr-quick-add-token))
+    (when (orgrr-on-macos-p)
+      (setq filename (ucs-normalize-HFS-NFD-string filename)))
+    (orgrr-open-file (concat filename ".org"))
+    (insert (concat "#+title: " time "-" orgrr-quick-add-token "\n\n"))))
+
+(defun orgrr-global-quick-add ()
+  "Create org-file in a specific selected container."
+  (interactive)
+  (let*  ((orgrr-name-container (orgrr-get-list-of-containers))
+	  (containers (nreverse (hash-table-keys orgrr-name-container)))
+	  (container))
+    (while (not (member container containers))
+      (setq container (completing-read "Select container: " containers)))
+    (orgrr-quick-add container)))
+
 (defun orgrr-insert (arg)
   "Insert links to an org-file in `org-directory' via mini-buffer completion. 
 If the selected title does not exist, a new note is created."
@@ -754,18 +751,21 @@ If the selected title does not exist, a new note is created."
          (filename (gethash random-title orgrr-title-filename)))
     (orgrr-open-file filename)))
 
-(defun orgrr-rename ()
+(defun orgrr-rename (&optional old-filename new-filename)
   "Rename current file and adjust all mentions of said file in other org-files in all containers. Does work across directories."
   (interactive)
-  (let* ((old-filename (if (equal major-mode 'dired-mode)
+  (let* ((old-filename-mentions '())
+	 (orgrr-name-container (orgrr-get-list-of-containers))
+	 (containers (nreverse (hash-table-values orgrr-name-container)))
+	 (lines))
+    (when (not old-filename)
+      (setq old-filename (if (equal major-mode 'dired-mode)
                         default-directory
-			(buffer-file-name)))
-	(new-filename (read-from-minibuffer "Filename to change: " old-filename))
-	(old-filename-mentions '())
-	(orgrr-name-container (orgrr-get-list-of-containers))
-	(containers (nreverse (hash-table-values orgrr-name-container)))
-	(lines))
-    (set-visited-file-name new-filename)
+			(buffer-file-name))))
+    (when (not new-filename)
+      (setq new-filename (read-from-minibuffer "Filename to change: " old-filename)))
+    (rename-file old-filename new-filename)
+    (set-visited-file-name new-filename nil t)
     (save-some-buffers t)  ;; necessary, as we are working directly with the files 
 ;; Add all files that mention filename to the list old-filename-mentions.
     (dolist (container containers)   
@@ -785,6 +785,29 @@ If the selected title does not exist, a new note is created."
 	    (replace-match (file-name-nondirectory new-filename)))))
   (save-some-buffers t)))
 
+(defun orgrr-rename-title-and-file ()
+  "Changes the title and filename of the current note. The first part of the 
+filename (with the creation date) will not be modified."
+  (interactive)
+  (let ((old-filename (if (equal major-mode 'dired-mode)
+                        default-directory
+			(buffer-file-name)))
+	(old-creation-time)
+	(new-filename))
+    (setq new-title (read-from-minibuffer "New title: "))
+    (orgrr-change-title new-title)
+    (setq new-filename (replace-regexp-in-string "[\"'?:;\\\s\/]" "_" new-title))
+    (string-match "\[0-9\]+-" old-filename)
+    (setq old-creation-time (match-string 0 old-filename))
+    (setq new-filename (concat old-creation-time new-filename ".org"))
+    (orgrr-rename nil new-filename)))
+
+(defun orgrr-rename-and-move ()
+ "Rename title and file, then move current note."
+ (interactive)
+ (orgrr-rename-title-and-file)
+ (orgrr-move-note))
+ 
 (defun orgrr-delete ()
   "Delete current note and show the previous buffer."
   (interactive)
@@ -1346,6 +1369,24 @@ function, make sure to be in the correct container."
             (setq roam-key key)))
         (forward-line)))
     roam-key))
+
+(defun orgrr-change-title (&optional new-title)
+  "Changes #+title."
+  (interactive)
+  (let* ((line)
+	 (has-changed-p))
+    (when (not new-title)
+      (setq new-title (read-from-minibuffer "New title: ")))
+    (save-excursion  
+      (goto-char (point-min))
+      (while (not (and (eobp)
+		       has-changed-p))
+	(let ((line (buffer-substring (line-beginning-position) (line-end-position))))
+	  (when (string-match "^#\\+title:\\s-*\\(.*\\)" line)
+	    (kill-region (line-beginning-position) (line-end-position))
+	    (insert (concat "#+title: " new-title))
+	    (setq has-changed-p t))
+	(forward-line))))))
 
   (defun orgrr-open-ref-url ()
     "Opens the URL in the current note's ROAM_KEY property, if one exists."

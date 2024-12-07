@@ -19,16 +19,15 @@ search the local container or all containers for a specified term. Regex is welc
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
+- **orgrr-quick-add** and **orgrr-global-quick-add** are for rapid note creation ([more on orgrr-quick-add](#orgrr-quick-add)).
+
 ## Changelog
+
+**0.9.14**
+- Added functions `orgrr-quick-add`, `orgrr-global-quick-add`, `orgrr-rename-title-and-file`, `orgrr-rename-and-move`; fixed bug in `orgrr-rename` that could lead to duplicates when renaming
 
 **0.9.13**
 - `orgrr-open-project`, `orgrr-add-to-project` and `orgrr-info` are now global, i.e. work across all containers
-
-**0.9.12** 
-- Removed orgrr-extensions, see the [FAQ](#faq) for more information
-
-**0.9.11**
-- orgrr-rename does now not only change the filename but also adjusts all links to the new filename in all containers
 
 
 Find a more complete version of the changelog [here](./changelog.org).
@@ -47,6 +46,7 @@ Find a more complete version of the changelog [here](./changelog.org).
 - [Basic functions](#basic-functions)
   - [orgrr-find](#orgrr-find)
   - [orgrr-insert](#orgrr-insert)
+  - [orgrr-quick-add](#orgrr-quick-add)
   - [orgrr-search](#orgrr-search)
   - [orgrr-rename](#orgrr-rename)
   - [orgrr-delete](#orgrr-delete)
@@ -193,15 +193,15 @@ orgrr began as a nearly feature-complete replica of the core functionality of [o
 
 **A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files, which is stored in hashtables. The aim is to have no dependencies on sql or related software. A second difference is that orgrr sticks to the ideal of every note being a single file (no nodes!). The final difference is relative minimalism - orgrr should have all necessary features to write, analyze, and manage notes - and draw on Orgmode/Emacs for everything else.**
 
-This package primarily address my own needs and I have been using orgrr almost daily for more than a year now (September 2024). My main container has more than 4000 notes and orgrr is much faster than org-roam. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest of the Zettelkasten packages available for Emacs.
+This package primarily address my own needs and I have been using orgrr almost daily for more than a year now (September 2024). My main container has more than 4000 notes and orgrr is much faster than org-roam. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest Zettelkasten packages available for Emacs.
 
 **As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions. If you are using a Git repository, a great solution for iOS access is [Working Copy](https://workingcopy.app/) due to its native support for Orgmode. In a related manner (and as a reminder), the [Github website](https://github.com/) also has good support for Orgmode.** 
 
 ### Basic design of a note
 
-In orgrr, all notes are assumed to follow a certain logic regarding metadata. The design principles used here are similar to org-roam v1 and interoperation between orgrr and org-roam v1 is possible (and was intended). Filenames themselves are used as unique identifiers and changing them without adjusting backlinks will break the connection between two notes (see also [orgrr-rename](#orgrr-rename)).
+In orgrr all notes are assumed to follow a certain logic regarding metadata. The design principles used here are similar to org-roam v1 and interoperation between orgrr and org-roam v1 is possible (and was intended). Filenames themselves are used as unique identifiers and changing them without adjusting backlinks will break the connection between two notes (see also [orgrr-rename](#orgrr-rename)).
 
-At the very minimum, **a note file for orgrr is an .org file that includes the following line**:
+At the very minimum **a note file for orgrr is an .org file that includes the following line**:
 
 ```org
 #+title:       title of a note
@@ -300,11 +300,32 @@ If called with `C-u` (`C-u orgrr-find`) or via `orgrr-global-find` notes from al
 
 This will search the org-directory (and all its subdirectories) for a note and then inserts a link to this note at point. You can search for any combination of tags, zettel ID and title (or alias). A marked region is recognized to narrow search.
 
-If the note does not exist, a new one with the same title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. The link to the new note will also be added at point. As above mentioned, you should use orgrr-find and orgrr-insert to create new notes and should use `kill-current-buffer` to abort.
+If the note does not exist, a new one with the same title will be created in the `org-directory`. The naming scheme of the new file is similar to org-roam v1. The link to the new note will also be added at point. As above mentioned, you should use orgrr-find and orgrr-insert to create new notes and `kill-current-buffer` to abort.
 
 If called with `C-u` (`C-u orgrr-insert`) or via `orgrr-global-insert` notes from all containers are considered (i.e. their titles and alias but not their tags or zettel numbers).
 
 A special variant of this function is `orgrr-insert-project`, which allows to insert a link to any orgrr-project in the current container (see [orgrr-projects](#orgrr-projects)).
+
+### orgrr-quick-add
+
+Sometimes one needs to write down something right there in the moment - with neither timer nor patience to think about a title or the best container for a note. `orgrr-quick-add` was creates for those moments. It will create a new note in the current container. The title is a combination of current date and the value of `orgrr-quick-add-token`. The latter can be adjusted via:
+
+```elisp
+(setq orgrr-quick-add-token "something")
+```
+
+`orgrr-global-quick-add` allows to pick a container before creating the new quick note. While the new quick note may be created in a different container, the current org-directory is not changed by this function. 
+
+`orgrr-quick-add` can be called with a specific container. So you could create an "inbox" and automatically add new quick notes there. See this sample code:
+
+```elisp
+(defun orgrr-quick-add-inbox ()
+  "Adds a note to my inbox container."
+  (interactive)
+  (orgrr-quick-add "inbox"))
+```
+
+For managing quick notes `orgrr-rename-title-and-file` (see [here](#orgrr-rename)) and `orgrr-rename-and-move` (see [here](orgrr-move-note)) are handy. 
 
 ### orgrr-search
 
@@ -312,12 +333,13 @@ For a long time I used different packages to search my notes (see, for example, 
 
 `orgrr-search` searches the current container, whereas `C-u orgrr-search` or `orgrr-global-search` searches all containers. The search string entered here is directly passed to `ripgrep`, so all `regex` that ripgrep understands should also work here. Search in orgrr is not case sensitive (i.e. `rg -i` is set). 
 
-
 ### orgrr-rename
 
-orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the `#+title` of a note (or any other meta-data about a note), however, will not cause any harm. In theory there should be no need to ever change the name of a file (or its location) after its creation. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
+orgrr uses file names as unique indentifiers. Therefore changing them will break the connection between notes - changing the `#+title` of a note (or any other meta-data about a note), however, will not cause any harm. In theory there should be no need to ever change the filename of a note. But sometimes there are stupid typos or naming conventions and the need to change a file name arises.
 
 This function allows to change the name of the file/note the current buffer visits and all corresponding links in other notes in all containers. Use with caution!
+
+`orgrr-rename-title-and-file` allows you to change title and filename of the current note in one go. It will, however, not change the creation date of the file (its first part). 
 
 ### orgrr-delete
 
@@ -326,6 +348,8 @@ This function deletes the current note and displays the previous buffer.
 ### orgrr-move-note
 
 This function allows to move the current note to one of the other containers. All links in the note and all containers (!) will be adjusted accordingly.
+
+`orgrr-rename-and-move` will consecutively execute `orgrr-rename-title-and-file` and `orgrr-move-note` on the current note.
 
 ### orgrr-random-note
 
