@@ -1374,8 +1374,6 @@ function, make sure to be in the correct container."
   "Changes #+title."
   (interactive)
   (let* ((line)
-	 (buffer (buffer-substring-no-properties (point-min) (point-max)))
-	 (old-title)
 	 (has-changed-p))
     (when (not new-title)
       (setq new-title (read-from-minibuffer "New title: ")))
@@ -1387,7 +1385,7 @@ function, make sure to be in the correct container."
 	  (when (string-match "^#\\+title:\\s-*\\(.*\\)" line)
 	    (kill-region (line-beginning-position) (line-end-position))
 	    (insert (concat "#+title: " new-title))
-	    (setq has-changed-p 1))
+	    (setq has-changed-p t))
 	(forward-line))))))
 
   (defun orgrr-open-ref-url ()
