@@ -1098,7 +1098,64 @@ patient."
 	  (orgrr-prepare-findings-buffer relatednotes-buffer))))
     (when (string-match-p "related notes for *" (buffer-name (current-buffer)))
       (orgrr-close-buffer))))
-  
+
+(defun orgrr-show-super-related (arg)
+  "Combines `orgrr-show-relarted-notes' and `orgrr-show-sequence' into one
+buffer. See these functions for more details.
+
+If called with C-u all containers will be searched for direct backlinks and
+backlinks of backlinks (second order backlinks). This may take a while, be
+patient."
+   (interactive "P")
+   (let ((call-with-arg nil))
+     (when (equal arg '(4))
+       (setq call-with-arg 1))
+     (when (not (string-match-p "super related notes for *" (buffer-name (current-buffer))))
+       (clrhash orgrr-filename-mentions)
+       (orgrr-get-all-meta)
+       (orgrr-prepare-zettelrank)
+       (let* ((filename (if (equal major-mode 'dired-mode)
+			    default-directory
+			  (buffer-file-name)))
+	      (title (gethash (concat "\\" (file-name-nondirectory filename)) orgrr-short_filename-title))
+              (superrelated-buffer (concat "super related notes for *" title "*"))
+	      (related-notes (orgrr-backlinks-first-and-second-order call-with-arg))
+	      (related-notes (+ related-notes (orgrr-forwardlinks-first-and-second-order)))
+	      (sorted-values '())
+	      (current-zettel (orgrr-read-current-zettel))
+	      (zettel-filename (gethash current-zettel orgrr-zettel-filename))
+	      (selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel))
+	      (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
+	      (orgrr-zettel-list (sort orgrr-zettel-list 'orgrr-dictionary-lessp)))
+	 (with-current-buffer (get-buffer-create superrelated-buffer)
+	   (erase-buffer)
+	   (orgrr-open-buffer superrelated-buffer)
+	   (insert (concat (orgrr-return-fullzettel-linked-head selection-zettel) "\n\n"))
+	   (insert (concat "* " (number-to-string related-notes) " Related Notes:\n\n"))
+	   (maphash (lambda (key value)
+		      (push (cons value key) sorted-values))
+		    orgrr-filename-mentions)
+	   (setq sorted-values (sort sorted-values (lambda (a b) (> (car a) (car b)))))
+	   (dolist (entry sorted-values)
+	     (let* ((connections (number-to-string (car entry)))
+		    (list-filename (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-filename))
+		    (list-title (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-title)))
+	       (insert (concat "** " "\[\[file:" list-filename "\]\[" list-title "\]\]: " connections "\n"))))
+	   (insert "\n* Sequence:\n\n")
+	   (dolist (element orgrr-zettel-list) 
+	     (let* ((last-char (substring selection-zettel -1))
+		    (is-last-char-num (string-match-p "[0-9]" last-char))
+		    (regex (if is-last-char-num
+			       (concat "^" selection-zettel "[a-zA-Z]")
+			     (concat "^" selection-zettel))))
+	    (when (string-match regex element)
+	      (if (not (equal element selection-zettel))
+		  (insert (concat "** " (orgrr-return-fullzettel-linked element) "\n"))))))
+	  (orgrr-prepare-findings-buffer superrelated-buffer))))
+    (when (string-match-p "super related notes for *" (buffer-name (current-buffer)))
+      (orgrr-close-buffer))))
+
+
 (defun orgrr-backlinks-first-and-second-order (call-with-arg)
   "Gets backlinks first and second order."
   (let* ((filename (if (equal major-mode 'dired-mode)
