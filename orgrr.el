@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 0.9.14
+;; Version: 0.9.15
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -30,6 +30,10 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.15
+;; - Added `orgrr-show-multiverse'; modified `orgrr-show-sequence' to 
+;; also show parent zettel
 ;;
 ;; 0.9.14
 ;; - Added functions `orgrr-quick-add', `orgrr-global-quick-add', 
@@ -299,7 +303,7 @@ Does not prepend tags and zettel in front of title and alias."
 
 (defun orgrr-selection-zettel (&optional current-zettel)
   "Prepare the symbol orgrr-selection for completing-read and send the result 
-in selection to orgrr-find-zettel and orgrr-insert-zettel. Only includes files 
+in selection to `orgrr-find-zettel' and `orgrr-insert-zettel'. Only includes files 
 that have a value for zettel. Prepends zettel value in front of title and 
 alias."
   (let* ((orgrr-selection-list (orgrr-prepare-zettel-selection-list))
@@ -329,7 +333,7 @@ alias."
     (setq orgrr-selection-list (reverse orgrr-selection-list))))
 
 (defun orgrr-find-zettel ()
-  "Like orgrr-find, but only considers notes that have a value for zettel. If 
+  "Like `orgrr-find', but only considers notes that have a value for zettel. If 
 the selected file name does not exist, a new one is created. Starts with the 
 current zettel ID, which allows you to search within a context."
   (interactive)
@@ -454,8 +458,8 @@ file)."
 (defun orgrr-show-sequence (&optional zettel-title)
   "Shows a sequence of notes for any given zettel value. If run while visiting 
 a buffer that has a value for zettel, this is taken as the starting value for 
-zettel. Results are presented in a different buffer in accordance with 
-orgrr-window-management."
+zettel. Results are presented in a different buffer in accordance with the
+variable orgrr-window-management."
   (interactive)
   (when (not (string-match-p "sequence for *" (buffer-name (current-buffer))))
     (orgrr-prepare-zettelrank)
@@ -463,6 +467,7 @@ orgrr-window-management."
 	   (zettel-title (or zettel-title (orgrr-selection-zettel current-zettel)))
 	   (zettel-filename (gethash zettel-title orgrr-title-filename))
 	   (selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel))
+	   (parent-zettel (orgrr-read-zettel-parent selection-zettel))
 	   (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
 	   (orgrr-zettel-list (sort orgrr-zettel-list 'orgrr-dictionary-lessp))
 	   (sequence-buffer (concat "sequence for *[" selection-zettel "]*")))
@@ -470,7 +475,10 @@ orgrr-window-management."
 	(let ((inhibit-read-only t))
           (erase-buffer)
 	  (insert (concat (orgrr-return-fullzettel-linked-head selection-zettel) "\n\n"))
-	  (insert "* Sequence:\n\n")
+	  (insert "* sequence:\n\n")
+	  (if (not (string-equal parent-zettel ""))
+	      (insert (concat "** parent zettel: \t" (orgrr-return-fullzettel-linked parent-zettel) "\n\n"))
+	    (insert "** This is a root zettel with no parent.\n\n"))
 	  (dolist (element orgrr-zettel-list) 
 	    (let* ((last-char (substring selection-zettel -1))
 		    (is-last-char-num (string-match-p "[0-9]" last-char))
@@ -1118,7 +1126,7 @@ patient."
 			    default-directory
 			  (buffer-file-name)))
 	      (title (gethash (concat "\\" (file-name-nondirectory filename)) orgrr-short_filename-title))
-              (superrelated-buffer (concat "multiverse for *" title "*"))
+              (multiverse-buffer (concat "multiverse for *" title "*"))
 	      (related-notes (orgrr-backlinks-first-and-second-order call-with-arg))
 	      (related-notes (+ related-notes (orgrr-forwardlinks-first-and-second-order)))
 	      (sorted-values '())
@@ -1128,36 +1136,39 @@ patient."
 	      (selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel))
 	      (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
 	      (orgrr-zettel-list (sort orgrr-zettel-list 'orgrr-dictionary-lessp)))
-	 (with-current-buffer (get-buffer-create superrelated-buffer)
-	   (erase-buffer)
-	   (orgrr-open-buffer superrelated-buffer)
-	   (insert (concat (orgrr-return-fullzettel-linked-head selection-zettel) "\n\n"))
-	   (insert "* sequence:\n\n")
-	   (if (not (string-equal parent-zettel ""))
-	       (insert (concat "** Parent: \t" (orgrr-return-fullzettel-linked parent-zettel) "\n\n"))
+	 (when current-zettel
+	   (with-current-buffer (get-buffer-create multiverse-buffer)
+	     (erase-buffer)
+	     (orgrr-open-buffer multiverse-buffer)
+	     (insert (concat (orgrr-return-fullzettel-linked-head selection-zettel) "\n\n"))
+	     (insert "* sequence:\n\n")
+	     (if (not (string-equal parent-zettel ""))
+		 (insert (concat "** parent: \t" (orgrr-return-fullzettel-linked parent-zettel) "\n\n"))
 	     (insert "** This is a root zettel with no parent.\n\n"))
-	   (dolist (element orgrr-zettel-list) 
-	     (let* ((last-char (substring selection-zettel -1))
+	     (dolist (element orgrr-zettel-list) 
+	       (let* ((last-char (substring selection-zettel -1))
 		    (is-last-char-num (string-match-p "[0-9]" last-char))
 		    (regex (if is-last-char-num
 			       (concat "^" selection-zettel "[a-zA-Z]")
 			     (concat "^" selection-zettel))))
-	    (when (string-match regex element)
-	      (if (not (equal element selection-zettel))
-		  (insert (concat "** " (orgrr-return-fullzettel-linked element) "\n"))))))
-	   (insert (concat "\n* " (number-to-string related-notes) " related notes:\n\n"))
-	   (maphash (lambda (key value)
-		      (push (cons value key) sorted-values))
-		    orgrr-filename-mentions)
-	   (setq sorted-values (sort sorted-values (lambda (a b) (> (car a) (car b)))))
-	   (dolist (entry sorted-values)
-	     (let* ((connections (number-to-string (car entry)))
-		    (list-filename (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-filename))
-		    (list-title (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-title)))
-	       (insert (concat "** " "\[\[file:" list-filename "\]\[" list-title "\]\]: " connections "\n"))))
-	  (orgrr-prepare-findings-buffer superrelated-buffer))))
-    (when (string-match-p "multiverse for *" (buffer-name (current-buffer)))
-      (orgrr-close-buffer))))
+		 (when (string-match regex element)
+		   (if (not (equal element selection-zettel))
+		       (insert (concat "** " (orgrr-return-fullzettel-linked element) "\n"))))))
+	     (insert (concat "\n* " (number-to-string related-notes) " related notes:\n\n"))
+	     (maphash (lambda (key value)
+			(push (cons value key) sorted-values))
+		      orgrr-filename-mentions)
+	     (setq sorted-values (sort sorted-values (lambda (a b) (> (car a) (car b)))))
+	     (dolist (entry sorted-values)
+	       (let* ((connections (number-to-string (car entry)))
+		      (list-filename (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-filename))
+		      (list-title (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-title)))
+		 (insert (concat "** " "\[\[file:" list-filename "\]\[" list-title "\]\]: " connections "\n"))))
+	     (orgrr-prepare-findings-buffer multiverse-buffer)))
+       (when (not current-zettel)
+	 (message "This note does not have a value for zettel!"))))
+     (when (string-match-p "multiverse for *" (buffer-name (current-buffer)))
+       (orgrr-close-buffer))))
 
 (defun orgrr-read-zettel-parent (zettel)
   "Returns parent zettel of current-zettel."
@@ -1439,8 +1450,7 @@ function, make sure to be in the correct container."
 (defun orgrr-change-title (&optional new-title)
   "Changes #+title."
   (interactive)
-  (let* ((line)
-	 (has-changed-p))
+  (let* ((has-changed-p))
     (when (not new-title)
       (setq new-title (read-from-minibuffer "New title: ")))
     (save-excursion  

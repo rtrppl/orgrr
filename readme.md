@@ -14,6 +14,8 @@ These are the primary functions orgrr provides:
 
 - **orgrr-show-related-notes** will show all related notes in a buffer ([more on orgrr-show-related-notes](#orgrr-show-related-notes)). For the underlying concept of "relationship", see [orgrr-related-notes](#orgrr-related-notes). 
 
+- **orgrr-show-multiverse** combines `orgrr-show-sequence` and `orgrr-show-related-notes` in one buffer ([more on orgrr-show-multiverse](#orgrr-show-multiverse)). 
+
 - **orgrr-search** and **orgrr-global-search** use ripgrep to either 
 search the local container or all containers for a specified term. Regex is welcome. 
 
@@ -22,6 +24,9 @@ search the local container or all containers for a specified term. Regex is welc
 - **orgrr-quick-add** and **orgrr-global-quick-add** are for rapid note creation ([more on orgrr-quick-add](#orgrr-quick-add)).
 
 ## Changelog
+
+**0.9.15**
+- Added `orgrr-show-multiverse`; modified `orgrr-show-sequence` to also show parent zettel
 
 **0.9.14**
 - Added functions `orgrr-quick-add`, `orgrr-global-quick-add`, `orgrr-rename-title-and-file`, `orgrr-rename-and-move`; fixed bug in `orgrr-rename` that could lead to duplicates when renaming
@@ -62,6 +67,7 @@ Find a more complete version of the changelog [here](./changelog.org).
   - [orgrr-show-sequence](#orgrr-show-sequence)
   - [orgrr-show-backlinks](#orgrr-show-backlinks)
   - [orgrr-show-related-notes](#orgrr-show-related-notes)	
+  - [orgrr-show-multiverse](#orgrr-show-multiverse)
 - [Functions for project management and writing](#functions-for-project-managemant)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
   - [orgrr-compile-sequence](#orgrr-compile-sequence)
@@ -396,15 +402,19 @@ Starting with version 0.9.8, `orgrr-show-sequence` can be called with an optiona
 
 ![orgrr-show-backlinks](/2024-orgrr-show-backlinks.gif)
 
-This displays all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate it as you would with any other org buffer and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the line of the snippet in the source document. Invoke the command again to close the side-window (while visiting this buffer).
+This displays all backlinks for the note in the current buffer in a side-window. The buffer here is temporary. You can navigate it as you would with any other org buffer and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). The headline link takes you to the line of the snippet in the source document. Invoke the command again to close the side-window (while visiting the backlink buffer).
 
 If called with `C-u`, backlinks from all containers are considered.
 
 ### orgrr-show-related-notes
 
-This displays all related notes for the note in the current buffer (see also [orgrr-related-notes](#orgrr-related-notes)). The orgmode buffer with the results is temporary. You can navigate it as you would with any other org buffer and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). Invoke the command again to close the side-window or buffer (while visiting this buffer).
+This displays all related notes for the note in the current buffer (see also [orgrr-related-notes](#orgrr-related-notes)). The orgmode buffer with the results is temporary. You can navigate it as you would with any other org buffer and, for example, jump between headlines by `org-next-visible-headline` or `org-previous-visible-headline` (or pressing "n" and "p"). Invoke the command again to close the side-window or buffer (while visiting the related-notes buffer).
 
 If called with `C-u`, backlinks of first and second order in all containers are considered. This may take a while, please be patient. 
+
+### orgrr-show-multiverse
+
+This will display the combined results of `orgrr-show-sequence` and `orgrr-show-related-notes` for the currently visited note. Invoke the command again to close the side-window or buffer (while visiting the multiverse buffer).
 
 ## Functions for project management
 
