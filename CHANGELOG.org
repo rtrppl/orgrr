@@ -1,5 +1,8 @@
 #+title: orgrr CHANGELOG
 
+**0.9.13**
+- `orgrr-open-project`, `orgrr-add-to-project` and `orgrr-info` are now global, i.e. work across all containers
+
 **0.9.12** 
 - Removed orgrr-extensions, see the [FAQ](#faq) for more information
 
