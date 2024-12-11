@@ -414,7 +414,7 @@ If called with `C-u`, backlinks of first and second order in all containers are 
 
 ### orgrr-show-multiverse
 
-This will display the combined results of `orgrr-show-sequence` and `orgrr-show-related-notes` for the currently visited note. Invoke the command again to close the side-window or buffer (while visiting the multiverse buffer).
+This will display the combined results of `orgrr-show-sequence` and `orgrr-show-related-notes` for the currently visited note. Use "q" or invoke the command again to close the side-window or buffer (while visiting the multiverse buffer).
 
 ## Functions for project management
 
@@ -458,7 +458,7 @@ This is what I did for a long time. But every time I (re-)installed my setup, e.
 
 - Is that all?
 
-No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only about 1500 lines of code (September 2024) are necessary to write a note-taking system that is not too far off from Denote or org-roam. That this thing works, provides me with independence from note-taking trends or specific operating systems, which is one of the reasons I don't see myself stopping to work on this project.
+No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only about 1650 lines of code (Decemver 2024) are necessary to write a note-taking system that is not too far off from Denote or org-roam. That this thing works, provides me with independence from note-taking trends or specific operating systems, which is one of the reasons I don't see myself stopping to work on this project.
 
 - What does orgrr stand for?
 
