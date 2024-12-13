@@ -110,6 +110,7 @@
    (select-window window)
    (goto-char (point-min))
    (org-next-visible-heading 2)
+   (orgrr-results-buffer-mode t)
    (deactivate-mark)))
 
 (defun orgrr-close-buffer ()
@@ -199,8 +200,7 @@ require NCD-formating."
 				 (snippet (orgrr-adjust-links snippet))
 				 (snippet (string-trim-left (string-trim-left snippet "*"))))
 			    (insert (concat "\*\* \[\[file:" full-filename "::" line-number "\]" "\[" result "\]\]:\n\n"  snippet "\n\n")))))))))
-	      (orgrr-prepare-findings-buffer backlink-buffer)
-	      (orgrr-results-buffer-mode t))))
+	      (orgrr-prepare-findings-buffer backlink-buffer))))
     (orgrr-close-buffer))))
 
 (defun orgrr-get-meta ()
@@ -1117,8 +1117,7 @@ patient."
 		    (list-filename (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-filename))
 		    (list-title (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-title)))
 	       (insert (concat "** " "\[\[file:" list-filename "\]\[" list-title "\]\]: " connections "\n"))))
-	  (orgrr-prepare-findings-buffer relatednotes-buffer)
-	  (orgrr-results-buffer-mode t))))
+	  (orgrr-prepare-findings-buffer relatednotes-buffer))))
     (when (string-match-p "related notes for *" (buffer-name (current-buffer)))
       (orgrr-close-buffer))))
 
@@ -1179,8 +1178,7 @@ patient."
 		      (list-filename (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-filename))
 		      (list-title (gethash (concat "\\" (substring (cdr entry) 1)) orgrr-short_filename-title)))
 		 (insert (concat "** " "\[\[file:" list-filename "\]\[" list-title "\]\]: " connections "\n"))))
-	     (orgrr-prepare-findings-buffer multiverse-buffer)
-	     (orgrr-results-buffer-mode t)))
+	     (orgrr-prepare-findings-buffer multiverse-buffer)))
        (when (not current-zettel)
 	 (message "This note does not have a value for zettel!"))))
      (when (string-match-p "multiverse for *" (buffer-name (current-buffer)))
@@ -1556,8 +1554,7 @@ If called with C-u the buffer is created without headlines."
 		      (setq end-flag t)))))
 ;;Starting here it is only window-management
 	      (orgrr-open-buffer draft-buffer)
-	      (orgrr-prepare-findings-buffer draft-buffer)
-	      (orgrr-results-buffer-mode t)))))
+	      (orgrr-prepare-findings-buffer draft-buffer)))))
     (when (string-match-p "*compiled sequence*" (buffer-name (current-buffer)))
       (orgrr-close-buffer))))
 
@@ -1622,8 +1619,7 @@ containers will be searched. Regex don't need to be escaped."
 				 (snippet (orgrr-adjust-links snippet))
 				 (snippet (string-trim-left (string-trim-left snippet "*"))))
 			    (insert (concat "\*\* \[\[file:" full-filename "::" line-number "\]" "\[" result "\]\]:\n\n"  snippet "\n\n")))))))))
-	      (orgrr-prepare-findings-buffer search-buffer)
-	      (orgrr-results-buffer-mode t))))
+	      (orgrr-prepare-findings-buffer search-buffer))))
       (when (string-match-p "search for *" (buffer-name (current-buffer)))
 	(orgrr-close-buffer))))
 
