@@ -26,7 +26,7 @@ search the local container or all containers for a specified term. Regex is welc
 ## Changelog
 
 **0.9.17**
-- Added option to use active region for `orgrr-add-to-project'
+- Added option to use active region for `orgrr-add-to-project`
 
 **0.9.16**
 - Added convience: typing "q" in any results buffer now closes that buffer (via a minor-mode)
