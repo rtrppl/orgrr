@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 0.9.16
+;; Version: 0.9.17
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -30,6 +30,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.17
+;; - Added option to use active region for `orgrr-add-to-project'
 ;;
 ;; 0.9.16 
 ;; - Added convience: typing "q" in any results buffer now closes that buffer
@@ -924,17 +927,21 @@ filename (with the creation date) will not be modified."
 	       (filename (buffer-file-name))
 	       (title (pcase (org-collect-keywords '("TITLE"))
 			(`(("TITLE" . ,val)) (car val)))))
-	  (beginning-of-line)
-	  (set-mark-command nil)
-	  (end-of-line)
-	  (setq snippet (buffer-substring-no-properties (region-beginning) (region-end)))
+	  (when (region-active-p)
+	    (setq line-number (line-number-at-pos (region-beginning)))
+	    (setq snippet (buffer-substring-no-properties (region-beginning) (region-end))))
+	  (when (not (region-active-p))
+	    (beginning-of-line)
+	    (set-mark-command nil)
+	    (end-of-line)
+	    (setq snippet (buffer-substring-no-properties (region-beginning) (region-end))))
 	  (setq snippet (concat "\*\* \[\[file:" filename "::" (number-to-string line-number)  "\]" "\[" title "\]\]:\n" snippet))
 	  (deactivate-mark))))
     snippet))
 
 (defun orgrr-add-to-project ()
-  "Add the current line at point (including when in orgrr-backlinks buffer) to 
-an existing project."
+  "Add the current line at point (including when in orgrr-backlinks buffer) 
+or the active region of a note to an existing project."
   (interactive)
   (let* ((snippet (orgrr-collect-project-snippet))
 	 (selection (orgrr-pick-project))
