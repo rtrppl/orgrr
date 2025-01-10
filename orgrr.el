@@ -819,6 +819,7 @@ filename (with the creation date) will not be modified."
 			(buffer-file-name)))
 	(old-creation-time)
 	(new-filename))
+    (save-buffer)
     (setq new-title (read-from-minibuffer "New title: "))
     (orgrr-change-title new-title)
     (setq new-filename (replace-regexp-in-string "[\"'?,:;\\\s\/]" "_" new-title))
