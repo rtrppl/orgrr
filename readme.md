@@ -338,9 +338,9 @@ For managing quick notes `orgrr-rename-title-and-file` (see [here](#orgrr-rename
 
 ### orgrr-search
 
-For a long time I used different packages to search my notes (see, for example, the excellent [deadgrep](https://github.com/Wilfred/deadgrep)) and a separate function felt unnecessary. With the advent of containers in orgrr this began to change. It was increasingly difficult to search a number of specified folders (which is what containers in orgrr are, see [orgrr-containers](#orgrr-containers)) at the same time - hence this function. 
+For a long time I used different packages to search my notes (see, for example, the excellent [deadgrep](https://github.com/Wilfred/deadgrep)) and a separate function felt unnecessary. With the advent of containers this began to change. It was increasingly difficult to search in a number of specified folders (which is what containers in orgrr are, see [orgrr-containers](#orgrr-containers)) at the same time - hence this function. 
 
-`orgrr-search` searches the current container, whereas `C-u orgrr-search` or `orgrr-global-search` searches all containers. The search string entered here is directly passed to `ripgrep`, so all `regex` that ripgrep understands should also work here. Search in orgrr is not case sensitive (i.e. `rg -i` is set). 
+`orgrr-search` searches the current container, whereas `C-u orgrr-search` or `orgrr-global-search` search all containers. The search string entered here is directly passed to `ripgrep`, so all `regex` that ripgrep understands should also work here. Search in orgrr is not case sensitive (i.e. `rg -i` is set). 
 
 ### orgrr-rename
 
