@@ -25,6 +25,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**0.9.18**
+- Added `orgrr-add-to-other-window`
+
 **0.9.17**
 - Added option to use active region for `orgrr-add-to-project`
 
@@ -71,8 +74,9 @@ Find a more complete version of the changelog [here](./changelog.org).
   - [orgrr-show-backlinks](#orgrr-show-backlinks)
   - [orgrr-show-related-notes](#orgrr-show-related-notes)	
   - [orgrr-show-multiverse](#orgrr-show-multiverse)
-- [Functions for project management and writing](#functions-for-project-managemant)
+- [Functions for project management and writing](#functions-for-project-managemant-and-writing)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
+  - [orgrr-add-to-other-window](#orgrr-add-to-other-window)
   - [orgrr-compile-sequence](#orgrr-compile-sequence)
   - [orgrr-container-commands](#orgrr-container-commands)
 - [Quality of life functions](#quality-of-life-functions)
@@ -419,13 +423,17 @@ If called with `C-u`, backlinks of first and second order in all containers are 
 
 This will display the combined results of `orgrr-show-sequence` and `orgrr-show-related-notes` for the currently visited note. Use "q" or invoke the command again to close the side-window or buffer (while visiting the multiverse buffer).
 
-## Functions for project management
+## Functions for project management and writing
 
 ### orgrr-add-to-project and orgrr-open-project
 
 `orgrr-add-to-project` appends the current line or the active region (only for org-files) to an orgrr-project and includes a source-link to allow for follow-up. All links within this snippet are corrected to work in the new location. This function works for all org-files and the `orgrr-backlinks` buffer.
 
 `orgrr-open-project` provides quick access to all orgrr-projects in all containers.
+
+### orgrr-add-to-other-window
+
+`orgrr-add-to-other-window`is based on `orgrr-add-to-project` but appends the current line or the active region (only for org-files) to another window. If there is more than one window open (besides the source window), a list of windows to chose from is offered. The destination file for the snippet also has to be in a orgrr container. 
 
 ### orgrr-compile-sequence
 
