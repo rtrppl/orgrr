@@ -25,6 +25,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**0.9.18**
+- Added `orgrr-add-to-other-window`
+
 **0.9.17**
 - Added option to use active region for `orgrr-add-to-project`
 
@@ -71,8 +74,9 @@ Find a more complete version of the changelog [here](./changelog.org).
   - [orgrr-show-backlinks](#orgrr-show-backlinks)
   - [orgrr-show-related-notes](#orgrr-show-related-notes)	
   - [orgrr-show-multiverse](#orgrr-show-multiverse)
-- [Functions for project management and writing](#functions-for-project-managemant)
+- [Functions for project management and writing](#functions-for-project-managemant-and-writing)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
+  - [orgrr-add-to-other-window](#orgrr-add-to-other-window)
   - [orgrr-compile-sequence](#orgrr-compile-sequence)
   - [orgrr-container-commands](#orgrr-container-commands)
 - [Quality of life functions](#quality-of-life-functions)
@@ -108,7 +112,6 @@ Finally, you may also want to set keybindings for the main functions (I have bou
 (global-set-key (kbd "M-s-f") 'orgrr-find)
 (global-set-key (kbd "M-s-l") 'orgrr-show-backlinks)
 (global-set-key (kbd "M-s-i") 'orgrr-insert)
-(global-set-key (kbd "M-s-I") 'orgrr-insert-project)
 (global-set-key (kbd "M-s-A") 'orgrr-add-to-project)
 (global-set-key (kbd "M-s-P") 'orgrr-open-project)
 (global-set-key (kbd "M-s-r") 'orgrr-show-related-notes)
@@ -131,7 +134,6 @@ This IMHO works best for linux and Emacs on the command line:
 (global-set-key (kbd "C-o f") 'orgrr-find)
 (global-set-key (kbd "C-o l") 'orgrr-show-backlinks)
 (global-set-key (kbd "C-o i") 'orgrr-insert)
-(global-set-key (kbd "C-o I") 'orgrr-insert-project)
 (global-set-key (kbd "C-o A") 'orgrr-add-to-project)
 (global-set-key (kbd "C-o P") 'orgrr-open-project)
 (global-set-key (kbd "C-o r") 'orgrr-show-related-notes)
@@ -162,7 +164,6 @@ Via use-package and straight a typical configuration of orgrr could look like th
 	("C-o f" . orgrr-find)
 	("C-o l" . orgrr-show-backlinks)
 	("C-o i" . orgrr-insert)
-	("C-o I" . orgrr-insert-project)
 	("C-o A" . orgrr-add-to-project)
 	("C-o P" . orgrr-open-project)
 	("C-o r" . orgrr-show-related-notes)
@@ -419,13 +420,17 @@ If called with `C-u`, backlinks of first and second order in all containers are 
 
 This will display the combined results of `orgrr-show-sequence` and `orgrr-show-related-notes` for the currently visited note. Use "q" or invoke the command again to close the side-window or buffer (while visiting the multiverse buffer).
 
-## Functions for project management
+## Functions for project management and writing
 
 ### orgrr-add-to-project and orgrr-open-project
 
 `orgrr-add-to-project` appends the current line or the active region (only for org-files) to an orgrr-project and includes a source-link to allow for follow-up. All links within this snippet are corrected to work in the new location. This function works for all org-files and the `orgrr-backlinks` buffer.
 
 `orgrr-open-project` provides quick access to all orgrr-projects in all containers.
+
+### orgrr-add-to-other-window
+
+`orgrr-add-to-other-window`is based on `orgrr-add-to-project` but appends the current line or the active region (only for org-files) to another window. If there is more than one window open (besides the source window), a list of windows to chose from is offered. The destination file for the snippet also has to be in an orgrr container. 
 
 ### orgrr-compile-sequence
 

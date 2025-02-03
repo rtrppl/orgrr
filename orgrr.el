@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 0.9.17
+;; Version: 0.9.18
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -30,6 +30,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.18
+;; - Added `orgrr-add-to-other-window'
 ;;
 ;; 0.9.17
 ;; - Added option to use active region for `orgrr-add-to-project'
@@ -962,6 +965,23 @@ or the active region of a note to an existing project."
       (insert (orgrr-format-project-snippet snippet))
       (save-buffer))))
 
+(defun orgrr-add-to-other-window ()
+  "Add the current line at point (including when in orgrr-backlinks buffer) 
+or the active region of a note to an other active window."
+  (interactive)
+  (let* ((snippet (orgrr-collect-project-snippet))
+	 (selection (orgrr-pick-window))
+	 (filename)
+         (titles (hash-table-keys orgrr-title-short_filename)))
+  (when (member selection titles)
+      (setq filename (gethash selection orgrr-title-short_filename))
+      (setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename))
+      (find-file-noselect filename))
+    (with-current-buffer (find-file-noselect filename)
+      (goto-char (point-max))
+      (insert (orgrr-format-project-snippet snippet))
+      (save-buffer))))
+
 (defun orgrr-pick-project ()
   "Provides a list of all projects to add the new snippet, with the option to 
 create a new one. Returns a project."
@@ -975,13 +995,39 @@ create a new one. Returns a project."
       (with-temp-buffer
        (insert (shell-command-to-string (concat "rg -i --sort modified -l -e  \"^\\#\\+roam_tags:.+orgrr-project\" \"" (expand-file-name container) "\"")))
        (let ((lines (split-string (buffer-string) "\n" t)))
-	 (print lines)
 	 (dolist (line lines)
 	   (when line
 	     (let ((title (gethash (concat "\\" (file-name-nondirectory line)) orgrr-short_filename-title)))
 	       (setq orgrr-selection-list (cons title orgrr-selection-list))))))))
      (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
      (setq selection (completing-read "Select: " orgrr-selection-list))
+     (if (string-match "^\(" selection)
+	 (setq selection (replace-regexp-in-string "\(.*?\) " "" selection)))
+     selection))
+
+(defun orgrr-pick-window ()
+  "Provides a list of all open windows to add the new snippet -  with the 
+exception of the source window."
+  (orgrr-get-all-meta)
+  (let* ((orgrr-selection-list ())
+	 (list-of-windows '())
+	 (orgrr-selection-list-completion)
+	 (current-buffer-file (buffer-file-name (current-buffer)))
+	 (selection))
+    (with-temp-buffer
+      (dolist (win (window-list))
+      (insert (buffer-file-name (window-buffer win)))
+      (let ((lines (split-string (buffer-string) "\n" t)))
+	(dolist (line lines)
+	  (when (and line
+		     (not (string-equal line current-buffer-file)))
+	    (let ((title (gethash (concat "\\" (file-name-nondirectory line)) orgrr-short_filename-title)))
+	       (setq orgrr-selection-list (cons title orgrr-selection-list))))))))
+     (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
+     (when (>= (length orgrr-selection-list) 2)
+       (setq selection (completing-read "Select: " orgrr-selection-list)))
+     (when (= (length orgrr-selection-list) 1)
+       (setq selection (car orgrr-selection-list)))
      (if (string-match "^\(" selection)
 	 (setq selection (replace-regexp-in-string "\(.*?\) " "" selection)))
      selection))
