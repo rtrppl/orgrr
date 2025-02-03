@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 0.9.18
+;; Version: 0.9.19
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -30,6 +30,10 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.9.19
+;; - Improved spacing for lists in `orgrr-show-sequence' and
+;; `orgrr-show-multiverse'
 ;;
 ;; 0.9.18
 ;; - Added `orgrr-add-to-other-window'
@@ -488,6 +492,7 @@ variable orgrr-window-management."
 	   (zettel-filename (gethash zettel-title orgrr-title-filename))
 	   (selection-zettel (gethash (concat "\\" zettel-filename) orgrr-filename-zettel))
 	   (parent-zettel (orgrr-read-zettel-parent selection-zettel))
+	   (max-zettel-id-value 0)
 	   (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
 	   (orgrr-zettel-list (sort orgrr-zettel-list 'orgrr-dictionary-lessp))
 	   (sequence-buffer (concat "sequence for *[" selection-zettel "]*")))
@@ -499,6 +504,19 @@ variable orgrr-window-management."
 	  (if (not (string-equal parent-zettel ""))
 	      (insert (concat "** parent zettel: \t" (orgrr-return-fullzettel-linked parent-zettel) "\n\n"))
 	    (insert "** This is a root zettel with no parent.\n\n"))
+	  ;; the following do list should only get the maxium length of any
+	     ;; zettel id used. This is necessary for adding the correct amount
+	     ;; of spacing in the list.
+	     (dolist (element orgrr-zettel-list) 
+	       (let* ((last-char (substring selection-zettel -1))
+		      (is-last-char-num (string-match-p "[0-9]" last-char))
+		      (regex (if is-last-char-num
+				 (concat "^" selection-zettel "[a-zA-Z]")
+			       (concat "^" selection-zettel))))
+		 (when (string-match regex element)
+		   (when (not (equal element selection-zettel))
+		     (when (> (length element) max-zettel-id-value)  
+		       (setq max-zettel-id-value (length element)))))))
 	  (dolist (element orgrr-zettel-list) 
 	    (let* ((last-char (substring selection-zettel -1))
 		    (is-last-char-num (string-match-p "[0-9]" last-char))
@@ -507,7 +525,7 @@ variable orgrr-window-management."
 			     (concat "^" selection-zettel))))
 	    (when (string-match regex element)
 	      (if (not (equal element selection-zettel))
-		  (insert (concat "** " (orgrr-return-fullzettel-linked element) "\n")))))))
+		  (insert (concat "** " (orgrr-return-fullzettel-linked element max-zettel-id-value) "\n")))))))
 ;;Starting here it is only window-management
 	    (orgrr-open-buffer sequence-buffer) 
 	    (orgrr-prepare-findings-buffer sequence-buffer))))
@@ -598,12 +616,20 @@ variable orgrr-window-management."
 	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
     (setq zettel (concat "\[" zettel "\]\t" matched-zettel-title))))
 
-(defun orgrr-return-fullzettel-linked (zettel)
+(defun orgrr-return-fullzettel-linked (zettel &optional max-zettel-id-value)
   "Returns the full name of a zettel (as in orgrr-zettel-list) and links the 
 title to the note."
-  (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename))
+  (let* ((max-zettel-id-value (or max-zettel-id-value 0))
+	 (spacing 0)
+	 (matched-zettel-filename (gethash zettel orgrr-zettel-filename))
 	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
-    (setq zettel (concat "\[" zettel "\]\t\[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]"))))
+    (when (>= max-zettel-id-value 1)
+      (setq max-zettel-id-value (+ 3 max-zettel-id-value))
+      (setq spacing (- max-zettel-id-value (length zettel)))
+      (setq zettel (concat "\[" zettel "\]" (make-string spacing ?\s) "\[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]")))
+    (when (= max-zettel-id-value 0)
+      (setq zettel (concat "\[" zettel "\]\t\[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]")))
+    zettel))
 
 (defun orgrr-return-fullzettel-linked-starred (zettel)
   "Returns the full name of a zettel (as in orgrr-zettel-list) and links the 
@@ -1198,6 +1224,7 @@ patient."
 	      (related-notes (orgrr-backlinks-first-and-second-order call-with-arg))
 	      (related-notes (+ related-notes (orgrr-forwardlinks-first-and-second-order)))
 	      (sorted-values '())
+	      (max-zettel-id-value 0)
 	      (current-zettel (orgrr-read-current-zettel))
 	      (parent-zettel (orgrr-read-zettel-parent current-zettel))
 	      (zettel-filename (gethash current-zettel orgrr-zettel-filename))
@@ -1213,6 +1240,19 @@ patient."
 	     (if (not (string-equal parent-zettel ""))
 		 (insert (concat "** parent: \t" (orgrr-return-fullzettel-linked parent-zettel) "\n\n"))
 	     (insert "** This is a root zettel with no parent.\n\n"))
+	     ;; the following do list should only get the maxium length of any
+	     ;; zettel id used. This is necessary for adding the correct amount
+	     ;; of spacing in the list.
+	     (dolist (element orgrr-zettel-list) 
+	       (let* ((last-char (substring selection-zettel -1))
+		      (is-last-char-num (string-match-p "[0-9]" last-char))
+		      (regex (if is-last-char-num
+				 (concat "^" selection-zettel "[a-zA-Z]")
+			       (concat "^" selection-zettel))))
+		 (when (string-match regex element)
+		   (when (not (equal element selection-zettel))
+		     (when (> (length element) max-zettel-id-value)  
+		       (setq max-zettel-id-value (length element)))))))
 	     (dolist (element orgrr-zettel-list) 
 	       (let* ((last-char (substring selection-zettel -1))
 		    (is-last-char-num (string-match-p "[0-9]" last-char))
@@ -1221,7 +1261,7 @@ patient."
 			     (concat "^" selection-zettel))))
 		 (when (string-match regex element)
 		   (if (not (equal element selection-zettel))
-		       (insert (concat "** " (orgrr-return-fullzettel-linked element) "\n"))))))
+		       (insert (concat "** " (orgrr-return-fullzettel-linked element max-zettel-id-value) "\n"))))))
 	     (insert (concat "\n* " (number-to-string related-notes) " relations:\n\n"))
 	     (maphash (lambda (key value)
 			(push (cons value key) sorted-values))

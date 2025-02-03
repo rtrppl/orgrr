@@ -25,21 +25,14 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**0.9.19**
+- Improved spacing for lists in `orgrr-show-sequence` and `orgrr-show-multiverse`
+
 **0.9.18**
 - Added `orgrr-add-to-other-window`
 
 **0.9.17**
 - Added option to use active region for `orgrr-add-to-project`
-
-**0.9.16**
-- Added convience: typing "q" in any results buffer now closes that buffer (via a minor-mode)
-
-**0.9.15**
-- Added `orgrr-show-multiverse`; modified `orgrr-show-sequence` to also show parent zettel
-
-**0.9.14**
-- Added functions `orgrr-quick-add`, `orgrr-global-quick-add`, `orgrr-rename-title-and-file`, `orgrr-rename-and-move`; fixed bug in `orgrr-rename` that could lead to duplicates when renaming
-
 
 Find a more complete version of the changelog [here](./changelog.org).
 
