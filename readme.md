@@ -34,7 +34,7 @@ search the local container or all containers for a specified term. Regex is welc
 **0.9.17**
 - Added option to use active region for `orgrr-add-to-project`
 
-Find a more complete version of the changelog [here](./changelog.org).
+Find a more complete version of the changelog [here](https://github.com/rtrppl/orgrr/blob/main/CHANGELOG.org).
 
 ------------------------------
 
