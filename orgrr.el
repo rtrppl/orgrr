@@ -224,43 +224,62 @@ orgrr-zettel-filename, orgrr-filename-zettel, orgrr-filename-tags."
   (clrhash orgrr-zettel-filename)
   (clrhash orgrr-filename-zettel)
   (clrhash orgrr-filename-tags)
-  (with-temp-buffer
-    (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)|(zettel:.*)\" \"" (expand-file-name org-directory) "\" -g \"*.org\"")))
-    (goto-char (point-min))
-    (while (not (eobp))
-      (let ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
-      ;; The following checks if this is a #+title line and is so, adds the title + filename to orgrr-title-filename and filename + title to orgrr-filename-title.
-	(when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
-	      (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
+  (let ((update-buffer-name "*orgrr-update-meta*")
+	(rg-results))
+    (when (member update-buffer-name (buffer-list))
+      (kill-buffer update-buffer-name))
+    (start-process
+     "orgrr-metadata-update" ;; Process name
+     "*orgrr-update-meta*"                         ;; No output buffer
+     "rg"                        ;; Program name (ripgrep)
+     "-i"                        ;; First argument
+     "--sort" 
+     "modified"
+     "--no-heading"              ;; to force machine readable output 
+     "-N"
+     "^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)|(zettel:.*)" 
+     (expand-file-name org-directory)
+     "-g"                        ;; Sixth argument
+     "*.org")                    ;; Seventh argument
+    (with-current-buffer update-buffer-name
+      (setq rg-results (buffer-string)))
+    (with-temp-buffer
+      (insert rg-results)
+      (goto-char (point-min))
+      (while (not (eobp))
+	(let ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
+	  ;; The following checks if this is a #+title line and is so, adds the title + filename to orgrr-title-filename and filename + title to orgrr-filename-title.
+	  (when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
+	    (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
 		   (filename (car line))
 		   (line (split-string current-entry "^.+\\(#\\+title:\\|:#+TITLE:\\)\\s-*" t))
 		   (title (car line)))
-		(puthash title filename orgrr-title-filename)
-		(puthash (concat "\\" filename) title orgrr-filename-title)))
-	;; The following checks if this is a #+roam_alias line and if so, adds all alias to orgrr-title-filename.
-	(when (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
-	  (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
-		 (filename (car line)))
+	      (puthash title filename orgrr-title-filename)
+	      (puthash (concat "\\" filename) title orgrr-filename-title)))
+	  ;; The following checks if this is a #+roam_alias line and if so, adds all alias to orgrr-title-filename.
+	  (when (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
+	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
+		   (filename (car line)))
 	    (with-temp-buffer
 	      (insert current-entry)
 	      (goto-char (point-min))
 	      (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
 		(puthash (match-string 1) filename orgrr-title-filename)))))
-;; The following checks if this is a #+zettel line and if so, adds the zettel-no to orgrr-zettel-filename.
-	(when (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
-	  (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
+	  ;; The following checks if this is a #+zettel line and if so, adds the zettel-no to orgrr-zettel-filename.
+	  (when (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
+	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
 		 (filename (car line))
 		 (zettel (car (cdr (cdr line)))))   
-	    (puthash zettel filename orgrr-zettel-filename)
-	    (puthash (concat "\\" filename) zettel orgrr-filename-zettel)))
-;; The following checks if the line contains tags and if so copies the tags to orgrr-tags-filename.
-	(when (string-match "\\(#\\+roam_tags:\\|#+ROAM_TAGS:\\)\\s-*\\(.+\\)" current-entry)
-	  (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
-		 (filename (car line))
-		 (tags (car (cdr (cdr line)))))
-	    (puthash (concat "\\" filename) tags orgrr-filename-tags)))
-(forward-line)))))
-
+	      (puthash zettel filename orgrr-zettel-filename)
+	      (puthash (concat "\\" filename) zettel orgrr-filename-zettel)))
+	  ;; The following checks if the line contains tags and if so copies the tags to orgrr-tags-filename.
+	  (when (string-match "\\(#\\+roam_tags:\\|#+ROAM_TAGS:\\)\\s-*\\(.+\\)" current-entry)
+	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
+		   (filename (car line))
+		   (tags (car (cdr (cdr line)))))
+	      (puthash (concat "\\" filename) tags orgrr-filename-tags)))
+	  (forward-line))))))
+  
 ;; orgrr-presorted-completion-table is based on 
 ;; https://emacs.stackexchange.com/questions/8115/make-completing-read
 ;; -respect-sorting-order-of-a-collection, thanks @sachac@emacs.ch for the hint!
