@@ -73,7 +73,7 @@ Find a more complete version of the changelog [here](./CHANGELOG.org).
   - [orgrr-compile-sequence](#orgrr-compile-sequence)
   - [orgrr-container-commands](#orgrr-container-commands)
 - [Quality of life functions](#quality-of-life-functions)
-  - [orgrr-toggle-single-window-mode](#orgrr-toggle-single-window-mode)
+  - [orgrr-toggle-single-window-mode](#orgrr-toggle-window-mode)
   - [orgrr-fix-all-links-buffer and orgrr-fix-all-links-container](#orgrr-fix-all-links-buffer-and-orgrr-fix-all-links-container)
 - [FAQ](#faq)
 
