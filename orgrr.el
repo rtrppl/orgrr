@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 0.9.19
+;; Version: 1.0
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -30,6 +30,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 1.0
+;; - Caching is now a thing in orgrr; further speed improvements
 ;;
 ;; 0.9.19
 ;; - Improved spacing for lists in `orgrr-show-sequence' and
@@ -69,7 +72,7 @@
 (defvar orgrr-window-management "single-window")
 (defvar orgrr-quick-add-token "quicknote")
 (defvar orgrr-compile-open-link-other-window t) ;; set this to nil if orgrr-compile-draft should respect orgrr-window-management settings
-
+(defvar orgrr-use-caching nil) ;; set this to t to use orgrr-caching
 
 ;; The following list of hashtables create the data structure in which orgrr stores metadata on notes.
 (defvar orgrr-title-filename (make-hash-table :test 'equal) "Hashtable with the key title and the value filename.")
@@ -219,36 +222,18 @@ org-files and adds them to hashtables.
 
 Updates the following hashtables: orgrr-title-filename, orgrr-filename-title, 
 orgrr-zettel-filename, orgrr-filename-zettel, orgrr-filename-tags."
-  (clrhash orgrr-filename-title)
-  (clrhash orgrr-title-filename)
-  (clrhash orgrr-zettel-filename)
-  (clrhash orgrr-filename-zettel)
-  (clrhash orgrr-filename-tags)
-  (let ((update-buffer-name "*orgrr-update-meta*")
-	(rg-results))
-    (when (member update-buffer-name (buffer-list))
-      (kill-buffer update-buffer-name))
-    (start-process
-     "orgrr-metadata-update" ;; Process name
-     "*orgrr-update-meta*"                         ;; No output buffer
-     "rg"                        ;; Program name (ripgrep)
-     "-i"                        ;; First argument
-     "--sort" 
-     "modified"
-     "--no-heading"              ;; to force machine readable output 
-     "-N"
-     "^\\#\\+(title:.*)|(roam_alias.*)|(roam_tags.*)|(zettel:.*)" 
-     (expand-file-name org-directory)
-     "-g"                        ;; Sixth argument
-     "*.org")                    ;; Seventh argument
-    (with-current-buffer update-buffer-name
-      (setq rg-results (buffer-string)))
+  (when (not orgrr-use-caching)
+    (clrhash orgrr-filename-title)
+    (clrhash orgrr-title-filename)
+    (clrhash orgrr-zettel-filename)
+    (clrhash orgrr-filename-zettel)
+    (clrhash orgrr-filename-tags)
     (with-temp-buffer
-      (insert rg-results)
+      (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+(title:.*|roam_alias.*|roam_tags.*|zettel:.*)\" \"" (expand-file-name org-directory) "\" -g \"*.org\"")))
       (goto-char (point-min))
       (while (not (eobp))
 	(let ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
-	  ;; The following checks if this is a #+title line and is so, adds the title + filename to orgrr-title-filename and filename + title to orgrr-filename-title.
+;; The following checks if this is a #+title line and is so, adds the title + filename to orgrr-title-filename and filename + title to orgrr-filename-title.
 	  (when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
 	    (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
 		   (filename (car line))
@@ -256,30 +241,149 @@ orgrr-zettel-filename, orgrr-filename-zettel, orgrr-filename-tags."
 		   (title (car line)))
 	      (puthash title filename orgrr-title-filename)
 	      (puthash (concat "\\" filename) title orgrr-filename-title)))
-	  ;; The following checks if this is a #+roam_alias line and if so, adds all alias to orgrr-title-filename.
+;; The following checks if this is a #+roam_alias line and if so, adds all alias to orgrr-title-filename.
 	  (when (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
 	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
 		   (filename (car line)))
-	    (with-temp-buffer
-	      (insert current-entry)
-	      (goto-char (point-min))
-	      (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
-		(puthash (match-string 1) filename orgrr-title-filename)))))
-	  ;; The following checks if this is a #+zettel line and if so, adds the zettel-no to orgrr-zettel-filename.
+	      (with-temp-buffer
+		(insert current-entry)
+		(goto-char (point-min))
+		(while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
+		  (puthash (match-string 1) filename orgrr-title-filename)))))
+;; The following checks if this is a #+zettel line and if so, adds the zettel-no to orgrr-zettel-filename.
 	  (when (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
 	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
-		 (filename (car line))
-		 (zettel (car (cdr (cdr line)))))   
+		   (filename (car line))
+		   (zettel (car (cdr (cdr line)))))   
 	      (puthash zettel filename orgrr-zettel-filename)
 	      (puthash (concat "\\" filename) zettel orgrr-filename-zettel)))
-	  ;; The following checks if the line contains tags and if so copies the tags to orgrr-tags-filename.
+;; The following checks if the line contains tags and if so copies the tags to orgrr-tags-filename.
 	  (when (string-match "\\(#\\+roam_tags:\\|#+ROAM_TAGS:\\)\\s-*\\(.+\\)" current-entry)
 	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
 		   (filename (car line))
 		   (tags (car (cdr (cdr line)))))
 	      (puthash (concat "\\" filename) tags orgrr-filename-tags)))
 	  (forward-line))))))
-  
+
+(defun orgrr-update-meta-cache ()
+  "This updates the cache of meta data for the current container. It is a
+asynchronos functional replacement for `orgrr-get-meta'."
+  (clrhash orgrr-filename-title)
+  (clrhash orgrr-title-filename)
+  (clrhash orgrr-zettel-filename)
+  (clrhash orgrr-filename-zettel)
+  (clrhash orgrr-filename-tags)
+  (let ((update-buffer-name "*orgrr-update-meta*"))
+    (when (get-buffer update-buffer-name)
+      (kill-buffer update-buffer-name))
+    (make-process
+     :name "orgrr-metadata-update"
+     :buffer update-buffer-name
+     :command (list "rg" "-i" "--sort" "modified"
+                    "-e"  
+		    "^\\#\\+(title:.*|roam_alias.*|roam_tags.*|zettel:.*)"
+                    (expand-file-name org-directory)
+                    "-g" "*.org")
+     :connection-type 'pipe
+     :sentinel #'orgrr-process-meta-cache)))
+
+(defun orgrr-update-all-meta-cache ()
+  "This updates the cache of ALL meta data for the current container. It is a
+asynchronos functional replacement for `orgrr-get-all-meta'."
+  (clrhash orgrr-short_filename-filename)
+  (clrhash orgrr-short_filename-title)
+  (clrhash orgrr-title-short_filename)
+  (let* ((update-buffer-name "*orgrr-update-all-meta")
+	 (orgrr-name-container (orgrr-get-list-of-containers))
+	 (containers (nreverse (hash-table-values orgrr-name-container))))
+    (dolist (container containers) 
+      (when (get-buffer (concat update-buffer-name "-" container "*"))
+	(kill-buffer (concat update-buffer-name "-" container "*")))
+      (make-process
+       :name "orgrr-all-metadata-update"
+       :buffer (concat update-buffer-name "-" container "*")
+       :command (list "rg" "-i" "--sort" "modified"
+                      "-e"  
+		      "^\\#\\+(title:.*|roam_alias.*)"
+                      (expand-file-name container)
+                      "-g" "*.org")
+       :connection-type 'pipe
+       :sentinel #'orgrr-process-all-meta-cache))))
+
+(defun orgrr-update-cache ()
+  "Updates all metadata for orgrr."
+  (interactive)
+  (orgrr-update-meta-cache)
+  (orgrr-update-all-meta-cache))
+
+(defun orgrr-process-meta-cache (process event)
+"Processes the data from `orgrr-update-meta-cache' and fills the proper
+hashtables."
+(let ((update-buffer-name "*orgrr-update-meta*"))
+  (when (string-equal event "finished\n")
+    (with-current-buffer update-buffer-name
+      (goto-char (point-min))
+      (while (not (eobp))
+	(let ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
+;; The following checks if this is a #+title line and is so, adds the title + filename to orgrr-title-filename and filename + title to orgrr-filename-title.
+	  (when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
+	    (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
+		   (filename (car line))
+		   (line (split-string current-entry "^.+\\(#\\+title:\\|:#+TITLE:\\)\\s-*" t))
+		   (title (car line)))
+	      (puthash title filename orgrr-title-filename)
+	      (puthash (concat "\\" filename) title orgrr-filename-title)))
+;; The following checks if this is a #+roam_alias line and if so, adds all alias to orgrr-title-filename.
+	  (when (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
+	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
+		   (filename (car line)))
+	      (with-temp-buffer
+		(insert current-entry)
+		(goto-char (point-min))
+		(while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
+		  (puthash (match-string 1) filename orgrr-title-filename)))))
+;; The following checks if this is a #+zettel line and if so, adds the zettel-no to orgrr-zettel-filename.
+	  (when (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
+	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
+		   (filename (car line))
+		   (zettel (car (cdr (cdr line)))))   
+	      (puthash zettel filename orgrr-zettel-filename)
+	      (puthash (concat "\\" filename) zettel orgrr-filename-zettel)))
+;; The following checks if the line contains tags and if so copies the tags to orgrr-tags-filename.
+	  (when (string-match "\\(#\\+roam_tags:\\|#+ROAM_TAGS:\\)\\s-*\\(.+\\)" current-entry)
+	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
+		   (filename (car line))
+		   (tags (car (cdr (cdr line)))))
+	      (puthash (concat "\\" filename) tags orgrr-filename-tags)))
+	  (forward-line)))
+      (kill-buffer update-buffer-name)))))
+
+(defun orgrr-process-all-meta-cache (process event)
+"Processes the data from `orgrr-update-all-meta-cache' and fills the proper
+hashtables."
+  (when (string-equal event "finished\n")
+    (with-current-buffer (process-buffer process)
+      (goto-char (point-min))
+      (while (not (eobp))
+	(let* ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
+	  (when (string-match "\\(.*\\):#\\+\\(title\\|TITLE\\):\\s-*\\(.+\\)" current-entry)
+	    (let* ((filename (match-string 1 current-entry))
+		   (title (match-string 3 current-entry)))
+	      (puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)
+	      (puthash (concat "\\" (file-name-nondirectory filename)) title orgrr-short_filename-title)
+	      (puthash title (file-name-nondirectory filename) orgrr-title-short_filename)))
+	  (when (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
+	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
+		   (filename (car line)))
+	      (with-temp-buffer
+		(insert current-entry)
+		(goto-char (point-min))
+		(while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
+		  (puthash (match-string 1) (file-name-nondirectory filename) orgrr-title-short_filename)))))
+	  (forward-line)))
+      (kill-buffer (process-buffer process)))))
+      
+
 ;; orgrr-presorted-completion-table is based on 
 ;; https://emacs.stackexchange.com/questions/8115/make-completing-read
 ;; -respect-sorting-order-of-a-collection, thanks @sachac@emacs.ch for the hint!
@@ -1113,32 +1217,33 @@ project, which is located in a different container than the main database.
 
 This also allows orgrr-show-related-notes to refer linked documents even 
 if they are not in the same container."
-  (clrhash orgrr-short_filename-filename)
-  (clrhash orgrr-short_filename-title)
-  (clrhash orgrr-title-short_filename)
-  (let* ((orgrr-name-container (orgrr-get-list-of-containers))
+  (when (not orgrr-use-caching)
+    (clrhash orgrr-short_filename-filename)
+    (clrhash orgrr-short_filename-title)
+    (clrhash orgrr-title-short_filename)
+    (let* ((orgrr-name-container (orgrr-get-list-of-containers))
 	 (containers (nreverse (hash-table-values orgrr-name-container))))
-    (dolist (container containers) 
-      (with-temp-buffer
-	(insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)|(roam_alias.*)\" \"" (expand-file-name container) "\" -g \"*.org\"")))
-	(goto-char (point-min))
-	(while (not (eobp))
-	  (let* ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
-	    (when (string-match "\\(.*\\):#\\+\\(title\\|TITLE\\):\\s-*\\(.+\\)" current-entry)
-	      (let* ((filename (match-string 1 current-entry))
-		     (title (match-string 3 current-entry)))
-		(puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)
-		(puthash (concat "\\" (file-name-nondirectory filename)) title orgrr-short_filename-title)
-		(puthash title (file-name-nondirectory filename) orgrr-title-short_filename)))
-	    (when (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
-	      (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
-		     (filename (car line)))
-		(with-temp-buffer
-		  (insert current-entry)
-		  (goto-char (point-min))
-		  (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
-		    (puthash (match-string 1) (file-name-nondirectory filename) orgrr-title-short_filename)))))
-	  (forward-line)))))))
+      (dolist (container containers) 
+	(with-temp-buffer
+	  (insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)|(roam_alias.*)\" \"" (expand-file-name container) "\" -g \"*.org\"")))
+	  (goto-char (point-min))
+	  (while (not (eobp))
+	    (let* ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
+	      (when (string-match "\\(.*\\):#\\+\\(title\\|TITLE\\):\\s-*\\(.+\\)" current-entry)
+		(let* ((filename (match-string 1 current-entry))
+		       (title (match-string 3 current-entry)))
+		  (puthash (concat "\\" (file-name-nondirectory filename)) filename orgrr-short_filename-filename)
+		  (puthash (concat "\\" (file-name-nondirectory filename)) title orgrr-short_filename-title)
+		  (puthash title (file-name-nondirectory filename) orgrr-title-short_filename)))
+	      (when (string-match "\\(#\\+roam_alias:\\|#+ROAM_ALIAS:\\)\\s-*\\(.+\\)" current-entry)
+		(let* ((line (split-string current-entry "\\(: \\|:\\)" t))
+		       (filename (car line)))
+		  (with-temp-buffer
+		    (insert current-entry)
+		    (goto-char (point-min))
+		    (while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
+		      (puthash (match-string 1) (file-name-nondirectory filename) orgrr-title-short_filename)))))
+	      (forward-line))))))))
 	 
 (defun orgrr-adjust-links (string)
   "Adjusts/corrects all links of STRING relative to the position of the note. 
@@ -1174,7 +1279,10 @@ collect this information."
  (dolist (container containers) 
    (setq container-number-of-files (string-to-number (string-trim (shell-command-to-string (concat "find \"" (expand-file-name container) "\"  -type f -name \"*.org\" | wc -l")))))
    (setq global-number-of-files (+ global-number-of-files container-number-of-files)))
-   (message "Orgrr considers %d titles and alias in %d org-files in %d containers. Collecting the titles took %s seconds to complete." (length titles) global-number-of-files (length containers) (format "%.5f" (car result)))))
+ (when (not orgrr-use-caching)
+   (message "Orgrr considers %d titles and alias in %d org-files in %d containers. Collecting the titles took %s seconds to complete." (length titles) global-number-of-files (length containers) (format "%.5f" (car result))))
+ (when orgrr-use-caching
+   (message "Orgrr considers %d titles and alias in %d org-files in %d containers. With caching turned on, collecting the titles took %s seconds to complete." (length titles) global-number-of-files (length containers) (format "%.6f" (car result))))))
     
 (defun orgrr-show-related-notes (arg)
   "Show all related notes in `org-directory' to the current org-file. Related 
@@ -1424,8 +1532,11 @@ orgrr-change-container can be called with a specific container."
     (if container
 	(setq selection container)
       (setq selection (completing-read "Select: " containers)))
-    (if (member selection containers)
+    (when (member selection containers)
 	(setq org-directory (gethash selection orgrr-name-container))
+	(when orgrr-use-caching
+	  (orgrr-update-meta-cache)))
+    (when (not (member selection containers))
       (message "Container does not exist."))))
 
 (defun orgrr-check-for-container-file ()
@@ -1741,6 +1852,17 @@ containers will be searched. Regex don't need to be escaped."
   (interactive)
   (orgrr-search '(4)))
 
+(defun orgrr-toggle-use-cache ()
+  "Toggle to turn usage of orgrr-cache on or off."
+  (interactive)
+  (when orgrr-use-caching
+    (setq orgrr-use-caching nil)
+    (remove-hook 'after-save-hook 'orgrr-update-cache))
+  (when (not orgrr-use-caching)
+    (setq orgrr-use-caching t)
+    (orgrr-update-cache)
+    (add-hook 'after-save-hook 'orgrr-update-cache)))
+
 (defun orgrr-initialize ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode 
 (which uses side-buffers). Also checks for org-directory and container
@@ -1749,7 +1871,10 @@ file."
     (setq org-link-frame-setup '((file . find-file))))
    (when (equal orgrr-window-management "multi-window")
       (setq org-link-frame-setup '((file . find-file-other-window))))
-   (orgrr-check-for-container-file))
+   (orgrr-check-for-container-file)
+   (when orgrr-use-caching
+     (orgrr-update-cache)
+     (add-hook 'after-save-hook 'orgrr-update-cache)))
 
 (orgrr-initialize)
 
