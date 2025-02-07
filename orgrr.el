@@ -72,7 +72,7 @@
 (defvar orgrr-window-management "single-window")
 (defvar orgrr-quick-add-token "quicknote")
 (defvar orgrr-compile-open-link-other-window t) ;; set this to nil if orgrr-compile-draft should respect orgrr-window-management settings
-(defvar orgrr-use-caching nil) ;; set this to t to use orgrr-caching
+(defvar orgrr-use-caching nil)
 
 ;; The following list of hashtables create the data structure in which orgrr stores metadata on notes.
 (defvar orgrr-title-filename (make-hash-table :test 'equal) "Hashtable with the key title and the value filename.")
@@ -994,6 +994,8 @@ filename (with the creation date) will not be modified."
 	  (progn
 	    (delete-file (buffer-file-name))
 	    (message "Note deleted!")
+	    (when orgrr-use-caching
+	      (orgrr-update-meta-cache))
 	    (kill-current-buffer)))
   (message "This is not a note!")))
 
@@ -1025,7 +1027,9 @@ filename (with the creation date) will not be modified."
 	      (orgrr-open-file (concat new-container "/" (file-name-nondirectory filename))) 
 	      (orgrr-fix-all-links-buffer)
 	      (save-some-buffers t)
-	    (message "Note has been moved and links have been adjusted!"))
+	      (when orgrr-use-caching
+		(orgrr-update-cache)) 
+	      (message "Note has been moved and links have been adjusted!"))
 	  (message "Note not moved!")))
     (message "Container does not exist."))
   (clrhash orgrr-name-container)))
@@ -1855,28 +1859,31 @@ containers will be searched. Regex don't need to be escaped."
 (defun orgrr-toggle-use-cache ()
   "Toggle to turn usage of orgrr-cache on or off."
   (interactive)
-  (when orgrr-use-caching
-    (setq orgrr-use-caching nil)
-    (remove-hook 'after-save-hook 'orgrr-update-cache))
-  (when (not orgrr-use-caching)
-    (setq orgrr-use-caching t)
-    (orgrr-update-cache)
-    (add-hook 'after-save-hook 'orgrr-update-cache)))
+  (if orgrr-use-caching
+      (progn
+	(setq orgrr-use-caching nil)
+	(remove-hook 'after-save-hook 'orgrr-update-cache))
+    (progn
+      (setq orgrr-use-caching t)
+      (orgrr-update-cache)
+      (add-hook 'after-save-hook 'orgrr-update-cache))))
 
 (defun orgrr-initialize ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode 
-(which uses side-buffers). Also checks for org-directory and container
-file."
+(which uses side-buffers). Also checks for org-directory, container
+file and caching."
   (when (equal orgrr-window-management "single-window")
     (setq org-link-frame-setup '((file . find-file))))
-   (when (equal orgrr-window-management "multi-window")
-      (setq org-link-frame-setup '((file . find-file-other-window))))
-   (orgrr-check-for-container-file)
-   (when orgrr-use-caching
-     (orgrr-update-cache)
-     (add-hook 'after-save-hook 'orgrr-update-cache)))
+  (when (equal orgrr-window-management "multi-window")
+    (setq org-link-frame-setup '((file . find-file-other-window))))
+  (orgrr-check-for-container-file)
+  (when orgrr-use-caching
+    (orgrr-update-cache)
+    (add-hook 'after-save-hook 'orgrr-update-cache)))
 
-(orgrr-initialize)
+;(orgrr-initialize)
+
+(add-hook 'emacs-startup-hook 'orgrr-initialize)
 
 (provide 'orgrr)
 
