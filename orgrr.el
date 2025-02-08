@@ -88,7 +88,6 @@
 (defvar orgrr-title-short_filename (make-hash-table :test 'equal) "Hashtable containing titles-filenames for all org-files accross all containers.")
 (defvar orgrr-filename-mentions (make-hash-table :test 'equal) "Hashtable necessary for orgrr-show-related-notes.") 
 
-
 (define-minor-mode orgrr-results-buffer-mode
   "A minor mode for orgrr results buffers."
   :lighter " orgrr-results-buffer"
@@ -96,7 +95,6 @@
             (define-key map (kbd "q") 'orgrr-close-buffer)
             map))
   
-
 (defun orgrr-open-file (filename)
   "A wrapper to open FILENAME either with find-file or find-file-other-window."
   (if (equal orgrr-window-management "multi-window")

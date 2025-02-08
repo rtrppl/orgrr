@@ -25,6 +25,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**1.0**
+- This version adds caching as an option. Activate by adding `(setq orgrr-use-caching t)` to your .emacs (see [Installation](#installation) for more details).
+
 **0.9.19**
 - Improved spacing for lists in `orgrr-show-sequence` and `orgrr-show-multiverse`
 
@@ -99,6 +102,14 @@ If you don't already have done so, you also should set an org-directory as the l
 (setq org-directory "~/path/to/org-directory")
 ```
 
+Version 1.0 adds caching as an option, which can be activated by:
+
+```elisp
+(setq orgrr-use-caching t)
+```
+
+This will improve the speed of all functions by a factor of **100** (conservative estimate for `orgrr-show-backlinks` or `orgrr-show-backlinks`) to **100000+** (for simple functions such as `orgrr-find`; e.g. from 0.5 seconds to 0.000002 seconds for 4500+ notes). The trade-off here is that the metadata on all notes is only updated when you save a note (or when you use `orgrr-update-cache`). 
+
 Finally, you may also want to set keybindings for the main functions (I have bound the Mac-command key to super/s):
 
 ```elisp
@@ -168,8 +179,9 @@ Via use-package and straight a typical configuration of orgrr could look like th
 	("C-o n" . orgrr-open-next-zettel)
 	("C-o N" . orgrr-no-find-zettel)
 	("C-o O" . orgrr-open-ref-url)
-	("C-o c" . orgrr-compile-sequence)))
-	
+	("C-o c" . orgrr-compile-sequence))
+  :config                     ;; remove this if you don't want to use caching
+  (setq orgrr-use-caching t)) ;; remove this if you don't want to use caching	
 ```
 
 As above, if you don't already have done so, you also should set an org-directory as the location for your notes.
@@ -196,7 +208,7 @@ orgrr began as a nearly feature-complete replica of the core functionality of [o
 
 **A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files, which is stored in hashtables. The aim is to have no dependencies on sql or related software. A second difference is that orgrr sticks to the ideal of every note being a single file (no nodes!). The final difference is relative minimalism - orgrr should have all necessary features to write, analyze, and manage notes - and draw on Orgmode/Emacs for everything else.**
 
-This package primarily address my own needs and I have been using orgrr almost daily for more than a year now (September 2024). My main container has more than 4000 notes and orgrr is much faster than org-roam. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest Zettelkasten packages available for Emacs.
+This package primarily address my own needs and I have been using orgrr almost daily for almost two years now (February 2025). My main container has more than 4500 notes and orgrr is much faster than org-roam (even without caching). Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest Zettelkasten packages available for Emacs.
 
 **As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions. If you are using a Git repository, a great solution for iOS access is [Working Copy](https://workingcopy.app/) due to its native support for Orgmode. In a related manner (and as a reminder), the [Github website](https://github.com/) also has good support for Orgmode.** 
 
