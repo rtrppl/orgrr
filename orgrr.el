@@ -88,6 +88,7 @@
 (defvar orgrr-title-short_filename (make-hash-table :test 'equal) "Hashtable containing titles-filenames for all org-files accross all containers.")
 (defvar orgrr-filename-mentions (make-hash-table :test 'equal) "Hashtable necessary for orgrr-show-related-notes.") 
 
+
 (define-minor-mode orgrr-results-buffer-mode
   "A minor mode for orgrr results buffers."
   :lighter " orgrr-results-buffer"
@@ -216,12 +217,22 @@ require NCD-formating."
 	      (orgrr-prepare-findings-buffer backlink-buffer))))
     (orgrr-close-buffer))))
 
+(defun orgrr-check-caching ()
+  "Helper function to adjust `after-save-hook'."
+  (when orgrr-use-caching
+    (when (not (member "(orgrr-update-cache)" after-save-hook))
+      (add-hook 'after-save-hook 'orgrr-update-cache)))
+  (when (not orgrr-use-caching)
+    (when (member "(orgrr-update-cache)" after-save-hook)
+      (remove-hook 'after-save-hook 'orgrr-update-cache))))
+	      
 (defun orgrr-get-meta ()
   "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all 
 org-files and adds them to hashtables.
 
 Updates the following hashtables: orgrr-title-filename, orgrr-filename-title, 
 orgrr-zettel-filename, orgrr-filename-zettel, orgrr-filename-tags."
+  (orgrr-check-caching)
   (when (not orgrr-use-caching)
     (clrhash orgrr-filename-title)
     (clrhash orgrr-title-filename)
@@ -265,6 +276,7 @@ orgrr-zettel-filename, orgrr-filename-zettel, orgrr-filename-tags."
 	      (puthash (concat "\\" filename) tags orgrr-filename-tags)))
 	  (forward-line))))))
 
+;;;###autoload
 (defun orgrr-update-meta-cache ()
   "This updates the cache of meta data for the current container. It is a
 asynchronos functional replacement for `orgrr-get-meta'."
@@ -274,7 +286,8 @@ asynchronos functional replacement for `orgrr-get-meta'."
   (clrhash orgrr-filename-zettel)
   (clrhash orgrr-filename-tags)
   (let ((update-buffer-name "*orgrr-update-meta*"))
-    (when (get-buffer update-buffer-name)
+    (when (and (get-buffer update-buffer-name)
+	       (not (get-buffer-process "*orgrr-update-meta*")))
       (kill-buffer update-buffer-name))
     (make-process
      :name "orgrr-metadata-update"
@@ -287,6 +300,7 @@ asynchronos functional replacement for `orgrr-get-meta'."
      :connection-type 'pipe
      :sentinel #'orgrr-process-meta-cache)))
 
+;;;###autoload
 (defun orgrr-update-all-meta-cache ()
   "This updates the cache of ALL meta data for the current container. It is a
 asynchronos functional replacement for `orgrr-get-all-meta'."
@@ -297,7 +311,8 @@ asynchronos functional replacement for `orgrr-get-all-meta'."
 	 (orgrr-name-container (orgrr-get-list-of-containers))
 	 (containers (nreverse (hash-table-values orgrr-name-container))))
     (dolist (container containers) 
-      (when (get-buffer (concat update-buffer-name "-" container "*"))
+      (when (and (get-buffer (concat update-buffer-name "-" container "*"))
+		 (not (get-buffer-process (concat update-buffer-name "-" container "*"))))
 	(kill-buffer (concat update-buffer-name "-" container "*")))
       (make-process
        :name "orgrr-all-metadata-update"
@@ -310,12 +325,14 @@ asynchronos functional replacement for `orgrr-get-all-meta'."
        :connection-type 'pipe
        :sentinel #'orgrr-process-all-meta-cache))))
 
+;;;###autoload
 (defun orgrr-update-cache ()
   "Updates all metadata for orgrr."
   (interactive)
   (orgrr-update-meta-cache)
   (orgrr-update-all-meta-cache))
 
+;;;###autoload
 (defun orgrr-process-meta-cache (process event)
 "Processes the data from `orgrr-update-meta-cache' and fills the proper
 hashtables."
@@ -358,6 +375,7 @@ hashtables."
 	  (forward-line)))
       (kill-buffer update-buffer-name)))))
 
+;;;###autoload
 (defun orgrr-process-all-meta-cache (process event)
 "Processes the data from `orgrr-update-all-meta-cache' and fills the proper
 hashtables."
@@ -1221,6 +1239,7 @@ project, which is located in a different container than the main database.
 
 This also allows orgrr-show-related-notes to refer linked documents even 
 if they are not in the same container."
+  (orgrr-check-caching)
   (when (not orgrr-use-caching)
     (clrhash orgrr-short_filename-filename)
     (clrhash orgrr-short_filename-title)
@@ -1543,6 +1562,7 @@ orgrr-change-container can be called with a specific container."
     (when (not (member selection containers))
       (message "Container does not exist."))))
 
+;;;###autoload
 (defun orgrr-check-for-container-file ()
   "Creates a container file in ~/.orgrr-container-list in case one does 
   not yet exist."
@@ -1868,6 +1888,7 @@ containers will be searched. Regex don't need to be escaped."
       (orgrr-update-cache)
       (add-hook 'after-save-hook 'orgrr-update-cache))))
 
+;;;###autoload
 (defun orgrr-initialize ()
   "Sets org-link-frame-setup for single-window-mode and multi-window mode 
 (which uses side-buffers). Also checks for org-directory, container
@@ -1877,12 +1898,9 @@ file and caching."
   (when (equal orgrr-window-management "multi-window")
     (setq org-link-frame-setup '((file . find-file-other-window))))
   (orgrr-check-for-container-file)
-  (when orgrr-use-caching
-    (orgrr-update-cache)
-    (add-hook 'after-save-hook 'orgrr-update-cache)))
+  (orgrr-update-cache))
 
-;(orgrr-initialize)
-
+;;;###autoload
 (add-hook 'emacs-startup-hook 'orgrr-initialize)
 
 (provide 'orgrr)
