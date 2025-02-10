@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 1.0
+;; Version: 1.0.2
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines 
 
@@ -30,6 +30,12 @@
 ;;
 ;;
 ;;; News
+;;
+;; 1.0.2
+;; - Improved handling of `orgrr-update-cache'
+;;
+;; 1.0.1
+;; - Fixes some issues with special characters in filenames
 ;;
 ;; 1.0
 ;; - Caching is now a thing in orgrr; further speed improvements
@@ -179,8 +185,8 @@ require NCD-formating."
 	     (dolist (container containers)
 	       (erase-buffer)
 	       (if (orgrr-on-macos-p)
-		(insert (shell-command-to-string (concat "rg -e \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "\" \"" (expand-file-name container) "\" -n --sort accessed -g \"*.org\"")))
-		(insert (shell-command-to-string (concat "rg -e \"" (file-name-nondirectory filename) "\" \"" (expand-file-name container) "\" -n --sort accessed -g \"*.org\""))))
+		(insert (shell-command-to-string (concat "rg -F \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "\" \"" (expand-file-name container) "\" -n --sort accessed -g \"*.org\"")))
+		(insert (shell-command-to-string (concat "rg -F \"" (file-name-nondirectory filename) "\" \"" (expand-file-name container) "\" -n --sort accessed -g \"*.org\""))))
 	    (let ((lines (split-string (buffer-string) "\n" t)))
 	      (dolist (line lines)
 		(when (string-match "^\\(.*?\\):\\(.*\\)$" line)
@@ -284,15 +290,12 @@ asynchronos functional replacement for `orgrr-get-meta'."
   (clrhash orgrr-filename-zettel)
   (clrhash orgrr-filename-tags)
   (let ((update-buffer-name "*orgrr-update-meta*"))
-    (when (and (get-buffer update-buffer-name)
-	       (not (get-buffer-process "*orgrr-update-meta*")))
-      (kill-buffer update-buffer-name))
     (make-process
      :name "orgrr-metadata-update"
      :buffer update-buffer-name
      :command (list "rg" "-i" "--sort" "modified"
                     "-e"  
-		    "^\\#\\+(title:.*|roam_alias.*|roam_tags.*|zettel:.*)"
+      		   "^\\#\\+(title:.*|roam_alias.*|roam_tags.*|zettel:.*)"
                     (expand-file-name org-directory)
                     "-g" "*.org")
      :connection-type 'pipe
@@ -309,9 +312,6 @@ asynchronos functional replacement for `orgrr-get-all-meta'."
 	 (orgrr-name-container (orgrr-get-list-of-containers))
 	 (containers (nreverse (hash-table-values orgrr-name-container))))
     (dolist (container containers) 
-      (when (and (get-buffer (concat update-buffer-name "-" container "*"))
-		 (not (get-buffer-process (concat update-buffer-name "-" container "*"))))
-	(kill-buffer (concat update-buffer-name "-" container "*")))
       (make-process
        :name "orgrr-all-metadata-update"
        :buffer (concat update-buffer-name "-" container "*")
@@ -327,8 +327,10 @@ asynchronos functional replacement for `orgrr-get-all-meta'."
 (defun orgrr-update-cache ()
   "Updates all metadata for orgrr."
   (interactive)
-  (orgrr-update-meta-cache)
-  (orgrr-update-all-meta-cache))
+  (when (and (not (process-live-p (get-process "orgrr-all-metadata-update")))
+	     (not (process-live-p (get-process "orgrr-metadata-update"))))
+    (orgrr-update-meta-cache)
+    (orgrr-update-all-meta-cache)))
 
 ;;;###autoload
 (defun orgrr-process-meta-cache (process event)
@@ -397,7 +399,8 @@ hashtables."
 		(while (re-search-forward "\"\\(.*?\\)\\\"" nil t)
 		  (puthash (match-string 1) (file-name-nondirectory filename) orgrr-title-short_filename)))))
 	  (forward-line)))
-      (kill-buffer (process-buffer process)))))
+      (kill-buffer (process-buffer process)))
+    (message "orgrr caching...done.")))
       
 
 ;; orgrr-presorted-completion-table is based on 
@@ -853,7 +856,8 @@ selected file name does not exist, a new one is created."
 	(orgrr-open-file filename))
       (when (not (member selection (hash-table-keys orgrr-title-filename)))
 	(setq time (format-time-string "%Y%m%d%H%M%S"))
-	(setq filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?,:;\\\s\/]" "_" selection)))
+	(setq filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?,.:;\(\)\\\s\/]" "_" selection)))
+	(setq filename (replace-regexp-in-string "_\\{2,\\}" "_" filename))
 	(when (orgrr-on-macos-p)
 	  (setq filename (ucs-normalize-HFS-NFD-string filename)))
 	(orgrr-open-file (concat filename ".org"))
@@ -921,7 +925,8 @@ If the selected title does not exist, a new note is created."
 	    (insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
 	(progn
 	  (let* ((time (format-time-string "%Y%m%d%H%M%S"))
-		 (filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?,:;\\\s\/]" "_" selection))))
+		 (filename (concat (file-name-as-directory org-directory) time "-" (replace-regexp-in-string "[\"'?,.:;\(\)\\\s\/]" "_" selection)))
+		 (filename (replace-regexp-in-string "_\\{2,\\}" "_" filename)))
 	    (when (orgrr-on-macos-p)
 	      (setq filename (ucs-normalize-HFS-NFD-string filename)))
 	    (if (region-active-p)
@@ -964,12 +969,12 @@ If the selected title does not exist, a new note is created."
     (dolist (container containers)   
       (with-temp-buffer
 	(if (orgrr-on-macos-p)
-	    (insert (shell-command-to-string (concat "rg -l -e \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory old-filename)) "\" \"" (expand-file-name container) "\" -n -g \"*.org\"")))
-	  (insert (shell-command-to-string (concat "rg -l -e \"" (file-name-nondirectory old-filename) "\" \"" (expand-file-name container) "\" -n -g \"*.org\""))))
+	    (insert (shell-command-to-string (concat "rg -l -F \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory old-filename)) "\" \"" (expand-file-name container) "\" -n -g \"*.org\"")))
+	  (insert (shell-command-to-string (concat "rg -l -F \"" (file-name-nondirectory old-filename) "\" \"" (expand-file-name container) "\" -n -g \"*.org\""))))
 	(setq lines (split-string (buffer-string) "\n" t)))
-	  (dolist (line lines)
-	    (if (string-match "\\.org$" line)
-		(push line old-filename-mentions))))
+      (dolist (line lines)
+	(if (string-match "\\.org$" line)
+	    (push line old-filename-mentions))))
 ;; This corrects the links. Please be aware that this is an intrusive action and might affect your data. 
       (dolist (filename old-filename-mentions)
 	(with-current-buffer (find-file-noselect filename)
@@ -1449,8 +1454,8 @@ patient."
     (dolist (container containers)
       (with-temp-buffer
        (if (orgrr-on-macos-p)
-	   (insert (shell-command-to-string (concat "rg -l -e \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "\" \"" (expand-file-name container) "\" -n -g \"*.org\"")))
-	 (insert (shell-command-to-string (concat "rg -l -e \"" (file-name-nondirectory filename) "\" \"" (expand-file-name container) "\" -n -g \"*.org\""))))
+	   (insert (shell-command-to-string (concat "rg -l -F \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "\" \"" (expand-file-name container) "\" -n -g \"*.org\"")))
+	 (insert (shell-command-to-string (concat "rg -l -F \"" (file-name-nondirectory filename) "\" \"" (expand-file-name container) "\" -n -g \"*.org\""))))
       (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (line lines)
 	  (let* ((short-filename (file-name-nondirectory line)))
@@ -1472,8 +1477,8 @@ patient."
     (setq filename (substring entry 1))
     (with-temp-buffer
       (if (orgrr-on-macos-p)
-	  (insert (shell-command-to-string (concat "rg -l -e \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "\" \"" (expand-file-name container) "\" -n -g \"*.org\"")))
-	(insert (shell-command-to-string (concat "rg -l -e \"" (file-name-nondirectory filename) "\" \"" (expand-file-name container) "\" -n -g \"*.org\""))))
+	  (insert (shell-command-to-string (concat "rg -l -F \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory filename)) "\" \"" (expand-file-name container) "\" -n -g \"*.org\"")))
+	(insert (shell-command-to-string (concat "rg -l -F \"" (file-name-nondirectory filename) "\" \"" (expand-file-name container) "\" -n -g \"*.org\""))))
       (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (line lines)
 	  (let* ((short-filename (file-name-nondirectory line)))
@@ -1556,7 +1561,7 @@ orgrr-change-container can be called with a specific container."
     (when (member selection containers)
 	(setq org-directory (gethash selection orgrr-name-container))
 	(when orgrr-use-caching
-	  (orgrr-update-meta-cache)))
+	  (orgrr-update-cache)))
     (when (not (member selection containers))
       (message "Container does not exist."))))
 
