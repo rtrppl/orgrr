@@ -25,8 +25,14 @@ search the local container (=`org-directory`; see also  [orgrr-containers](#orgr
 
 ## Changelog
 
+**1.0.2**
+- Improved handling of `orgrr-update-cache` (should fix "trying to delete non-existing buffer" error)
+
+**1.0.1**
+- Fixes some issues with special characters in filenames
+
 **1.0**
-- This version adds caching as an option. Activate by adding `(setq orgrr-use-caching t)` to your .emacs (see [Installation](#installation) for more details).
+- This version adds caching as an option, resulting in massive speed gains. Activate by adding `(setq orgrr-use-caching t)` to your .emacs (see [Installation](#installation) for more details).
 
 **0.9.19**
 - Improved spacing for lists in `orgrr-show-sequence` and `orgrr-show-multiverse`

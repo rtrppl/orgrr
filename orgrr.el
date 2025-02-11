@@ -4,7 +4,7 @@
 ;; URL: https://github.com/rtrppl/orgrr
 ;; Version: 1.0.2
 ;; Package-Requires: ((emacs "27.2"))
-;; Keywords: comm wp outlines 
+;; Keywords: comm wp outlines
 
 ;; This file is not part of GNU Emacs.
 
@@ -24,7 +24,7 @@
 ;;; Commentary:
 
 ;; Orgrr is a minimalist but complete note-taking system for Emacs. Its
-;; intended purpose is the creation and management of a Zettelkasten-like 
+;; intended purpose is the creation and management of a Zettelkasten-like
 ;; system, e.g. many small notes that can easily be linked together.
 ;;
 ;;
@@ -38,7 +38,7 @@
 ;; - Fixes some issues with special characters in filenames
 ;;
 ;; 1.0
-;; - Caching is now a thing in orgrr; further speed improvements
+;; - Caching is now a thing in orgrr; massive speed gains
 ;;
 ;; 0.9.19
 ;; - Improved spacing for lists in `orgrr-show-sequence' and
@@ -50,22 +50,14 @@
 ;; 0.9.17
 ;; - Added option to use active region for `orgrr-add-to-project'
 ;;
-;; 0.9.16 
+;; 0.9.16
 ;; - Added convience: typing "q" in any results buffer now closes that buffer
 ;; (via a minor-mode)
 ;;
 ;; 0.9.15
-;; - Added `orgrr-show-multiverse'; modified `orgrr-show-sequence' to 
+;; - Added `orgrr-show-multiverse'; modified `orgrr-show-sequence' to
 ;; also show parent zettel
 ;;
-;; 0.9.14
-;; - Added functions `orgrr-quick-add', `orgrr-global-quick-add', 
-;; `orgrr-rename-title-and-file', `orgrr-rename-and-move'; fixed bug in 
-;; `orgrr-rename' that could lead to duplicates when renaming
-;;
-;; 0.9.13
-;; - `orgrr-open-project', `orgrr-add-to-project' and `orgrr-info' are now global and
-;; work across containers
 ;;
 ;; For more changes see the changelog.
 ;;
@@ -85,14 +77,14 @@
 (defvar orgrr-filename-title (make-hash-table :test 'equal) "Hashtable with the the key filename and the value title.")
 (defvar orgrr-filename-tags (make-hash-table :test 'equal) "Hashtable with the key filename and the value tags.")
 (defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable with the key filename without path and the value filename+path.")
-(defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with the key zettel and the value filename.") 
-(defvar orgrr-filename-zettel (make-hash-table :test 'equal) "Hashtable with the key filename and the value zettel.")  
+(defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with the key zettel and the value filename.")
+(defvar orgrr-filename-zettel (make-hash-table :test 'equal) "Hashtable with the key filename and the value zettel.")
 (defvar orgrr-zettelrank-zettel (make-hash-table :test 'equal) "Hashtable with the key rank of a zettel and the value zettel.") ;; rank means how a zettel value of a note relates to other notes
 (defvar orgrr-zettel-zettelrank (make-hash-table :test 'equal) "Hashtable with the key zettel and the value rank of a zettel.")
 (defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable containing all org-files accross all containers.")
 (defvar orgrr-short_filename-title (make-hash-table :test 'equal) "Hashtable containing filenames-titles for all org-files accross all containers.")
 (defvar orgrr-title-short_filename (make-hash-table :test 'equal) "Hashtable containing titles-filenames for all org-files accross all containers.")
-(defvar orgrr-filename-mentions (make-hash-table :test 'equal) "Hashtable necessary for orgrr-show-related-notes.") 
+(defvar orgrr-filename-mentions (make-hash-table :test 'equal) "Hashtable necessary for `orgrr-show-related-notes'.")
 
 (define-minor-mode orgrr-results-buffer-mode
   "A minor mode for orgrr results buffers."
@@ -102,7 +94,7 @@
             map))
   
 (defun orgrr-open-file (filename)
-  "A wrapper to open FILENAME either with find-file or find-file-other-window."
+  "A wrapper to open FILENAME either with `find-file' or `find-file-other-window'."
   (if (equal orgrr-window-management "multi-window")
       (find-file-other-window filename)
     (if (equal orgrr-window-management "single-window")
@@ -110,7 +102,7 @@
       (find-file-other-window filename))))
 
 (defun orgrr-open-buffer (buffer)
- "A wrapper to open BUFFER according to orgrr-window-management settings."
+ "A wrapper to open BUFFER according to `orgrr-window-management' settings."
  (when (equal orgrr-window-management "multi-window")
 		  (display-buffer-in-side-window
 		   (current-buffer)
@@ -132,7 +124,7 @@
    (deactivate-mark)))
 
 (defun orgrr-close-buffer ()
-   "A wrapper to close BUFFER according to orgrr-window-management settings."
+   "A wrapper to close BUFFER according to `orgrr-window-management' settings."
    (interactive)
    (when (equal orgrr-window-management "multi-window")
      (kill-buffer))
@@ -140,7 +132,7 @@
      (kill-buffer)))
 
 (defun orgrr-toggle-window-mode ()
-  "Switch between single-window-mode and multi-window mode (which uses 
+  "Switch between single-window-mode and multi-window mode (which uses
 side-buffers)."
   (interactive)
   (if (equal orgrr-window-management "multi-window")
@@ -152,8 +144,8 @@ side-buffers)."
       (setq org-link-frame-setup '((file . find-file-other-window))))))
 
 (defun orgrr-on-macos-p ()
-  "Check if Emacs is running on macOS. This became necessary due to some 
-normalization issues with filenames that contain non-ascii characters and 
+  "Check if Emacs is running on macOS. This became necessary due to some
+normalization issues with filenames that contain non-ascii characters and
 require NCD-formating."
   (eq system-type 'darwin))
 
@@ -231,11 +223,11 @@ require NCD-formating."
       (remove-hook 'after-save-hook 'orgrr-update-cache))))
 	      
 (defun orgrr-get-meta ()
-  "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all 
+  "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all
 org-files and adds them to hashtables.
 
-Updates the following hashtables: orgrr-title-filename, orgrr-filename-title, 
-orgrr-zettel-filename, orgrr-filename-zettel, orgrr-filename-tags."
+Updates the following hashtables: `orgrr-title-filename', `orgrr-filename-title',
+`orgrr-zettel-filename', `orgrr-filename-zettel', `orgrr-filename-tags'."
   (orgrr-check-caching)
   (when (not orgrr-use-caching)
     (clrhash orgrr-filename-title)
@@ -269,7 +261,7 @@ orgrr-zettel-filename, orgrr-filename-zettel, orgrr-filename-tags."
 	  (when (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
 	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
 		   (filename (car line))
-		   (zettel (car (cdr (cdr line)))))   
+		   (zettel (car (cdr (cdr line)))))
 	      (puthash zettel filename orgrr-zettel-filename)
 	      (puthash (concat "\\" filename) zettel orgrr-filename-zettel)))
 ;; The following checks if the line contains tags and if so copies the tags to orgrr-tags-filename.
@@ -294,7 +286,7 @@ asynchronos functional replacement for `orgrr-get-meta'."
      :name "orgrr-metadata-update"
      :buffer update-buffer-name
      :command (list "rg" "-i" "--sort" "modified"
-                    "-e"  
+                    "-e"
       		   "^\\#\\+(title:.*|roam_alias.*|roam_tags.*|zettel:.*)"
                     (expand-file-name org-directory)
                     "-g" "*.org")
@@ -311,12 +303,12 @@ asynchronos functional replacement for `orgrr-get-all-meta'."
   (let* ((update-buffer-name "*orgrr-update-all-meta")
 	 (orgrr-name-container (orgrr-get-list-of-containers))
 	 (containers (nreverse (hash-table-values orgrr-name-container))))
-    (dolist (container containers) 
+    (dolist (container containers)
       (make-process
        :name "orgrr-all-metadata-update"
        :buffer (concat update-buffer-name "-" container "*")
        :command (list "rg" "-i" "--sort" "modified"
-                      "-e"  
+                      "-e"
 		      "^\\#\\+(title:.*|roam_alias.*)"
                       (expand-file-name container)
                       "-g" "*.org")
@@ -363,7 +355,7 @@ hashtables."
 	  (when (string-match "\\(#\\+zettel:\\|#+ZETTEL:\\)\\s-*\\(.+\\)" current-entry)
 	    (let* ((line (split-string current-entry "\\(: \\|:\\)" t))
 		   (filename (car line))
-		   (zettel (car (cdr (cdr line)))))   
+		   (zettel (car (cdr (cdr line)))))
 	      (puthash zettel filename orgrr-zettel-filename)
 	      (puthash (concat "\\" filename) zettel orgrr-filename-zettel)))
 ;; The following checks if the line contains tags and if so copies the tags to orgrr-tags-filename.
@@ -403,7 +395,7 @@ hashtables."
     (message "orgrr caching...done.")))
       
 
-;; orgrr-presorted-completion-table is based on 
+;; orgrr-presorted-completion-table is based on
 ;; https://emacs.stackexchange.com/questions/8115/make-completing-read
 ;; -respect-sorting-order-of-a-collection, thanks @sachac@emacs.ch for the hint!
 ;; lambda functions and let for whatever reason don't like each other,
@@ -411,7 +403,7 @@ hashtables."
 
 (defun orgrr-presorted-completion-table (orgrr-selection-list)
   (let ((orgrr-selection-list-completion ()))
-    (setq orgrr-selection-list-completion 
+    (setq orgrr-selection-list-completion
 	  (lambda (string pred action)
 	    (if (eq action 'metadata)
 		`(metadata (display-sort-function . ,#'identity))
@@ -419,8 +411,8 @@ hashtables."
 orgrr-selection-list-completion))
 
 (defun orgrr-selection ()
-  "Prepare the symbol orgrr-selection for completing-read and send the result 
-in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front 
+  "Prepare the symbol orgrr-selection for completing-read and send the result
+in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front
 of title and alias."
   (orgrr-get-meta)
   (let* ((orgrr-selection-list ())
@@ -446,15 +438,15 @@ of title and alias."
 	(setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
       (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
     (if (string-match "^\\[" selection)
-	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))  
+	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))
     (if (string-match "^\(" selection)
 	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
   selection)) ;; this line ensures that the value of selection is returned when this function is called
 
 (defun orgrr-global-selection ()
-  "Use data from all containers to prepare the symbol orgrr-selection for 
-completing-read and send the result in selection to orgrr-find and 
-orgrr-insert. 
+  "Use data from all containers to prepare the symbol orgrr-selection for
+completing-read and send the result in selection to orgrr-find and
+orgrr-insert.
 
 Does not prepend tags and zettel in front of title and alias."
   (orgrr-get-all-meta)
@@ -468,9 +460,9 @@ Does not prepend tags and zettel in front of title and alias."
   selection)) ;; this line ensures that the value of selection is returned when this function is called
 
 (defun orgrr-selection-zettel (&optional current-zettel)
-  "Prepare the symbol orgrr-selection for completing-read and send the result 
-in selection to `orgrr-find-zettel' and `orgrr-insert-zettel'. Only includes files 
-that have a value for zettel. Prepends zettel value in front of title and 
+  "Prepare the symbol orgrr-selection for completing-read and send the result
+in selection to `orgrr-find-zettel' and `orgrr-insert-zettel'. Only includes files
+that have a value for zettel. Prepends zettel value in front of title and
 alias."
   (let* ((orgrr-selection-list (orgrr-prepare-zettel-selection-list))
 	(orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
@@ -493,14 +485,14 @@ alias."
     (dolist (title titles)
       (let* ((filename (gethash title orgrr-title-filename)))
 	(if (member (concat "\\" filename) filenames-for-zettel)
-	    (progn 
+	    (progn
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "]\s" title))
 	      (setq orgrr-selection-list (cons final-title orgrr-selection-list))))))
     (setq orgrr-selection-list (reverse orgrr-selection-list))))
 
 (defun orgrr-find-zettel ()
-  "Like `orgrr-find', but only considers notes that have a value for zettel. If 
-the selected file name does not exist, a new one is created. Starts with the 
+  "Like `orgrr-find', but only considers notes that have a value for zettel. If
+the selected file name does not exist, a new one is created. Starts with the
 current zettel ID, which allows you to search within a context."
   (interactive)
   (let ((selection (orgrr-selection-zettel)))
@@ -514,7 +506,7 @@ current zettel ID, which allows you to search within a context."
 	(insert (concat "#+title: " selection "\n"))))))
 
 (defun orgrr-no-selection-zettel ()
-  "Prepare the symbol orgrr-selection for completing-read and send the result 
+  "Prepare the symbol orgrr-selection for completing-read and send the result
 in selection to orgrr-find and orgrr-insert. Excludes zettel. "
   (interactive)
   (orgrr-get-meta)
@@ -529,25 +521,25 @@ in selection to orgrr-find and orgrr-insert. Excludes zettel. "
       (let* ((filename (gethash title orgrr-title-filename)))
 	(if (member (concat "\\" filename) filenames-for-tags)
 	    (if (not (member (concat "\\" filename) filenames-for-zettel))
-		(progn 
+		(progn
 		  (setq final-title (concat "(" (gethash (concat "\\" filename) orgrr-filename-tags) ") " title))
 		  (setq orgrr-selection-list (cons final-title orgrr-selection-list)))))
 	(if (not (member (concat "\\" filename) filenames-for-tags))
 	    (if (not (member (concat "\\" filename) filenames-for-zettel))
-		(progn 
+		(progn
 		  (setq final-title title)
 		  (setq orgrr-selection-list (cons final-title orgrr-selection-list)))))))
     (setq orgrr-selection-list (reverse orgrr-selection-list))
     (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
     (if (region-active-p)
 	(setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
-      (setq selection (completing-read "Select: " orgrr-selection-list-completion))) 
+      (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
     (if (string-match "^\(" selection)
 	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
     selection))
 
 (defun orgrr-no-find-zettel ()
-  "Like orgrr-find-zettel, but only considers notes that have no value for 
+  "Like orgrr-find-zettel, but only considers notes that have no value for
 zettel."
   (interactive)
   (let ((selection (orgrr-no-selection-zettel))
@@ -557,9 +549,9 @@ zettel."
       (orgrr-open-file filename))))
 
 (defun orgrr-add-zettel ()
-  "Drill down a list of notes with values for zettel to allow the user to find 
-the correct spot for a new zettel and then insert a line with #+zettel: 
-zettel-value after the last line starting with #+ (from the beginning of the 
+  "Drill down a list of notes with values for zettel to allow the user to find
+the correct spot for a new zettel and then insert a line with #+zettel:
+zettel-value after the last line starting with #+ (from the beginning of the
 file)."
   (interactive)
   (orgrr-get-meta)
@@ -622,8 +614,8 @@ file)."
       current-zettel))
     
 (defun orgrr-show-sequence (&optional zettel-title)
-  "Shows a sequence of notes for any given zettel value. If run while visiting 
-a buffer that has a value for zettel, this is taken as the starting value for 
+  "Shows a sequence of notes for any given zettel value. If run while visiting
+a buffer that has a value for zettel, this is taken as the starting value for
 zettel. Results are presented in a different buffer in accordance with the
 variable orgrr-window-management."
   (interactive)
@@ -649,7 +641,7 @@ variable orgrr-window-management."
 	  ;; the following do list should only get the maxium length of any
 	     ;; zettel id used. This is necessary for adding the correct amount
 	     ;; of spacing in the list.
-	     (dolist (element orgrr-zettel-list) 
+	     (dolist (element orgrr-zettel-list)
 	       (let* ((last-char (substring selection-zettel -1))
 		      (is-last-char-num (string-match-p "[0-9]" last-char))
 		      (regex (if is-last-char-num
@@ -657,9 +649,9 @@ variable orgrr-window-management."
 			       (concat "^" selection-zettel))))
 		 (when (string-match regex element)
 		   (when (not (equal element selection-zettel))
-		     (when (> (length element) max-zettel-id-value)  
+		     (when (> (length element) max-zettel-id-value)
 		       (setq max-zettel-id-value (length element)))))))
-	  (dolist (element orgrr-zettel-list) 
+	  (dolist (element orgrr-zettel-list)
 	    (let* ((last-char (substring selection-zettel -1))
 		    (is-last-char-num (string-match-p "[0-9]" last-char))
 		    (regex (if is-last-char-num
@@ -669,13 +661,13 @@ variable orgrr-window-management."
 	      (if (not (equal element selection-zettel))
 		  (insert (concat "** " (orgrr-return-fullzettel-linked element max-zettel-id-value) "\n")))))))
 ;;Starting here it is only window-management
-	    (orgrr-open-buffer sequence-buffer) 
+	    (orgrr-open-buffer sequence-buffer)
 	    (orgrr-prepare-findings-buffer sequence-buffer))))
   (when (string-match-p "sequence for *" (buffer-name (current-buffer)))
     (orgrr-close-buffer)))
 
 
-;; The following three functions have been taken from 
+;; The following three functions have been taken from
 ;; https://stackoverflow.com/questions/1942045/natural-order-sort-for-emacs-lisp
 ;; They work really well for dictionary compare.
 
@@ -710,7 +702,7 @@ variable orgrr-window-management."
 
 (defun orgrr-dict-split (str)
   "split a string into a list of number and non-number components"
-  (save-match-data 
+  (save-match-data
     (let ((res nil))
       (while (and str (not (string-equal "" str)))
         (let ((p (string-match "[0-9]*\\.?[0-9]+" str)))
@@ -742,13 +734,13 @@ variable orgrr-window-management."
 (defun orgrr-prepare-zettelrank ()
   "Prepares a hashtable that contains the rank of all zettel."
   (orgrr-get-meta)
-  (let* ((zettelrank 0)	 
+  (let* ((zettelrank 0)
 	 (orgrr-zettel-list (hash-table-values orgrr-filename-zettel))
 	 (orgrr-zettel-list (sort orgrr-zettel-list 'orgrr-dictionary-lessp)))
     (clrhash orgrr-zettelrank-zettel)
     (clrhash orgrr-zettel-zettelrank)
     (dolist (zettel orgrr-zettel-list)
-      (setq zettelrank (+ zettelrank 1))   
+      (setq zettelrank (+ zettelrank 1))
       (puthash (number-to-string zettelrank) zettel orgrr-zettelrank-zettel)
       (puthash zettel (number-to-string zettelrank) orgrr-zettel-zettelrank))))
 
@@ -759,7 +751,7 @@ variable orgrr-window-management."
     (setq zettel (concat "\[" zettel "\]\t" matched-zettel-title))))
 
 (defun orgrr-return-fullzettel-linked (zettel &optional max-zettel-id-value)
-  "Returns the full name of a zettel (as in orgrr-zettel-list) and links the 
+  "Returns the full name of a zettel (as in orgrr-zettel-list) and links the
 title to the note."
   (let* ((max-zettel-id-value (or max-zettel-id-value 0))
 	 (spacing 0)
@@ -774,14 +766,14 @@ title to the note."
     zettel))
 
 (defun orgrr-return-fullzettel-linked-starred (zettel)
-  "Returns the full name of a zettel (as in orgrr-zettel-list) and links the 
+  "Returns the full name of a zettel (as in orgrr-zettel-list) and links the
 title to the note. Adds stars for org-bolding."
   (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename))
 	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
     (setq zettel (concat "*" zettel "* \[\[file:" matched-zettel-filename "\]\["  matched-zettel-title "\]\]"))))
 
 (defun orgrr-return-fullnote-linked-starred (title)
-  "Returns the full name of a zettel (as in orgrr-zettel-list) and links the 
+  "Returns the full name of a zettel (as in orgrr-zettel-list) and links the
 title to the note. Adds stars for org-bolding."
   (let* ((filename (gethash title orgrr-title-filename)))
     (setq title (concat "*\[\[file:" filename "\]\[" title "\]\]*"))))
@@ -801,7 +793,7 @@ title to the note. Adds stars for org-bolding."
 (defun orgrr-return-fullzettel-content (zettel)
   "Returns the full content of a zettel without meta-data."
   (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename)))
-    (with-temp-buffer 
+    (with-temp-buffer
       (insert-file-contents matched-zettel-filename)
       (goto-char (point-min))
       (while (not (eobp))
@@ -810,10 +802,10 @@ title to the note. Adds stars for org-bolding."
 		  (string-prefix-p "#+roam_alias" current-entry t)
 		  (string-prefix-p "#+roam_key" current-entry t)
 		  (string-prefix-p "#+roam_tags" current-entry t)
-		  (string-prefix-p "#+zettel" current-entry t))	       
+		  (string-prefix-p "#+zettel" current-entry t))
               (delete-region (line-beginning-position) (line-end-position))
             (forward-line 1))))
-      (string-trim (buffer-string)))))     
+      (string-trim (buffer-string)))))
 
 (defun orgrr-return-zettel-from-title (title)
   "Returns the zettel from a title."
@@ -837,7 +829,7 @@ title to the note. Adds stars for org-bolding."
       (message "This note has no value for zettel, so there is no next zettel!"))))
 
 (defun orgrr-find (arg)
-  "Find org-file in `org-directory' via mini-buffer completion. If the 
+  "Find org-file in `org-directory' via mini-buffer completion. If the
 selected file name does not exist, a new one is created."
   (interactive "P")
   (let ((selection)
@@ -849,7 +841,7 @@ selected file name does not exist, a new one is created."
 	 (setq filename (gethash selection orgrr-title-short_filename))
 	 (setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename))
 	 (orgrr-open-file filename)))
-    (when (not (equal arg '(4)))  
+    (when (not (equal arg '(4)))
       (setq selection (orgrr-selection))
       (when (member selection (hash-table-keys orgrr-title-filename))
 	(setq filename (gethash selection orgrr-title-filename))
@@ -897,7 +889,7 @@ selected file name does not exist, a new one is created."
     (orgrr-quick-add container)))
 
 (defun orgrr-insert (arg)
-  "Insert links to an org-file in `org-directory' via mini-buffer completion. 
+  "Insert links to an org-file in `org-directory' via mini-buffer completion.
 If the selected title does not exist, a new note is created."
   (interactive "P")
   (let ((path-of-current-note
@@ -909,12 +901,12 @@ If the selected title does not exist, a new note is created."
     (when (equal arg '(4))
 	(setq selection (orgrr-global-selection))
 	(setq filename (gethash selection orgrr-title-short_filename))
-	(setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename)) 
+	(setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename))
 	(setq filename (file-relative-name filename path-of-current-note))
 	(if (region-active-p)
 	    (kill-region (region-beginning) (region-end)))
 	(insert (concat "\[\[file:" filename "\]\[" selection "\]\]")))
-    (when (not (equal arg '(4)))  
+    (when (not (equal arg '(4)))
       (setq selection (orgrr-selection))
       (if (member selection (hash-table-keys orgrr-title-filename))
 	  (progn
@@ -964,9 +956,9 @@ If the selected title does not exist, a new note is created."
       (setq new-filename (read-from-minibuffer "Filename to change: " old-filename)))
     (rename-file old-filename new-filename)
     (set-visited-file-name new-filename nil t)
-    (save-some-buffers t)  ;; necessary, as we are working directly with the files 
+    (save-some-buffers t)  ;; necessary, as we are working directly with the files
 ;; Add all files that mention filename to the list old-filename-mentions.
-    (dolist (container containers)   
+    (dolist (container containers)
       (with-temp-buffer
 	(if (orgrr-on-macos-p)
 	    (insert (shell-command-to-string (concat "rg -l -F \"" (ucs-normalize-HFS-NFD-string (file-name-nondirectory old-filename)) "\" \"" (expand-file-name container) "\" -n -g \"*.org\"")))
@@ -975,7 +967,7 @@ If the selected title does not exist, a new note is created."
       (dolist (line lines)
 	(if (string-match "\\.org$" line)
 	    (push line old-filename-mentions))))
-;; This corrects the links. Please be aware that this is an intrusive action and might affect your data. 
+;; This corrects the links. Please be aware that this is an intrusive action and might affect your data.
       (dolist (filename old-filename-mentions)
 	(with-current-buffer (find-file-noselect filename)
 	  (goto-char (point-min))
@@ -984,7 +976,7 @@ If the selected title does not exist, a new note is created."
   (save-some-buffers t)))
 
 (defun orgrr-rename-title-and-file ()
-  "Changes the title and filename of the current note. The first part of the 
+  "Changes the title and filename of the current note. The first part of the
 filename (with the creation date) will not be modified."
   (interactive)
   (let ((old-filename (if (equal major-mode 'dired-mode)
@@ -1045,11 +1037,11 @@ filename (with the creation date) will not be modified."
 	      (rename-file filename (concat new-container "/" (file-name-nondirectory filename)))
 	      (orgrr-adjust-backlinks-in-current-container filename)
 	      (setq org-directory new-container)
-	      (orgrr-open-file (concat new-container "/" (file-name-nondirectory filename))) 
+	      (orgrr-open-file (concat new-container "/" (file-name-nondirectory filename)))
 	      (orgrr-fix-all-links-buffer)
 	      (save-some-buffers t)
 	      (when orgrr-use-caching
-		(orgrr-update-cache)) 
+		(orgrr-update-cache))
 	      (message "Note has been moved and links have been adjusted!"))
 	  (message "Note not moved!")))
     (message "Container does not exist."))
@@ -1118,7 +1110,7 @@ filename (with the creation date) will not be modified."
     snippet))
 
 (defun orgrr-add-to-project ()
-  "Add the current line at point (including when in orgrr-backlinks buffer) 
+  "Add the current line at point (including when in orgrr-backlinks buffer)
 or the active region of a note to an existing project."
   (interactive)
   (let* ((snippet (orgrr-collect-project-snippet))
@@ -1140,7 +1132,7 @@ or the active region of a note to an existing project."
       (save-buffer))))
 
 (defun orgrr-add-to-other-window ()
-  "Add the current line at point (including when in orgrr-backlinks buffer) 
+  "Add the current line at point (including when in orgrr-backlinks buffer)
 or the active region of a note to an other active window."
   (interactive)
   (let* ((snippet (orgrr-collect-project-snippet))
@@ -1157,7 +1149,7 @@ or the active region of a note to an other active window."
       (save-buffer))))
 
 (defun orgrr-pick-project ()
-  "Provides a list of all projects to add the new snippet, with the option to 
+  "Provides a list of all projects to add the new snippet, with the option to
 create a new one. Returns a project."
   (orgrr-get-all-meta)
   (let* ((orgrr-selection-list ())
@@ -1165,7 +1157,7 @@ create a new one. Returns a project."
 	 (orgrr-name-container (orgrr-get-list-of-containers))
 	 (containers (nreverse (hash-table-values orgrr-name-container)))
 	 (selection))
-    (dolist (container containers) 
+    (dolist (container containers)
       (with-temp-buffer
        (insert (shell-command-to-string (concat "rg -i --sort modified -l -e  \"^\\#\\+roam_tags:.+orgrr-project\" \"" (expand-file-name container) "\"")))
        (let ((lines (split-string (buffer-string) "\n" t)))
@@ -1180,7 +1172,7 @@ create a new one. Returns a project."
      selection))
 
 (defun orgrr-pick-window ()
-  "Provides a list of all open windows to add the new snippet -  with the 
+  "Provides a list of all open windows to add the new snippet -  with the
 exception of the source window."
   (orgrr-get-all-meta)
   (let* ((orgrr-selection-list ())
@@ -1235,12 +1227,12 @@ exception of the source window."
 containers and adds them to the hashtables orgrr-short_filename-filename,
 orgrr-short_filename-title, and orgrr-title-short_filename. This is needed
 to correct the links of a snippet created in one container for use in another
-via orgrr-add-to-project. 
+via orgrr-add-to-project.
 
-An intended use case for orgrr-add-to-project is to add snippets to a writing 
+An intended use case for orgrr-add-to-project is to add snippets to a writing
 project, which is located in a different container than the main database.
 
-This also allows orgrr-show-related-notes to refer linked documents even 
+This also allows orgrr-show-related-notes to refer linked documents even
 if they are not in the same container."
   (orgrr-check-caching)
   (when (not orgrr-use-caching)
@@ -1249,7 +1241,7 @@ if they are not in the same container."
     (clrhash orgrr-title-short_filename)
     (let* ((orgrr-name-container (orgrr-get-list-of-containers))
 	 (containers (nreverse (hash-table-values orgrr-name-container))))
-      (dolist (container containers) 
+      (dolist (container containers)
 	(with-temp-buffer
 	  (insert (shell-command-to-string (concat "rg -i --sort accessed \"^\\#\\+(title:.*)|(roam_alias.*)\" \"" (expand-file-name container) "\" -g \"*.org\"")))
 	  (goto-char (point-min))
@@ -1272,7 +1264,7 @@ if they are not in the same container."
 	      (forward-line))))))))
 	 
 (defun orgrr-adjust-links (string)
-  "Adjusts/corrects all links of STRING relative to the position of the note. 
+  "Adjusts/corrects all links of STRING relative to the position of the note.
 Does not work when filenames themselves are changed."
   (let* ((path-of-current-note
 	  (if (buffer-file-name)
@@ -1285,13 +1277,13 @@ Does not work when filenames themselves are changed."
     (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
       (let* ((filename (file-name-nondirectory (match-string 1))))
 	(if (member (concat "\\" filename) (hash-table-keys orgrr-short_filename-filename))
-	    (progn 
+	    (progn
 	      (let* ((new-filename (gethash (concat "\\" filename) orgrr-short_filename-filename)))
 		     (replace-match (concat "file:" (file-relative-name new-filename path-of-current-note))))))))
     (buffer-string))))
     
 (defun orgrr-info ()
- "Show the amount of titles considered by orgrr and how long it takes to 
+ "Show the amount of titles considered by orgrr and how long it takes to
 collect this information."
  (interactive)
  (let* ((result (benchmark-run-compiled 1
@@ -1302,7 +1294,7 @@ collect this information."
        (containers (nreverse (hash-table-values orgrr-name-container)))
        (container-number-of-files 0)
        (global-number-of-files 0))
- (dolist (container containers) 
+ (dolist (container containers)
    (setq container-number-of-files (string-to-number (string-trim (shell-command-to-string (concat "find \"" (expand-file-name container) "\"  -type f -name \"*.org\" | wc -l")))))
    (setq global-number-of-files (+ global-number-of-files container-number-of-files)))
  (when (not orgrr-use-caching)
@@ -1311,11 +1303,11 @@ collect this information."
    (message "Orgrr considers %d titles and alias in %d org-files in %d containers. With caching turned on, collecting the titles took %s seconds to complete." (length titles) global-number-of-files (length containers) (format "%.6f" (car result))))))
     
 (defun orgrr-show-related-notes (arg)
-  "Show all related notes in `org-directory' to the current org-file. Related 
-means here notes linking to this note and the notes that link to them as well 
-as notes linked by the current note and the links from these notes. It is 
-assumed that the more times a note in environment is mentioned, the more 
-important it is. Notes of higher importance are listed at the top. Parents and 
+  "Show all related notes in `org-directory' to the current org-file. Related
+means here notes linking to this note and the notes that link to them as well
+as notes linked by the current note and the links from these notes. It is
+assumed that the more times a note in environment is mentioned, the more
+important it is. Notes of higher importance are listed at the top. Parents and
 grandparents as well as children and grandchildren.
 
 If called with C-u all containers will be searched for direct backlinks and
@@ -1396,7 +1388,7 @@ patient."
 	     ;; the following do list should only get the maxium length of any
 	     ;; zettel id used. This is necessary for adding the correct amount
 	     ;; of spacing in the list.
-	     (dolist (element orgrr-zettel-list) 
+	     (dolist (element orgrr-zettel-list)
 	       (let* ((last-char (substring selection-zettel -1))
 		      (is-last-char-num (string-match-p "[0-9]" last-char))
 		      (regex (if is-last-char-num
@@ -1404,9 +1396,9 @@ patient."
 			       (concat "^" selection-zettel))))
 		 (when (string-match regex element)
 		   (when (not (equal element selection-zettel))
-		     (when (> (length element) max-zettel-id-value)  
+		     (when (> (length element) max-zettel-id-value)
 		       (setq max-zettel-id-value (length element)))))))
-	     (dolist (element orgrr-zettel-list) 
+	     (dolist (element orgrr-zettel-list)
 	       (let* ((last-char (substring selection-zettel -1))
 		    (is-last-char-num (string-match-p "[0-9]" last-char))
 		    (regex (if is-last-char-num
@@ -1548,7 +1540,7 @@ patient."
     related-notes))
 
 (defun orgrr-change-container (&optional container)
-  "Switch between a list of containers stored in ~/.orgrr-container-list. 
+  "Switch between a list of containers stored in ~/.orgrr-container-list.
 orgrr-change-container can be called with a specific container."
   (interactive)
   (orgrr-check-for-container-file)
@@ -1567,7 +1559,7 @@ orgrr-change-container can be called with a specific container."
 
 ;;;###autoload
 (defun orgrr-check-for-container-file ()
-  "Creates a container file in ~/.orgrr-container-list in case one does 
+  "Creates a container file in ~/.orgrr-container-list in case one does
   not yet exist."
   (interactive)
   (when (not (file-exists-p "~/.orgrr-container-list"))
@@ -1594,7 +1586,7 @@ orgrr-change-container can be called with a specific container."
            (setq org-directory (gethash (car containers) orgrr-name-container)))))))
 
 (defun orgrr-get-list-of-containers ()
- "Return orgrr-name-container, a hashtable that includes a list of names and 
+ "Return orgrr-name-container, a hashtable that includes a list of names and
 locations of all containers."
  (orgrr-check-for-container-file)
  (let ((orgrr-name-container (make-hash-table :test 'equal)))
@@ -1653,14 +1645,14 @@ orgrr-name-container))
  (goto-char (point-min)))
 
 (defun orgrr-adjust-backlinks-in-current-container (filename)
-  "This is a helper function for orgrr-move-note and will adjust all links in 
-notes in the previous/old container referring to the moving note to its new 
+  "This is a helper function for orgrr-move-note and will adjust all links in
+notes in the previous/old container referring to the moving note to its new
 location. It does not account for changes of the filename itself!
 
-This one of the very few functions where orgrr is directly changing your data 
+This one of the very few functions where orgrr is directly changing your data
 (to fix the links). Be aware of this, but don't be scared."
-  (save-some-buffers t)  ;; necessary, as we are working directly with the files 
-  (let* ((orgrr-backlinks '()) 
+  (save-some-buffers t)  ;; necessary, as we are working directly with the files
+  (let* ((orgrr-backlinks '())
 	 (original-filename filename))
     ;; Add all files that mention filename to the list orgrr-backlinks.
     (with-temp-buffer
@@ -1672,14 +1664,14 @@ This one of the very few functions where orgrr is directly changing your data
 	  (if (string-match "\\.org$" line)
 	      (if (not (equal original-filename line))
 		  (push line orgrr-backlinks))))))
-;; This corrects the links. Please be aware that this is an intrusive action and might affect your data. 
+;; This corrects the links. Please be aware that this is an intrusive action and might affect your data.
   (dolist (filename orgrr-backlinks)
     (with-current-buffer (find-file-noselect filename)
       (orgrr-fix-all-links-buffer)))))
 
 (defun orgrr-fix-all-links-container ()
-   "This function can be used to fix all links in a container. This is useful 
-if you move a whole container/directory to a new location. When running this 
+   "This function can be used to fix all links in a container. This is useful
+if you move a whole container/directory to a new location. When running this
 function, make sure to be in the correct container."
   (interactive)
   (if (yes-or-no-p (format "Are you sure you want to fix all links in this container? "))
@@ -1718,7 +1710,7 @@ function, make sure to be in the correct container."
   (let* ((has-changed-p))
     (when (not new-title)
       (setq new-title (read-from-minibuffer "New title: ")))
-    (save-excursion  
+    (save-excursion
       (goto-char (point-min))
       (while (not (and (eobp)
 		       has-changed-p))
@@ -1738,14 +1730,14 @@ function, make sure to be in the correct container."
 (defun orgrr-compile-sequence (arg)
   "Creates a temporary buffer with all notes between two selected zettels
 (e.g. between two notes with values for zettel). Sequencing works similar
-as in orgrr-show-sequence. 
+as in orgrr-show-sequence.
 
-This feature has two main use-cases. First, it does allow to look at a 
+This feature has two main use-cases. First, it does allow to look at a
 stack of notes at once. It is, therefore, not unlike orgrr-show-sequence
-but includes the content of each zettel. Second, this also allows for 
-drafting chapters based on notes. 
+but includes the content of each zettel. Second, this also allows for
+drafting chapters based on notes.
 
-Clicking on the headlines or any other link will open the linked note in 
+Clicking on the headlines or any other link will open the linked note in
 the mode other-window (can be turned off).
 
 If called with C-u the buffer is created without headlines."
@@ -1798,7 +1790,7 @@ If called with C-u the buffer is created without headlines."
 				(concat "^" selection-zettel))))
 		  (when (and (string-match regex element)
 			     (not end-flag))
-		    (when (not call-with-arg) 
+		    (when (not call-with-arg)
 		      (insert (concat "* " (orgrr-return-fullzettel-linked-starred element) "\n\n")))
 		    (insert (concat (orgrr-return-fullzettel-content element) "\n\n")))
 		  (when (equal element end-point)
@@ -1810,7 +1802,7 @@ If called with C-u the buffer is created without headlines."
       (orgrr-close-buffer))))
 
 (defun orgrr-search (arg &optional search-string)
- "Search function for orgrr based on ripgrep. When called with C-u all 
+ "Search function for orgrr based on ripgrep. When called with C-u all
 containers will be searched. Regex don't need to be escaped."
  (interactive "P")
   (let ((call-with-arg nil))
@@ -1818,9 +1810,9 @@ containers will be searched. Regex don't need to be escaped."
       (setq call-with-arg 1))
     (when (not (string-match-p "search for *" (buffer-name (current-buffer))))
       (orgrr-get-all-meta)
-      (let* ((search (if (not search-string) 
+      (let* ((search (if (not search-string)
 			 (read-from-minibuffer "Search for: ")
-		       search-string)) 
+		       search-string))
 	     (search-buffer (concat "search for *" search "*"))
 	     (hits 0)
 	     (orgrr-counter-quote (make-hash-table :test 'equal))
@@ -1893,7 +1885,7 @@ containers will be searched. Regex don't need to be escaped."
 
 ;;;###autoload
 (defun orgrr-initialize ()
-  "Sets org-link-frame-setup for single-window-mode and multi-window mode 
+  "Sets org-link-frame-setup for single-window-mode and multi-window mode
 (which uses side-buffers). Also checks for org-directory, container
 file and caching."
   (when (equal orgrr-window-management "single-window")
