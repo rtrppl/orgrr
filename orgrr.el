@@ -226,8 +226,9 @@ require NCD-formating."
   "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all
 org-files and adds them to hashtables.
 
-Updates the following hashtables: `orgrr-title-filename', `orgrr-filename-title',
-`orgrr-zettel-filename', `orgrr-filename-zettel', `orgrr-filename-tags'."
+Updates the following hashtables: `orgrr-title-filename', 
+`orgrr-filename-title', `orgrr-zettel-filename', `orgrr-filename-zettel', 
+`orgrr-filename-tags'."
   (orgrr-check-caching)
   (when (not orgrr-use-caching)
     (clrhash orgrr-filename-title)
@@ -325,7 +326,7 @@ asynchronos functional replacement for `orgrr-get-all-meta'."
     (orgrr-update-all-meta-cache)))
 
 ;;;###autoload
-(defun orgrr-process-meta-cache (process event)
+(defun orgrr-process-meta-cache (_process event)
 "Processes the data from `orgrr-update-meta-cache' and fills the proper
 hashtables."
 (let ((update-buffer-name "*orgrr-update-meta*"))
@@ -461,8 +462,8 @@ Does not prepend tags and zettel in front of title and alias."
 
 (defun orgrr-selection-zettel (&optional current-zettel)
   "Prepare the symbol orgrr-selection for completing-read and send the result
-in selection to `orgrr-find-zettel' and `orgrr-insert-zettel'. Only includes files
-that have a value for zettel. Prepends zettel value in front of title and
+in selection to `orgrr-find-zettel' and `orgrr-insert-zettel'. Only includes
+files that have a value for zettel. Prepends zettel value in front of title and
 alias."
   (let* ((orgrr-selection-list (orgrr-prepare-zettel-selection-list))
 	(orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
@@ -808,11 +809,10 @@ title to the note. Adds stars for org-bolding."
       (string-trim (buffer-string)))))
 
 (defun orgrr-return-zettel-from-title (title)
-  "Returns the zettel from a title."
+  "Returns the matched zettel from a title."
   (let* ((matched-title-filename (gethash title orgrr-title-filename))
-	 (matched-zettel (gethash (concat "\\" matched-title-filename) orgrr-filename-zettel))
-	 (zettel))
-    (setq zettel matched-zettel)))
+	 (matched-zettel (gethash (concat "\\" matched-title-filename) orgrr-filename-zettel)))
+    matched-zettel))
 
 (defun orgrr-open-previous-zettel ()
   "Opens the previous zettel."
@@ -863,8 +863,7 @@ selected file name does not exist, a new one is created."
 (defun orgrr-quick-add (&optional container)
   "Create org-file in container or org-directory."
   (interactive)
-  (let* ((save-org-directory org-directory)
-	 (filename)
+  (let* ((filename)
 	 (orgrr-name-container (orgrr-get-list-of-containers))
 	 (containers (nreverse (hash-table-keys orgrr-name-container)))
 	 (time))
@@ -942,7 +941,8 @@ If the selected title does not exist, a new note is created."
     (orgrr-open-file filename)))
 
 (defun orgrr-rename (&optional old-filename new-filename)
-  "Rename current file and adjust all mentions of said file in other org-files in all containers. Does work across directories."
+  "Rename current file and adjust all mentions of said file in other org-files
+in all containers. Does work across directories."
   (interactive)
   (let* ((old-filename-mentions '())
 	 (orgrr-name-container (orgrr-get-list-of-containers))
@@ -983,6 +983,7 @@ filename (with the creation date) will not be modified."
                         default-directory
 			(buffer-file-name)))
 	(old-creation-time)
+	(new-title)
 	(new-filename))
     (save-buffer)
     (setq new-title (read-from-minibuffer "New title: "))
@@ -1166,7 +1167,7 @@ create a new one. Returns a project."
 	     (let ((title (gethash (concat "\\" (file-name-nondirectory line)) orgrr-short_filename-title)))
 	       (setq orgrr-selection-list (cons title orgrr-selection-list))))))))
      (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
-     (setq selection (completing-read "Select: " orgrr-selection-list))
+     (setq selection (completing-read "Select: " orgrr-selection-list-completion))
      (if (string-match "^\(" selection)
 	 (setq selection (replace-regexp-in-string "\(.*?\) " "" selection)))
      selection))
@@ -1176,7 +1177,6 @@ create a new one. Returns a project."
 exception of the source window."
   (orgrr-get-all-meta)
   (let* ((orgrr-selection-list ())
-	 (list-of-windows '())
 	 (orgrr-selection-list-completion)
 	 (current-buffer-file (buffer-file-name (current-buffer)))
 	 (selection))
@@ -1191,7 +1191,7 @@ exception of the source window."
 	       (setq orgrr-selection-list (cons title orgrr-selection-list))))))))
      (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
      (when (>= (length orgrr-selection-list) 2)
-       (setq selection (completing-read "Select: " orgrr-selection-list)))
+       (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
      (when (= (length orgrr-selection-list) 1)
        (setq selection (car orgrr-selection-list)))
      (if (string-match "^\(" selection)
@@ -1505,7 +1505,6 @@ patient."
       (goto-char (point-min))
       (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
 	 (let* ((filename (match-string 1))
-		(new-directory (file-name-directory filename))
 		(new-filename (file-name-nondirectory filename)))
 	   (if (and (not (equal original-filename new-filename))(member (concat "\\" new-filename) (hash-table-keys orgrr-short_filename-filename)))
 	       (progn
@@ -1524,8 +1523,7 @@ patient."
 		 (goto-char (point-min))
 		 (while (re-search-forward "file:\\(.*?\\.org\\)" nil t)
 		   (let* ((2nd-filename (match-string 1))
-			  (2nd-new-directory (file-name-directory 2nd-filename))
-			  (2nd-new-filename (file-name-nondirectory 2nd-filename)))
+		  	  (2nd-new-filename (file-name-nondirectory 2nd-filename)))
 		     (if (and (not (equal original-filename 2nd-new-filename))(member (concat "\\" 2nd-new-filename) (hash-table-keys orgrr-short_filename-filename)))
 			 (progn
 			   (if (not (member (concat "\\" 2nd-new-filename) (hash-table-keys orgrr-filename-mentions)))
@@ -1688,9 +1686,7 @@ function, make sure to be in the correct container."
   "Reads out #+roam_key."
   (let* ((current-entry nil)
 	 (roam-key nil)
-	 (buffer (buffer-substring-no-properties (point-min) (point-max)))
-	 (line)
-	 (key))
+	 (buffer (buffer-substring-no-properties (point-min) (point-max))))
     (with-temp-buffer
       (insert buffer)
       (goto-char (point-min))
