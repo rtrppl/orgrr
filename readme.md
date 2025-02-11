@@ -1,6 +1,6 @@
 # orgrr
 
-orgrr aims to facilitate the writing, analyzing, and managing of Orgmode notes in Emacs. It is inspired by [Zettelkasten-like](https://www.youtube.com/watch?v=qRSCKSPMuDc) systems.
+orgrr aims to facilitate writing and managing Orgmode notes in Emacs. It is inspired by [Zettelkasten-like](https://www.youtube.com/watch?v=qRSCKSPMuDc) systems and designed to take on thousands of notes. orgrr includes advanced functionality to structure and analyze the relationships between notes.
 
 These are the primary functions orgrr provides:
 
@@ -16,14 +16,23 @@ These are the primary functions orgrr provides:
 
 - **orgrr-show-multiverse** combines `orgrr-show-sequence` and `orgrr-show-related-notes` in one buffer ([more on orgrr-show-multiverse](#orgrr-show-multiverse)). 
 
-- **orgrr-search** and **orgrr-global-search** use ripgrep to either 
-search the local container or all containers for a specified term. Regex is welcome. 
+- **orgrr-search** and **orgrr-global-search** use `ripgrep` to either 
+search the local container (=`org-directory`; see also  [orgrr-containers](#orgrr-containers)) or all containers for a specified term. Regex is welcome. 
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
 - **orgrr-quick-add** and **orgrr-global-quick-add** are for rapid note creation ([more on orgrr-quick-add](#orgrr-quick-add)).
 
 ## Changelog
+
+**1.0.2**
+- Improved handling of `orgrr-update-cache` (should fix "trying to delete non-existing buffer" error)
+
+**1.0.1**
+- Fixes some issues with special characters in filenames
+
+**1.0**
+- This version adds caching as an option, resulting in massive speed gains. Activate by adding `(setq orgrr-use-caching t)` to your .emacs (see [Installation](#installation) for more details).
 
 **0.9.19**
 - Improved spacing for lists in `orgrr-show-sequence` and `orgrr-show-multiverse`
@@ -99,6 +108,14 @@ If you don't already have done so, you also should set an org-directory as the l
 (setq org-directory "~/path/to/org-directory")
 ```
 
+Version 1.0 adds caching as an option, which can be activated by:
+
+```elisp
+(setq orgrr-use-caching t)
+```
+
+This will improve the speed of all functions by a factor of **100** (conservative estimate for `orgrr-show-backlinks` or `orgrr-show-backlinks`) to **100000+** (for simple functions such as `orgrr-find`; e.g. from 0.5 seconds to 0.000002 seconds for 4500+ notes). The trade-off here is that the meta-data for all notes is only updated when you save a note (or when you use `orgrr-update-cache`). 
+
 Finally, you may also want to set keybindings for the main functions (I have bound the Mac-command key to super/s):
 
 ```elisp
@@ -168,14 +185,10 @@ Via use-package and straight a typical configuration of orgrr could look like th
 	("C-o n" . orgrr-open-next-zettel)
 	("C-o N" . orgrr-no-find-zettel)
 	("C-o O" . orgrr-open-ref-url)
-	("C-o c" . orgrr-compile-sequence)))
-	
-```
-
-As above, if you don't already have done so, you also should set an org-directory as the location for your notes.
-
-```org
-(setq org-directory "~/path/to/org-directory")
+	("C-o c" . orgrr-compile-sequence))
+  :config
+  (setq orgrr-use-caching t) ;; remove this if you don't want to use caching
+  (setq org-directory "~/path/to/org-directory"))
 ```
 
 ### Known Issue: Orgmode fontification glitch
@@ -196,7 +209,7 @@ orgrr began as a nearly feature-complete replica of the core functionality of [o
 
 **A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files, which is stored in hashtables. The aim is to have no dependencies on sql or related software. A second difference is that orgrr sticks to the ideal of every note being a single file (no nodes!). The final difference is relative minimalism - orgrr should have all necessary features to write, analyze, and manage notes - and draw on Orgmode/Emacs for everything else.**
 
-This package primarily address my own needs and I have been using orgrr almost daily for more than a year now (September 2024). My main container has more than 4000 notes and orgrr is much faster than org-roam. Even on a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest Zettelkasten packages available for Emacs.
+This package primarily address my own needs and I have been using orgrr almost daily for two years now (February 2025). My main container (see [orgrr-containers](#orgrr-containers)) has more than 4500 notes and orgrr is much faster than org-roam (even without caching). On a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest Zettelkasten packages available for Emacs.
 
 **As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions. If you are using a Git repository, a great solution for iOS access is [Working Copy](https://workingcopy.app/) due to its native support for Orgmode. In a related manner (and as a reminder), the [Github website](https://github.com/) also has good support for Orgmode.** 
 
@@ -232,7 +245,7 @@ There is an ongoing debate on whether or not a true Zettelkasten-system also nee
 
 To be honest, initially, I did not see the need to add this. After all, didn't Luhmann use zettel IDs primarily for linking? Would'd this be much more efficiently handled with org-links? Over time, however, the idea grew on me for a particular reason: This is another great way to show relationships between notes! It is also the only option to create a hierarchy of notes. Both aspects are very useful when you have more than a few hundred notes. 
 
-Values for zettel (i.e. zettel IDs) are added without quotation marks (and you should use [orgrr-add-zettel](#orgrr-add-zettel) for this). Using zettel values in orgrr makes most sense if you stick to [Luhmann's naming scheme](https://niklas-luhmann-archiv.de/bestand/zettelkasten/zettel/ZK_1_NB_1-5_V), e.g. 1a, 1a1, 1a2, 1a2a, 1a3, 1a3a...., as orgrr is using lexical sorting for these values.
+Values for zettel (i.e. zettel IDs) are added without quotation marks (and you should use [orgrr-add-zettel](#orgrr-add-zettel) for this). Using zettel values in orgrr makes most sense if you stick to [Luhmann's naming scheme](https://niklas-luhmann-archiv.de/bestand/zettelkasten/zettel/ZK_1_NB_1-5_V), e.g. 1, 1a, 1a1, 1a2, 1a2a, 1a3, 1a3a...., as orgrr is using lexical sorting for these values.
 
 ```org
 #+zettel:   value
@@ -459,7 +472,7 @@ This is what I did for a long time. But every time I (re-)installed my setup, e.
 
 - Is that all?
 
-No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only about 1650 lines of code (December 2024) are necessary to write a note-taking system that is not too far off from Denote or org-roam. I use very few external libraries and no common lisp. This should make the code really easy to understand even for those just getting started with elisp. 
+No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only about 1900 lines of code (February 2025) are necessary to write a note-taking system that is not too far off from Denote or org-roam. I use very few external libraries and no common lisp. This should make the code really easy to understand even for those just getting started with elisp. 
 
 That this thing works, provides me with independence from note-taking trends or specific operating systems, which is one of the reasons I don't see myself stopping to work on this project anytime soon.
 
@@ -469,10 +482,10 @@ orgrr started as an acronym for "org-roam ripgrep" or "org-roam replica", as org
 
 - Is this a subtle criticism directed at the org-roam approach?
 
-Not at all! The project was born out of admiration for the pioneering work done by Jethro Kuan and others. You should check out the real org-roam. 
+Not at all! The project was born out of admiration for the pioneering work done by Jethro Kuan and others. You should check out the real org-roam (although it does seem that package is currently not maintained). 
 
 - Why did you remove orgrr-extensions.el?
 
-orgrr is a personal project and only includes functions that I actually use. Since writing `orgrr-save-website`, which draws on `org-web-tools` and `pandoc`, I discovered that the results for many pages were less than optimal. I wrote a little package to transform websites into minimal orgmode documents. The results were promising and I now exclusively use [website2org](https://github.com/rtrppl/website2org). Maybe it works for you as well.
+orgrr is primarily a personal project and only includes functions that I actually use. Since writing `orgrr-save-website`, which draws on `org-web-tools` and `pandoc`, I discovered that the results for many pages were less than optimal. I wrote a little package to transform websites into minimal orgmode documents. The results were promising and I now exclusively use [website2org](https://github.com/rtrppl/website2org). Maybe it works for you as well.
 
 `orgrr-show-findlike` also produced increasingly suboptimal results and took way longer than `orgrr-show-related-notes`. It was a fun experiment but not really all that useful.
