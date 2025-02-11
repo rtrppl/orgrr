@@ -1298,9 +1298,9 @@ collect this information."
    (setq container-number-of-files (string-to-number (string-trim (shell-command-to-string (concat "find \"" (expand-file-name container) "\"  -type f -name \"*.org\" | wc -l")))))
    (setq global-number-of-files (+ global-number-of-files container-number-of-files)))
  (when (not orgrr-use-caching)
-   (message "Orgrr considers %d titles and alias in %d org-files in %d containers. Collecting the titles took %s seconds to complete." (length titles) global-number-of-files (length containers) (format "%.5f" (car result))))
+   (message "Orgrr considers %d titles and aliases in %d org-files in %d containers. Collecting the titles took %s seconds to complete." (length titles) global-number-of-files (length containers) (format "%.5f" (car result))))
  (when orgrr-use-caching
-   (message "Orgrr considers %d titles and alias in %d org-files in %d containers. With caching turned on, collecting the titles took %s seconds to complete." (length titles) global-number-of-files (length containers) (format "%.6f" (car result))))))
+   (message "Orgrr considers %d titles and aliases in %d org-files in %d containers. With caching turned on, collecting the titles took %s seconds to complete." (length titles) global-number-of-files (length containers) (format "%.6f" (car result))))))
     
 (defun orgrr-show-related-notes (arg)
   "Show all related notes in `org-directory' to the current org-file. Related
