@@ -114,7 +114,7 @@ Version 1.0 adds caching as an option, which can be activated by:
 (setq orgrr-use-caching t)
 ```
 
-This will improve the speed of all functions by a factor of **100** (conservative estimate for `orgrr-show-backlinks` or `orgrr-show-backlinks`) to **100000+** (for simple functions such as `orgrr-find`; e.g. from 0.5 seconds to 0.000002 seconds for 4500+ notes). The trade-off here is that the meta-data for all notes is only updated when you save a note (or when you use `orgrr-update-cache`). 
+This will improve the speed of all functions by a factor of 100 (conservative estimate for `orgrr-show-backlinks` or `orgrr-show-backlinks`) to 100000+ (for simple functions such as `orgrr-find`; e.g. from 0.5 seconds to 0.000002 seconds for 4500+ notes). The trade-off here is that the meta-data for all notes is only updated when you save a note (or when you use `orgrr-update-cache`). 
 
 Finally, you may also want to set keybindings for the main functions (I have bound the Mac-command key to super/s):
 
@@ -205,17 +205,17 @@ One of the maintainers of Orgmode referred to this as a [fontification glitch](h
 
 ### Origin story
 
-orgrr began as a nearly feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1), built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regex and hashtables. It does recognize alternative note titles (`#+roam_alias`) and tags (`#+roam_tags`) as introduced by org-roam. orgrr currently only works with [org-files](https://orgmode.org) (i.e. in a technical sense: files ending in .org).
+orgrr began as a nearly feature-complete replica of the core functionality of [org-roam v1](https://github.com/org-roam/org-roam-v1), built using [ripgrep](https://github.com/BurntSushi/ripgrep) (rg), a lot of regexp and Elisp hashtables. While the project has evolved quite a bit since then, the main ideas underlying it have not changed: 
 
-**A crucial difference between org-roam and orgrr is the use of databases. orgrr only relies on rg to update it's data about org-files, which is stored in hashtables. The aim is to have no dependencies on sql or related software. A second difference is that orgrr sticks to the ideal of every note being a single file (no nodes!). The final difference is relative minimalism - orgrr should have all necessary features to write, analyze, and manage notes - and draw on Orgmode/Emacs for everything else.**
+**orgrr only relies on rg to update it's data about org-files, which is stored in hashtables. The aim is to have no dependencies on sql or related database software. A second difference is that orgrr sticks to the ideal of every note being a single file (no org-roam v2 "nodes"). The final difference is relative minimalism - orgrr should have all necessary features to write, analyze, and manage notes - and draw on Orgmode/Emacs for everything else.**
 
 This package primarily address my own needs and I have been using orgrr almost daily for two years now (February 2025). My main container (see [orgrr-containers](#orgrr-containers)) has more than 4500 notes and orgrr is much faster than org-roam (even without caching). On a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest Zettelkasten packages available for Emacs.
 
-**As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions. If you are using a Git repository, a great solution for iOS access is [Working Copy](https://workingcopy.app/) due to its native support for Orgmode. In a related manner (and as a reminder), the [Github website](https://github.com/) also has good support for Orgmode.** 
+**As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions. If you are using a Git repository, a great solution for iOS access is [Working Copy](https://workingcopy.app/) due to its native support for Orgmode. The [Github website](https://github.com/) also has good support for Orgmode.** 
 
 ### Basic design of a note
 
-In orgrr all notes are assumed to follow a certain logic regarding metadata. The design principles used here are similar to org-roam v1 and interoperation between orgrr and org-roam v1 is possible (and was intended). Filenames themselves are used as unique identifiers and changing them without adjusting backlinks will break the connection between two notes (see also [orgrr-rename](#orgrr-rename)).
+In orgrr all notes are assumed to follow a certain logic regarding metadata. The design principles used here are similar to org-roam v1 and interoperation between orgrr and org-roam v1 is possible (and was intended). Filenames themselves are used as **unique identifiers** and changing them without adjusting backlinks will break the connection between two notes (see also [orgrr-rename](#orgrr-rename)).
 
 At the very minimum **a note file for orgrr is an .org file that includes the following line**:
 
@@ -243,7 +243,7 @@ Tags are added without quotation marks, separated by space.
 
 There is an ongoing debate on whether or not a true Zettelkasten-system also needs to respect Luhmann's emphasis on the importance of the sequence of notes ("Folgezettel"). For an in-depth discussion of the topic see [here](https://zettelkasten.de/folgezettel/).
 
-To be honest, initially, I did not see the need to add this. After all, didn't Luhmann use zettel IDs primarily for linking? Would'd this be much more efficiently handled with org-links? Over time, however, the idea grew on me for a particular reason: This is another great way to show relationships between notes! It is also the only option to create a hierarchy of notes. Both aspects are very useful when you have more than a few hundred notes. 
+To be honest, initially, I did not see the need to add this. After all, didn't Luhmann use zettel IDs primarily for linking? Would'd this be much more efficiently handled with org-links? Over time, however, the idea grew on me for a particular reason: This is another great way to discover relationships between notes! It is also the only option to create a hierarchy of notes. Both aspects are very useful when you have more than a few hundred notes. 
 
 Values for zettel (i.e. zettel IDs) are added without quotation marks (and you should use [orgrr-add-zettel](#orgrr-add-zettel) for this). Using zettel values in orgrr makes most sense if you stick to [Luhmann's naming scheme](https://niklas-luhmann-archiv.de/bestand/zettelkasten/zettel/ZK_1_NB_1-5_V), e.g. 1, 1a, 1a1, 1a2, 1a2a, 1a3, 1a3a...., as orgrr is using lexical sorting for these values.
 
@@ -288,7 +288,7 @@ orgrr-projects thereby enable rapid access to a set of paragraphs and are the ma
 
 ### orgrr-related-notes
 
-There are many different attempts to surface related notes in note-taking systems in Emacs (and outside of it). Most of them draw on some variation of text-analysis and algorithmic determination of proximity. I always felt that the links one personally adds to notes are an underused asset for assessing the proximity between notes. This function collects all notes related (via links) to the current note to the second degree - it collects the backlinks for the backlinks and the outgoing links mentioned by outgoing links. Using a family as analogy, orgrr considers all parents and grandparents as well as all children and grandchildren of a note. All links to a specific note are counted and the resulting list is ranked by frequency. This is much quicker (about 10 times) than the excellent [org-similarity](https://github.com/brunoarine/org-similarity) and still produces very interesting results. See the example below:
+There are many different attempts to surface related notes in note-taking systems in Emacs (and outside of it). Most of them draw on some variation of text-analysis and algorithmic determination of proximity. I always felt that the links one personally adds to notes are an underused asset for assessing the proximity between notes. This function collects all notes related (via links) to the current note to the second degree - it collects the backlinks for the backlinks and the outgoing links mentioned by outgoing links. Using a family as an analogy, orgrr considers all parents and grandparents as well as all children and grandchildren of a note. All links to a specific note are counted and the resulting list is ranked by frequency. This is much quicker (about 10 times) than the excellent [org-similarity](https://github.com/brunoarine/org-similarity) and still produces very interesting results. See the example below:
 
 ![orgrr-show-related-notes](/2024-orgrr-show-related-notes.gif)
 
@@ -296,7 +296,7 @@ See also [orgrr-show-related-notes](#orgrr-show-related-notes).
 
 ### orgrr-containers
 
-Another feature that felt missing in orgrr (and org-roam v1) was the option to keep several different sets of data. [Obsidian](https://obsidian.md)'s [vaults](https://help.obsidian.md/Getting+started/Create+a+vault) is an example of this idea and has been the inspiration for orgrr-containers. Each orgrr-container is a folder containing org-files (that may have sub-folders with org-files of their own). Denote now also has [a silo feature](https://protesilaos.com/emacs/denote#h:15719799-a5ff-4e9a-9f10-4ca03ef8f6c5) that seems similar. 
+Another feature that felt missing in orgrr (and org-roam v1) was the option to keep several different sets of data. [Obsidian](https://obsidian.md)'s [vaults](https://help.obsidian.md/Getting+started/Create+a+vault) is an example of this idea and has been the inspiration for **orgrr-containers**. Each orgrr-container is a folder containing org-files (that may have sub-folders with org-files of their own). Denote now also has [a silo feature](https://protesilaos.com/emacs/denote#h:15719799-a5ff-4e9a-9f10-4ca03ef8f6c5) that seems similar. 
 
 Please note that this works by changing the "org-directory" through `orgrr-change-container`. The file `~/.orgrr-container-list` contains a list of all containers (to which you can add and remove containers by using `orgrr-create-container` and `orgrr-remove-container`, see also [orgrr-container-commands](#orgrr-container-commands)). If your setup is anything like mine, this also will affect your org-agenda (for me this is a feature). 
 
