@@ -25,6 +25,9 @@ search the local container (=`org-directory`; see also  [orgrr-containers](#orgr
 
 ## Changelog
 
+**1.0.3**
+- Better handling of existing headings of notes by `orgrr-compile-sequence` (=increasing them by one level)
+
 **1.0.2**
 - Improved handling of `orgrr-update-cache` (should fix "trying to delete non-existing buffer" error)
 
@@ -193,7 +196,7 @@ Via use-package and straight a typical configuration of orgrr could look like th
 
 ### Known Issue: Orgmode fontification glitch
 
-A new note in orgrr starts with a title (for details see [orgrr's way of dealing with notes](#orgrr's-way-of-dealing-with-notes)). That title is used as the source for the filename but special characters are replaced by underscores `_`. As you may know, Orgmode uses underscores for emphasis, e.g. subscript or underlining. While filenames in Orgmode links are usually ignored, sometimes they are not. Many links in the same paragrpah therefore may lead to some wild underlining. The links themselves, however, are not affected and will continue to work. Org-export is also not affected. 
+A new note in orgrr starts with a title (for details see [orgrr's way of dealing with notes](#orgrr's-way-of-dealing-with-notes)). That title is used as the source for the filename but special characters are replaced by underscores `_`. As you may know, Orgmode uses underscores for emphasis, e.g. subscript or underlining. While filenames in Orgmode links are usually ignored, sometimes they are not. Many links in the same paragraph therefore may lead to some wild underlining. The links themselves, however, are not affected and will continue to work. Org-export is also not affected. 
 
 One of the maintainers of Orgmode referred to this as a [fontification glitch](https://fosstodon.org/@yantar92/113527782876327486#.). There seems to be no good fix for this at the moment. Hence, if you share my design sensibilities, you may want to turn subscript off. The easiest way to do this is to add this line to your config:
 

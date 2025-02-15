@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 1.0.2
+;; Version: 1.0.3
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines
 
@@ -30,6 +30,10 @@
 ;;
 ;;
 ;;; News
+;;
+;; 1.0.3
+;; - Better handling of existing headings of notes by 
+;; `orgrr-compile-sequence' (=increasing them by one level)
 ;;
 ;; 1.0.2
 ;; - Improved handling of `orgrr-update-cache'
@@ -1788,7 +1792,10 @@ If called with C-u the buffer is created without headlines."
 			     (not end-flag))
 		    (when (not call-with-arg)
 		      (insert (concat "* " (orgrr-return-fullzettel-linked-starred element) "\n\n")))
-		    (insert (concat (orgrr-return-fullzettel-content element) "\n\n")))
+;;Increase the Orgmode headings of the original note by one
+		    (let* ((zettel-content (orgrr-return-fullzettel-content element))
+			   (zettel-content (replace-regexp-in-string "^\\(*\\)" "\\1*" zettel-content)))
+		    (insert (concat zettel-content "\n\n"))))
 		  (when (equal element end-point)
 		      (setq end-flag t)))))
 ;;Starting here it is only window-management
