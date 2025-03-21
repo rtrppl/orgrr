@@ -4,9 +4,9 @@ orgrr aims to facilitate writing and managing Orgmode notes in Emacs. It is insp
 
 These are the primary functions orgrr provides:
 
-- **orgrr-find** will find and open a note ([more on the basic design of notes in orgrr](#basic-design-of-a-note)) in the `org-directory`. If the title (or alias) entered does not exist, a new note is created ([more on orgrr-find](#orgrr-find)). 
+- **orgrr-find** will find and open a note ([more on the basic design of notes in orgrr](#basic-design-of-a-note)) in the `org-directory` (or any container; see also [orgrr-containers](#orgrr-containers)). If the title (or alias) entered does not exist, a new note is created ([more on orgrr-find](#orgrr-find)). 
 
-- **orgrr-insert** will insert a link to another note in the `org-directory`. If the title (or alias) entered does not exist, a new note is created ([more on orgrr-insert](#orgrr-insert)).
+- **orgrr-insert** will insert a link to another note in the `org-directory` (or any container). If the title (or alias) entered does not exist, a new note is created ([more on orgrr-insert](#orgrr-insert)).
 
 - **orgrr-show-sequence** will show a sequence of notes ("Folgezettel") for a selected note in a buffer ([more on orgrr-show-sequence](#orgrr-show-sequence)). Use **orgrr-compile-sequence** to create a temporary buffer with the content from a sequence of notes  ([more on orgrr-compile-sequence](#orgrr-compile-sequence)).
 
@@ -17,13 +17,16 @@ These are the primary functions orgrr provides:
 - **orgrr-show-multiverse** combines `orgrr-show-sequence` and `orgrr-show-related-notes` in one buffer ([more on orgrr-show-multiverse](#orgrr-show-multiverse)). 
 
 - **orgrr-search** and **orgrr-global-search** use `ripgrep` to either 
-search the local container (=`org-directory`; see also  [orgrr-containers](#orgrr-containers)) or all containers for a specified term. Regex is welcome. 
+search the local container or all containers for a specified term. Regex is welcome. 
 
 - **orgrr-add-to-project** and **orgrr-open-project** are for note management and quick access to a limited number of notes.
 
 - **orgrr-quick-add** and **orgrr-global-quick-add** are for rapid note creation ([more on orgrr-quick-add](#orgrr-quick-add)).
 
 ## Changelog
+
+**1.0.4**
+- Updated readme; More improvements for results buffers: read-only mode, hit n/p for next/previous link; </> for first/last link; enter/return to open the link at point
 
 **1.0.3**
 - Better handling of existing headings of notes by `orgrr-compile-sequence` (=increasing them by one level)
@@ -214,7 +217,7 @@ orgrr began as a nearly feature-complete replica of the core functionality of [o
 
 This package primarily address my own needs and I have been using orgrr almost daily for two years now (February 2025). My main container (see [orgrr-containers](#orgrr-containers)) has more than 4500 notes and orgrr is much faster than org-roam (even without caching). On a Rasberry Pi 5, rg needs less than a second to extract all of the meta-data! It may be among the fastest Zettelkasten packages available for Emacs.
 
-**As no database is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions. If you are using a Git repository, a great solution for iOS access is [Working Copy](https://workingcopy.app/) due to its native support for Orgmode. The [Github website](https://github.com/) also has good support for Orgmode.** 
+**As no database file is involved, orgrr works great with [Dropbox](https://www.dropbox.com/), [Google Drive](https://drive.google.com/) or other file-syncing solutions. If you are using a Git repository, a great solution for iOS access is [Working Copy](https://workingcopy.app/) due to its native support for Orgmode. The [Github website](https://github.com/) also has good support for Orgmode.** 
 
 ### Basic design of a note
 
@@ -467,7 +470,8 @@ These functions were a byproduct of rewriting orgrr-move-note and correct links 
 
 Probably. The way how org-roam v1 operated really resonated for me. I liked the idea of my notes being a collection of many small text files. The mandatory use of org-id in org-roam v2 made it challenging to understand where links in the notes would be ultimately direct to. A potential conversion to Markdown or something else would also be much harder - in short (and I might be wrong on this) the changes between v1 and v2 seemed to make org-roam less future-proof, while offering no additional benefit for my personal use-case.
 
-If you don't like orgrr but are interested in similar note-taking systems, you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). Also, [minaduki](https://github.com/kisaragi-hiu/minaduki) is a seemingly well-maintained real (fork) of org-roam v1, if that is what you are looking for.  There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only discovered after orgrr was done. Another interesting project with a (very) long history is [howm](https://github.com/kaorahi/howm), which also can be set to use rg (see [here](https://leahneukirchen.org/blog/archive/2022/03/note-taking-in-emacs-with-howm.html)).
+If you don't like orgrr but are interested in similar note-taking systems, you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). If you like org-roam v2 but need a speedier solution, [org-node](https://github.com/meedstrom/org-node) appears to be a much that. Also, [minaduki](https://github.com/kisaragi-hiu/minaduki) is a seemingly well-maintained real (fork) of org-roam v1, if that is what you are looking for.  There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only discovered after orgrr was done. Another interesting project with a (very) long history is [howm](https://github.com/kaorahi/howm), which also can be set to use rg (see [here](https://leahneukirchen.org/blog/archive/2022/03/note-taking-in-emacs-with-howm.html)).
+
 
 - But you could have continued to use org-roam v1!
 

@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 1.0.3
+;; Version: 1.0.4
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines
 
@@ -31,6 +31,11 @@
 ;;
 ;;; News
 ;;
+;; 1.0.4 
+;; - Updated readme; More improvements for results buffers: read-only mode, hit n/p for
+;; next/previous link; </> for first/last link; enter/return to open the
+;; link at point
+;;
 ;; 1.0.3
 ;; - Better handling of existing headings of notes by 
 ;; `orgrr-compile-sequence' (=increasing them by one level)
@@ -51,17 +56,6 @@
 ;; 0.9.18
 ;; - Added `orgrr-add-to-other-window'
 ;;
-;; 0.9.17
-;; - Added option to use active region for `orgrr-add-to-project'
-;;
-;; 0.9.16
-;; - Added convience: typing "q" in any results buffer now closes that buffer
-;; (via a minor-mode)
-;;
-;; 0.9.15
-;; - Added `orgrr-show-multiverse'; modified `orgrr-show-sequence' to
-;; also show parent zettel
-;;
 ;;
 ;; For more changes see the changelog.
 ;;
@@ -78,7 +72,7 @@
 
 ;; The following list of hashtables create the data structure in which orgrr stores metadata on notes.
 (defvar orgrr-title-filename (make-hash-table :test 'equal) "Hashtable with the key title and the value filename.")
-(defvar orgrr-filename-title (make-hash-table :test 'equal) "Hashtable with the the key filename and the value title.")
+(defvar orgrr-filename-title (make-hash-table :test 'equal) "Hashtable with the key filename and the value title.")
 (defvar orgrr-filename-tags (make-hash-table :test 'equal) "Hashtable with the key filename and the value tags.")
 (defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable with the key filename without path and the value filename+path.")
 (defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with the key zettel and the value filename.")
@@ -95,7 +89,25 @@
   :lighter " orgrr-results-buffer"
   :keymap (let ((map (make-sparse-keymap)))
             (define-key map (kbd "q") 'orgrr-close-buffer)
+	    (define-key map (kbd "n") 'org-next-link)
+	    (define-key map (kbd "p") 'org-previous-link)
+	    (define-key map (kbd "<") 'orgrr-org-goto-first-link)
+	    (define-key map (kbd ">") 'orgrr-org-goto-last-link)
+	    (define-key map (kbd "<return>") 'org-open-at-point)
+	    (define-key map (kbd "SPC") 'scroll-up-command)
             map))
+
+(defun orgrr-org-goto-first-link ()
+  "Move point to the first link in the current buffer."
+  (interactive)
+  (goto-char (point-min))  
+  (org-next-link))
+
+(defun orgrr-org-goto-last-link ()
+  "Move point to the last link in the current buffer."
+  (interactive)
+  (goto-char (point-max)) 
+  (org-previous-link))  
   
 (defun orgrr-open-file (filename)
   "A wrapper to open FILENAME either with `find-file' or `find-file-other-window'."
@@ -125,7 +137,8 @@
    (goto-char (point-min))
    (org-next-visible-heading 2)
    (orgrr-results-buffer-mode t)
-   (deactivate-mark)))
+   (deactivate-mark)
+   (setq buffer-read-only t)))
 
 (defun orgrr-close-buffer ()
    "A wrapper to close BUFFER according to `orgrr-window-management' settings."

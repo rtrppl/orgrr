@@ -1,5 +1,14 @@
 #+title: orgrr CHANGELOG
 
+*0.9.17*
+- Added option to use active region for =orgrr-add-to-project=
+
+*0.9.16*
+- Added convience: typing "q" in any results buffer now closes that buffer (via a minor-mode)
+
+*0.9.15*
+- Added =orgrr-show-multiverse=; modified =orgrr-show-sequence= to also show parent zettel
+
 *0.9.16* - Added convience: typing "q" in any results buffer now closes that buffer (via a minor-mode)
 
 *0.9.15* - Added =orgrr-show-multiverse=; modified =orgrr-show-sequence= to also show parent zettel
