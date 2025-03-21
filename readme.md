@@ -470,8 +470,9 @@ These functions were a byproduct of rewriting orgrr-move-note and correct links 
 
 Probably. The way how org-roam v1 operated really resonated for me. I liked the idea of my notes being a collection of many small text files. The mandatory use of org-id in org-roam v2 made it challenging to understand where links in the notes would be ultimately direct to. A potential conversion to Markdown or something else would also be much harder - in short (and I might be wrong on this) the changes between v1 and v2 seemed to make org-roam less future-proof, while offering no additional benefit for my personal use-case.
 
-If you don't like orgrr but are interested in similar note-taking systems, you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). If you like org-roam v2 but need a speedier solution, [org-node](https://github.com/meedstrom/org-node) appears to be a much that. Also, [minaduki](https://github.com/kisaragi-hiu/minaduki) is a seemingly well-maintained real (fork) of org-roam v1, if that is what you are looking for.  There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only discovered after orgrr was done. Another interesting project with a (very) long history is [howm](https://github.com/kaorahi/howm), which also can be set to use rg (see [here](https://leahneukirchen.org/blog/archive/2022/03/note-taking-in-emacs-with-howm.html)).
+If you don't like orgrr but are interested in similar note-taking systems, you may want to check out [org-roam](https://www.orgroam.com), [Denote](https://github.com/protesilaos/denote) or [ZK](https://github.com/localauthor/zk). If you like org-roam v2 but need a speedier solution, [org-node](https://github.com/meedstrom/org-node) appears to be a that. Also, [minaduki](https://github.com/kisaragi-hiu/minaduki) is a seemingly well-maintained real (fork) of org-roam v1, if that is what you are looking for. There is at least one more project that uses rg, [gkroam](https://github.com/Kinneyzhang/gkroam), which I only discovered after orgrr was done. Another interesting project with a (very) long history is [howm](https://github.com/kaorahi/howm), which also can be set to use rg (see [here](https://leahneukirchen.org/blog/archive/2022/03/note-taking-in-emacs-with-howm.html)).
 
+If you want to built your own note-taking system you might want to take a look at [indexed](https://github.com/meedstrom/indexed/) by the author of the above mentioned **org-node**.
 
 - But you could have continued to use org-roam v1!
 
@@ -479,7 +480,7 @@ This is what I did for a long time. But every time I (re-)installed my setup, e.
 
 - Is that all?
 
-No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only about 1900 lines of code (February 2025) are necessary to write a note-taking system that is not too far off from Denote or org-roam. I use very few external libraries and no common lisp. This should make the code really easy to understand even for those just getting started with elisp. 
+No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only a single .el file with about 1900 lines of code (March 2025) is necessary for a note-taking system that is not too far off from Denote or org-roam (all alternatives listed above use at least 3-5; org-node, for example, sits at 672 LOC). I use very few external libraries and no common lisp. This should make the code really easy to understand even for those just getting started with elisp. 
 
 That this thing works, provides me with independence from note-taking trends or specific operating systems, which is one of the reasons I don't see myself stopping to work on this project anytime soon.
 
