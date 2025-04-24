@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 1.0.4
+;; Version: 1.0.5
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines
 
@@ -30,6 +30,10 @@
 ;;
 ;;
 ;;; News
+;;
+;; 1.0.5
+;; - New function `orgrr-find-missing-titles' will find orgmode files without a
+;; proper title
 ;;
 ;; 1.0.4 
 ;; - Updated readme; More improvements for results buffers: read-only mode, hit n/p for
@@ -290,6 +294,43 @@ Updates the following hashtables: `orgrr-title-filename',
 	      (puthash (concat "\\" filename) tags orgrr-filename-tags)))
 	  (forward-line))))))
 
+(defun orgrr-find-missing-titles ()
+ "Check the current container for orgmode files missing a title."
+ (interactive)
+ (let ((all-files '())
+       (files-with-titles '())
+       (files-missing-titles '())
+       (missing-files-buffer "*orgmode files without a title*"))
+   (with-temp-buffer
+     (insert (shell-command-to-string (concat "rg -i --sort modified \"^\\#\\+title:.*\" \"" (expand-file-name org-directory) "\" -g \"*.org\"")))
+     (goto-char (point-min))
+     (while (not (eobp))
+       (let ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
+	 (when (string-match "\\(#\\+title:\\|#+TITLE:\\)\\s-*\\(.+\\)" current-entry)
+	   (let* ((line (split-string current-entry "\\(:#\\+title:\\|:#+TITLE:\\)\\s-*\\(.+\\)" t))
+		  (filename (car line)))
+	     (push filename files-with-titles))))
+       (forward-line)))
+   (with-temp-buffer
+     (insert (shell-command-to-string (concat "rg --files \"" (expand-file-name org-directory) "\" -g \"*.org\"")))
+     (goto-char (point-min))
+     (while (not (eobp))
+       (let ((current-entry (buffer-substring (line-beginning-position) (line-end-position))))
+	 (push current-entry all-files))
+       (forward-line)))
+   (setq files-missing-titles all-files)
+   (dolist (entry files-with-titles)
+     (setq files-missing-titles (remove entry files-missing-titles)))
+   (with-current-buffer (get-buffer-create missing-files-buffer)
+     (erase-buffer)
+     (orgrr-open-buffer missing-files-buffer)
+     (org-mode)
+     (insert "These Orgmode files do not have a correct #+title:\n\n")
+     (insert (concat "* " (number-to-string (length files-missing-titles)) " results\n\n"))
+     (dolist (entry files-missing-titles)
+       (insert (concat "** " "[[" entry "][" (file-name-nondirectory entry) "]]\n\n")))
+     (orgrr-prepare-findings-buffer missing-files-buffer))))
+	   
 ;;;###autoload
 (defun orgrr-update-meta-cache ()
   "This updates the cache of meta data for the current container. It is a
@@ -313,7 +354,7 @@ asynchronos functional replacement for `orgrr-get-meta'."
 
 ;;;###autoload
 (defun orgrr-update-all-meta-cache ()
-  "This updates the cache of ALL meta data for the current container. It is a
+  "This updates the cache of meta data for all containers. It is a
 asynchronos functional replacement for `orgrr-get-all-meta'."
   (clrhash orgrr-short_filename-filename)
   (clrhash orgrr-short_filename-title)

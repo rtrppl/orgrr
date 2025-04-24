@@ -25,6 +25,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**1.0.5**
+- New function `orgrr-find-missing-titles` will find orgmode files without a proper title
+
 **1.0.4**
 - Updated readme; More improvements for results buffers: read-only mode, hit n/p for next/previous link; </> for first/last link; enter/return to open the link at point
 
@@ -90,8 +93,10 @@ Find a more complete version of the changelog [here](./CHANGELOG.org).
 - [Quality of life functions](#quality-of-life-functions)
   - [orgrr-toggle-single-window-mode](#orgrr-toggle-window-mode)
   - [orgrr-fix-all-links-buffer and orgrr-fix-all-links-container](#orgrr-fix-all-links-buffer-and-orgrr-fix-all-links-container)
+  - [orgrr-find-missing-titles](#orgrr-find-missing-titles)
 - [FAQ](#faq)
-
+  
+  
 ## Installation
 
 **In order to use orgrr you'll need [rg](https://github.com/BurntSushi/ripgrep) installed on your machine.** The easiest way to do so might be [homebrew](https://brew.sh), i.e. `brew install rg`.
@@ -463,6 +468,10 @@ This function switches between `multi-window` and `single-window-mode`, affectin
 ### orgrr-fix-all-links-buffer and ogrr-fix-all-links-container
 
 These functions were a byproduct of rewriting orgrr-move-note and correct links either in the current buffer or the current container. Fixing hereby means: if you move org files to a different folder, org-links with hard-wired directories in them may cease to work. The functions will fix these links as long as there is a file with the same filename in the known containers. Even using the speedy rg, orgrr-fix-all-links-container may take a while to complete.
+
+### orgrr-find-missing-titles
+
+Without a proper title in an Orgmode note (i.e. "#+title:", see above), orgrr is unable to see and interact with said note. If such a note is linked in other notes, this may also cause several weird issues in `orgrr-show-related-notes` or `orgrr-show-related-notes`. This function produces a list of Orgmode files that lack a proper title for you to fix. 
 
 ## FAQ
 
