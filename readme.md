@@ -25,6 +25,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**1.0.6**
+- Improved handling of `orgrr-prepare-findings-buffer` read-only mode; minor changes in keybindings in results buffer; improved handling of existing headings of notes in backlinks buffer
+
 **1.0.5**
 - New function `orgrr-find-missing-titles` will find orgmode files without a proper title
 

@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 1.0.5
+;; Version: 1.0.6
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines
 
@@ -30,6 +30,11 @@
 ;;
 ;;
 ;;; News
+;;
+;; 1.0.6
+;; - Improved handling of `orgrr-prepare-findings-buffer' read-only mode; minor changes
+;; in keybindings in results buffer; improved handling of existing headings of notes in
+;; backlinks buffer
 ;;
 ;; 1.0.5
 ;; - New function `orgrr-find-missing-titles' will find orgmode files without a
@@ -93,8 +98,8 @@
   :lighter " orgrr-results-buffer"
   :keymap (let ((map (make-sparse-keymap)))
             (define-key map (kbd "q") 'orgrr-close-buffer)
-	    (define-key map (kbd "n") 'org-next-link)
-	    (define-key map (kbd "p") 'org-previous-link)
+	    (define-key map (kbd "n") 'org-next-visible-heading)
+	    (define-key map (kbd "p") 'org-previous-visible-heading)
 	    (define-key map (kbd "<") 'orgrr-org-goto-first-link)
 	    (define-key map (kbd ">") 'orgrr-org-goto-last-link)
 	    (define-key map (kbd "<return>") 'org-open-at-point)
@@ -141,8 +146,8 @@
    (goto-char (point-min))
    (org-next-visible-heading 2)
    (orgrr-results-buffer-mode t)
-   (deactivate-mark)
-   (setq buffer-read-only t)))
+   (deactivate-mark))
+ (setq buffer-read-only t))
 
 (defun orgrr-close-buffer ()
    "A wrapper to close BUFFER according to `orgrr-window-management' settings."
@@ -208,31 +213,37 @@ require NCD-formating."
 		  (puthash backlinks (match-string 2 line) orgrr-counter-quote))))))
 	  ;; match-string 2 includes the line number!
       (with-current-buffer (get-buffer-create backlink-buffer)
-              (erase-buffer)
-	      (orgrr-open-buffer backlink-buffer)
-              (insert (concat "\*\[\[file:" filename "\]\[" title "\]\]\*\n\n"))
-              (if (= backlinks 1)
-		  (insert "* 1 backlink\n\n")
-		(insert (concat "* " (number-to-string backlinks) " backlinks\n\n")))
-	      ;; Going through the backlinks
-              (dolist (counter (hash-table-keys orgrr-counter-filename))
-		(let ((entry (gethash counter orgrr-counter-filename)))
-		  (when (and (stringp entry)
-                             (not (string= entry filename)))
-		    (let ((key entry)
-			  (value (gethash counter orgrr-counter-quote)))
-                      (when (stringp value)
-			(let* ((short_filename (file-name-nondirectory key))
-			       (full-filename key)
-			       (result (gethash (concat "\\" short_filename) orgrr-short_filename-title)))
-			  (string-match "^\\(.*?\\):\\(.*\\)$" value)
-			  (let* ((line-number (match-string 1 value))
-				 (snippet (match-string 2 value))
-				 (snippet (orgrr-adjust-links snippet))
-				 (snippet (string-trim-left (string-trim-left snippet "*"))))
-			    (insert (concat "\*\* \[\[file:" full-filename "::" line-number "\]" "\[" result "\]\]:\n\n"  snippet "\n\n")))))))))
-	      (orgrr-prepare-findings-buffer backlink-buffer))))
+	(setq buffer-read-only nil)
+        (erase-buffer)
+	(orgrr-open-buffer backlink-buffer)
+        (insert (concat "\*\[\[file:" filename "\]\[" title "\]\]\*\n\n"))
+        (if (= backlinks 1)
+	    (insert "* 1 backlink\n\n")
+	  (insert (concat "* " (number-to-string backlinks) " backlinks\n\n")))
+	;; Going through the backlinks
+        (dolist (counter (hash-table-keys orgrr-counter-filename))
+	  (let ((entry (gethash counter orgrr-counter-filename)))
+	    (when (and (stringp entry)
+                       (not (string= entry filename)))
+	      (let ((key entry)
+		    (value (gethash counter orgrr-counter-quote)))
+                (when (stringp value)
+		  (let* ((short_filename (file-name-nondirectory key))
+			 (full-filename key)
+			 (result (gethash (concat "\\" short_filename) orgrr-short_filename-title)))
+		    (string-match "^\\(.*?\\):\\(.*\\)$" value)
+		    (let* ((line-number (match-string 1 value))
+			   (snippet (match-string 2 value))
+			   (snippet (orgrr-adjust-links snippet))
+			   (snippet (orgrr-adjust-org-headings-level snippet))
+			   (snippet (string-trim-left (string-trim-left snippet "*"))))
+		      (insert (concat "\*\* \[\[file:" full-filename "::" line-number "\]" "\[" result "\]\]:\n\n"  snippet "\n\n")))))))))
+	(orgrr-prepare-findings-buffer backlink-buffer))))
     (orgrr-close-buffer))))
+
+(defun orgrr-adjust-org-headings-level (snippet)
+  "Adjusts the level of Orgmode headings in a given snippet."
+  (setq snippet (replace-regexp-in-string "^\\(\\** \\)" "***\\1" snippet)))
 
 (defun orgrr-check-caching ()
   "Helper function to adjust `after-save-hook'."
@@ -322,6 +333,7 @@ Updates the following hashtables: `orgrr-title-filename',
    (dolist (entry files-with-titles)
      (setq files-missing-titles (remove entry files-missing-titles)))
    (with-current-buffer (get-buffer-create missing-files-buffer)
+     (setq buffer-read-only nil)
      (erase-buffer)
      (orgrr-open-buffer missing-files-buffer)
      (org-mode)
@@ -691,6 +703,7 @@ variable orgrr-window-management."
 	   (sequence-buffer (concat "sequence for *[" selection-zettel "]*")))
       (with-current-buffer (get-buffer-create sequence-buffer)
 	(let ((inhibit-read-only t))
+	  (setq buffer-read-only nil)
           (erase-buffer)
 	  (insert (concat (orgrr-return-fullzettel-linked-head selection-zettel) "\n\n"))
 	  (insert "* sequence:\n\n")
@@ -1387,6 +1400,7 @@ patient."
 	      (related-notes (+ related-notes (orgrr-forwardlinks-first-and-second-order)))
 	      (sorted-values '()))
 	 (with-current-buffer (get-buffer-create relatednotes-buffer)
+	   (setq buffer-read-only nil)
 	   (erase-buffer)
 	   (orgrr-open-buffer relatednotes-buffer)
 	   (insert (concat (orgrr-return-fullnote-linked-starred title) "\n\n"))
@@ -1436,6 +1450,7 @@ patient."
 	      (orgrr-zettel-list (sort orgrr-zettel-list 'orgrr-dictionary-lessp)))
 	 (when current-zettel
 	   (with-current-buffer (get-buffer-create multiverse-buffer)
+	     (setq buffer-read-only nil)
 	     (erase-buffer)
 	     (orgrr-open-buffer multiverse-buffer)
 	     (insert (concat (orgrr-return-fullzettel-linked-head selection-zettel) "\n\n"))
@@ -1832,6 +1847,7 @@ If called with C-u the buffer is created without headlines."
 		(setq end-point (orgrr-return-zettel-from-title end-point))))
 	  (with-current-buffer (get-buffer-create draft-buffer)
 	    (let ((inhibit-read-only t))
+	      (setq buffer-read-only nil)
               (erase-buffer)
 	      (insert (concat (orgrr-return-fullzettel-linked-starred selection-zettel) " - " (orgrr-return-fullzettel-linked-starred end-point) "\n\n"))
 	      (insert "* compiled sequence:\n\n")
@@ -1894,34 +1910,35 @@ containers will be searched. Regex don't need to be escaped."
 		  (puthash hits (match-string 2 line) orgrr-counter-quote))))))
 	  ;; match-string 2 includes the line number!
       (with-current-buffer (get-buffer-create search-buffer)
-              (erase-buffer)
-	      (orgrr-open-buffer search-buffer)
-	      (org-mode)
-	      (if call-with-arg
-		  (insert (concat "Global search for: *" search "*\n\n"))
-		(insert (concat "Local search for: *" search "*\n\n")))
-              (if (= hits 1)
-		  (insert "* 1 result\n\n")
-		(insert (concat "* " (number-to-string hits) " results\n\n")))
-	      ;; Going through the search results
-              (dolist (counter (hash-table-keys orgrr-counter-filename))
-		(let ((entry (gethash counter orgrr-counter-filename)))
-		  (when (stringp entry)
-		    (let ((key entry)
-			  (value (gethash counter orgrr-counter-quote)))
-                      (when (stringp value)
-			(let* ((short_filename (file-name-nondirectory key))
-			       (full-filename key)
-			       (result (gethash (concat "\\" short_filename) orgrr-short_filename-title)))
-			  (string-match "^\\(.*?\\):\\(.*\\)$" value)
-			  (let* ((line-number (match-string 1 value))
-				 (snippet (match-string 2 value))
-				 (snippet (orgrr-adjust-links snippet))
-				 (snippet (string-trim-left (string-trim-left snippet "*"))))
-			    (insert (concat "\*\* \[\[file:" full-filename "::" line-number "\]" "\[" result "\]\]:\n\n"  snippet "\n\n")))))))))
-	      (orgrr-prepare-findings-buffer search-buffer))))
-      (when (string-match-p "search for *" (buffer-name (current-buffer)))
-	(orgrr-close-buffer))))
+	(setq buffer-read-only nil)
+        (erase-buffer)
+	(orgrr-open-buffer search-buffer)
+	(org-mode)
+	(if call-with-arg
+	    (insert (concat "Global search for: *" search "*\n\n"))
+	  (insert (concat "Local search for: *" search "*\n\n")))
+        (if (= hits 1)
+	    (insert "* 1 result\n\n")
+	  (insert (concat "* " (number-to-string hits) " results\n\n")))
+	;; Going through the search results
+        (dolist (counter (hash-table-keys orgrr-counter-filename))
+	  (let ((entry (gethash counter orgrr-counter-filename)))
+	    (when (stringp entry)
+	      (let ((key entry)
+		    (value (gethash counter orgrr-counter-quote)))
+                (when (stringp value)
+		  (let* ((short_filename (file-name-nondirectory key))
+			 (full-filename key)
+			 (result (gethash (concat "\\" short_filename) orgrr-short_filename-title)))
+		    (string-match "^\\(.*?\\):\\(.*\\)$" value)
+		    (let* ((line-number (match-string 1 value))
+			   (snippet (match-string 2 value))
+			   (snippet (orgrr-adjust-links snippet))
+			   (snippet (string-trim-left (string-trim-left snippet "*"))))
+		      (insert (concat "\*\* \[\[file:" full-filename "::" line-number "\]" "\[" result "\]\]:\n\n"  snippet "\n\n")))))))))
+	(orgrr-prepare-findings-buffer search-buffer))))
+    (when (string-match-p "search for *" (buffer-name (current-buffer)))
+      (orgrr-close-buffer))))
 
 (defun orgrr-global-search ()
   "A simple wrapper for a global orgrr-search."
