@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 1.0.6
+;; Version: 1.0.7
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines
 
@@ -30,6 +30,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 1.0.7
+;; - Improved pre-selection for `orgrr-compile-sequence'
 ;;
 ;; 1.0.6
 ;; - Improved handling of `orgrr-prepare-findings-buffer' read-only mode; minor changes
@@ -140,7 +143,7 @@
 (defun orgrr-prepare-findings-buffer (buffer)
  "Preparing the orgrr findings buffer."
  (with-current-buffer buffer
-   (org-mode))
+   (org-mode))    
  (let ((window (get-buffer-window buffer)))
    (select-window window)
    (goto-char (point-min))
@@ -820,7 +823,7 @@ variable orgrr-window-management."
   "Returns the full name of a zettel (as in orgrr-zettel-list)."
   (let* ((matched-zettel-filename (gethash zettel orgrr-zettel-filename))
 	 (matched-zettel-title (gethash (concat "\\" matched-zettel-filename) orgrr-filename-title)))
-    (setq zettel (concat "\[" zettel "\]\t" matched-zettel-title))))
+    (setq zettel (concat "\[" zettel "\] " matched-zettel-title))))
 
 (defun orgrr-return-fullzettel-linked (zettel &optional max-zettel-id-value)
   "Returns the full name of a zettel (as in orgrr-zettel-list) and links the
@@ -1825,7 +1828,7 @@ If called with C-u the buffer is created without headlines."
 	     (end-flag)
 	     (draft-buffer "*compiled sequence*"))
 	(if current-zettel
-	    (setq starting-point (completing-read "Select starting point: " orgrr-selection-list-completion nil nil current-zettel))
+	    (setq starting-point (completing-read "Select starting point: " orgrr-selection-list-completion nil nil (orgrr-return-fullzettel current-zettel)))
 	  (setq starting-point (completing-read "Select starting point: " orgrr-selection-list-completion)))
 	(if (string-match "^\\[\\(.*?\\)\\]" starting-point)
       	    (setq starting-point (replace-regexp-in-string "\\[.*?\\]\\s-*" "" starting-point)))

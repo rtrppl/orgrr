@@ -25,6 +25,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**1.0.7**
+- Improved pre-selection for `orgrr-compile-sequence`
+
 **1.0.6**
 - Improved handling of `orgrr-prepare-findings-buffer` read-only mode; minor changes in keybindings in results buffer; improved handling of existing headings of notes in backlinks buffer
 
@@ -45,15 +48,6 @@ search the local container or all containers for a specified term. Regex is welc
 
 **1.0**
 - This version adds caching as an option, resulting in massive speed gains. Activate by adding `(setq orgrr-use-caching t)` to your .emacs (see [Installation](#installation) for more details).
-
-**0.9.19**
-- Improved spacing for lists in `orgrr-show-sequence` and `orgrr-show-multiverse`
-
-**0.9.18**
-- Added `orgrr-add-to-other-window`
-
-**0.9.17**
-- Added option to use active region for `orgrr-add-to-project`
 
 Find a more complete version of the changelog [here](./CHANGELOG.org).
 

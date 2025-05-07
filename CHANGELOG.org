@@ -1,5 +1,14 @@
 #+title: orgrr CHANGELOG
 
+*0.9.19*
+- Improved spacing for lists in `orgrr-show-sequence` and `orgrr-show-multiverse`
+
+*0.9.18*
+- Added `orgrr-add-to-other-window`
+
+*0.9.17*
+- Added option to use active region for `orgrr-add-to-project`
+
 *0.9.17*
 - Added option to use active region for =orgrr-add-to-project=
 
