@@ -43,13 +43,13 @@
 ;; - New function `orgrr-find-missing-titles' will find orgmode files without a
 ;; proper title
 ;;
-;; 1.0.4 
+;; 1.0.4
 ;; - Updated readme; More improvements for results buffers: read-only mode, hit n/p for
 ;; next/previous link; </> for first/last link; enter/return to open the
 ;; link at point
 ;;
 ;; 1.0.3
-;; - Better handling of existing headings of notes by 
+;; - Better handling of existing headings of notes by
 ;; `orgrr-compile-sequence' (=increasing them by one level)
 ;;
 ;; 1.0.2
@@ -112,14 +112,14 @@
 (defun orgrr-org-goto-first-link ()
   "Move point to the first link in the current buffer."
   (interactive)
-  (goto-char (point-min))  
+  (goto-char (point-min))
   (org-next-link))
 
 (defun orgrr-org-goto-last-link ()
   "Move point to the last link in the current buffer."
   (interactive)
-  (goto-char (point-max)) 
-  (org-previous-link))  
+  (goto-char (point-max))
+  (org-previous-link))
   
 (defun orgrr-open-file (filename)
   "A wrapper to open FILENAME either with `find-file' or `find-file-other-window'."
@@ -141,9 +141,9 @@
    (switch-to-buffer buffer)))
 
 (defun orgrr-prepare-findings-buffer (buffer)
- "Preparing the orgrr findings buffer."
+ "Preparing the orgrr findings BUFFER."
  (with-current-buffer buffer
-   (org-mode))    
+   (org-mode))
  (let ((window (get-buffer-window buffer)))
    (select-window window)
    (goto-char (point-min))
@@ -161,8 +161,7 @@
      (kill-buffer)))
 
 (defun orgrr-toggle-window-mode ()
-  "Switch between single-window-mode and multi-window mode (which uses
-side-buffers)."
+  "Switch between single-window-mode and multi-window mode."
   (interactive)
   (if (equal orgrr-window-management "multi-window")
       (progn
@@ -173,13 +172,15 @@ side-buffers)."
       (setq org-link-frame-setup '((file . find-file-other-window))))))
 
 (defun orgrr-on-macos-p ()
-  "Check if Emacs is running on macOS. This became necessary due to some
-normalization issues with filenames that contain non-ascii characters and
-require NCD-formating."
+  "Check if Emacs is running on macOS.
+
+This became necessary due to some normalization issues with filenames that
+contain non-ascii characters and require NCD-formating."
   (eq system-type 'darwin))
 
 (defun orgrr-show-backlinks (arg)
-  "Show all backlinks in `org-directory' to the current org-file."
+  "Show all backlinks in `org-directory' to the current org-file. If called with
+ARG backlinks for all orgrr-containers are shown."
   (interactive "P")
   (let ((call-with-arg nil))
     (when (equal arg '(4))
@@ -245,7 +246,7 @@ require NCD-formating."
     (orgrr-close-buffer))))
 
 (defun orgrr-adjust-org-headings-level (snippet)
-  "Adjusts the level of Orgmode headings in a given snippet."
+  "Adjusts the level of Orgmode headings in a given SNIPPET."
   (setq snippet (replace-regexp-in-string "^\\(\\** \\)" "***\\1" snippet)))
 
 (defun orgrr-check-caching ()
@@ -258,11 +259,11 @@ require NCD-formating."
       (remove-hook 'after-save-hook 'orgrr-update-cache))))
 	      
 (defun orgrr-get-meta ()
-  "Gets the value for #+title, #+roam_alias, #+roam_tags and #+zettel for all
+  "Gets value for #+title, #+roam_alias, #+roam_tags and #+zettel from all
 org-files and adds them to hashtables.
 
-Updates the following hashtables: `orgrr-title-filename', 
-`orgrr-filename-title', `orgrr-zettel-filename', `orgrr-filename-zettel', 
+Updates the following hashtables: `orgrr-title-filename',
+`orgrr-filename-title', `orgrr-zettel-filename', `orgrr-filename-zettel',
 `orgrr-filename-tags'."
   (orgrr-check-caching)
   (when (not orgrr-use-caching)
