@@ -26,7 +26,7 @@ search the local container or all containers for a specified term. Regex is welc
 ## Changelog
 
 **1.1**
-- New function `orgrr-super-compile-sequence` combines `orgrr-compile-squence` and `orgrr-show-backlinks`
+- New function `orgrr-super-compile-sequence` combines `orgrr-compile-sequence` and `orgrr-show-backlinks`
 
 **1.0.7**
 - Improved pre-selection for `orgrr-compile-sequence`
