@@ -90,14 +90,13 @@
 (defvar orgrr-title-filename (make-hash-table :test 'equal) "Hashtable with the key title and the value filename.")
 (defvar orgrr-filename-title (make-hash-table :test 'equal) "Hashtable with the key filename and the value title.")
 (defvar orgrr-filename-tags (make-hash-table :test 'equal) "Hashtable with the key filename and the value tags.")
-(defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable with the key filename without path and the value filename+path.")
+(defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable containing all org-files accross all containers.")
+(defvar orgrr-short_filename-title (make-hash-table :test 'equal) "Hashtable containing filenames-titles for all org-files accross all containers.")
+(defvar orgrr-title-short_filename (make-hash-table :test 'equal) "Hashtable containing titles-filenames for all org-files accross all containers.")
 (defvar orgrr-zettel-filename (make-hash-table :test 'equal) "Hashtable with the key zettel and the value filename.")
 (defvar orgrr-filename-zettel (make-hash-table :test 'equal) "Hashtable with the key filename and the value zettel.")
 (defvar orgrr-zettelrank-zettel (make-hash-table :test 'equal) "Hashtable with the key rank of a zettel and the value zettel.") ;; rank means how a zettel value of a note relates to other notes
 (defvar orgrr-zettel-zettelrank (make-hash-table :test 'equal) "Hashtable with the key zettel and the value rank of a zettel.")
-(defvar orgrr-short_filename-filename (make-hash-table :test 'equal) "Hashtable containing all org-files accross all containers.")
-(defvar orgrr-short_filename-title (make-hash-table :test 'equal) "Hashtable containing filenames-titles for all org-files accross all containers.")
-(defvar orgrr-title-short_filename (make-hash-table :test 'equal) "Hashtable containing titles-filenames for all org-files accross all containers.")
 (defvar orgrr-filename-mentions (make-hash-table :test 'equal) "Hashtable necessary for `orgrr-show-related-notes'.")
 
 (define-minor-mode orgrr-results-buffer-mode
@@ -254,9 +253,11 @@ If SUPER is non-nil, the results are directly inserted there."
 ;; directly returning the results for orgrr-super-compile-sequence
 	  (when (and (not (string-match-p "backlinks for *" (buffer-name (current-buffer)))) 
 		     super)
-	    (if (= backlinks 1)
-		(insert "** 1 backlink\n\n")
-	      (insert (concat "** " (number-to-string backlinks) " backlinks\n\n")))
+	    (let* ((short_filename (file-name-nondirectory filename))
+		   (title (gethash (concat "\\" short_filename) orgrr-short_filename-title)))
+		   (if (= backlinks 1)
+		       (insert (concat "** 1 backlink for \*\[\[file:" filename "\]\[" title "\]\]\*\n\n"))
+		     (insert (concat "** " (number-to-string backlinks) " backlinks for \*\[\[file:" filename "\]\[" title "\]\]\*\n\n"))))
 	    ;; Going through the backlinks
             (dolist (counter (hash-table-keys orgrr-counter-filename))
 	      (let ((entry (gethash counter orgrr-counter-filename)))
