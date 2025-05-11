@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 1.0.7
+;; Version: 1.1
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines
 
@@ -30,6 +30,10 @@
 ;;
 ;;
 ;;; News
+;;
+;; 1.1.
+;; - New function `orgrr-super-compile-sequence' combines `orgrr-compile-squence'
+;; and `orgrr-show-backlinks'
 ;;
 ;; 1.0.7
 ;; - Improved pre-selection for `orgrr-compile-sequence'

@@ -25,6 +25,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**1.1**
+- New function `orgrr-super-compile-sequence` combines `orgrr-compile-squence` and `orgrr-show-backlinks`
+
 **1.0.7**
 - Improved pre-selection for `orgrr-compile-sequence`
 
@@ -82,6 +85,7 @@ Find a more complete version of the changelog [here](./CHANGELOG.org).
   - [orgrr-show-backlinks](#orgrr-show-backlinks)
   - [orgrr-show-related-notes](#orgrr-show-related-notes)	
   - [orgrr-show-multiverse](#orgrr-show-multiverse)
+  - [orgrr-super-compile-sequence](#orgrr-super-compile-sequence)	
 - [Functions for project management and writing](#functions-for-project-managemant-and-writing)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
   - [orgrr-add-to-other-window](#orgrr-add-to-other-window)
@@ -433,6 +437,10 @@ If called with `C-u`, backlinks of first and second order in all containers are 
 ### orgrr-show-multiverse
 
 This will display the combined results of `orgrr-show-sequence` and `orgrr-show-related-notes` for the currently visited note. Use "q" or invoke the command again to close the side-window or buffer (while visiting the multiverse buffer).
+
+### orgrr-super-compile-sequence
+
+This function adds backlinks to each note listed by `orgrr-compile-sequence`. In a technical sense the functions [orgrr-compile-sequence](#orgrr-compile-sequence) and [orgrr-show-backlinks](#orgrr-show-backlinks) are combined. The backlinks are generated from all containers. Depending on the length of the sequence and the number of backlinks for each individual note, this function therefore may take a while to finish. It's intented purpose is to collect all available information on a topic in a single Orgmode buffer.
 
 ## Functions for project management and writing
 
