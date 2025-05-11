@@ -25,6 +25,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**1.1**
+- New function `orgrr-super-compile-sequence` combines `orgrr-compile-squence` and `orgrr-show-backlinks`
+
 **1.0.7**
 - Improved pre-selection for `orgrr-compile-sequence`
 
@@ -82,6 +85,7 @@ Find a more complete version of the changelog [here](./CHANGELOG.org).
   - [orgrr-show-backlinks](#orgrr-show-backlinks)
   - [orgrr-show-related-notes](#orgrr-show-related-notes)	
   - [orgrr-show-multiverse](#orgrr-show-multiverse)
+  - [orgrr-super-compile-sequence](#orgrr-super-compile-sequence)	
 - [Functions for project management and writing](#functions-for-project-managemant-and-writing)
   - [orgrr-add-to-project and orgrr-open-project](#orgrr-add-to-project-and-orgrr-open-project)
   - [orgrr-add-to-other-window](#orgrr-add-to-other-window)
@@ -434,6 +438,10 @@ If called with `C-u`, backlinks of first and second order in all containers are 
 
 This will display the combined results of `orgrr-show-sequence` and `orgrr-show-related-notes` for the currently visited note. Use "q" or invoke the command again to close the side-window or buffer (while visiting the multiverse buffer).
 
+### orgrr-super-compile-sequence
+
+This function adds backlinks to each note listed by `orgrr-compile-sequence`. In a technical sense the functions [orgrr-compile-sequence](#orgrr-compile-sequence) and [orgrr-show-backlinks](#orgrr-show-backlinks) are combined. The backlinks are generated from all containers. Depending on the length of the sequence and the number of backlinks for each individual note, this function therefore may take a while to finish. It's intented purpose is to collect all available information on a topic in a single Orgmode buffer.
+
 ## Functions for project management and writing
 
 ### orgrr-add-to-project and orgrr-open-project
@@ -486,7 +494,7 @@ This is what I did for a long time. But every time I (re-)installed my setup, e.
 
 - Is that all?
 
-No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only a single .el file with about 1900 lines of code (March 2025) is necessary for a note-taking system that is not too far off from Denote or org-roam (all alternatives listed above use at least 3-5 times of that; org-node, for example, sits at 6720 LOC). I use very few external libraries and no common lisp. This should make the code really easy to understand even for those just getting started with elisp. 
+No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only a single .el file with about 2100 lines of code (May 2025) is necessary for a note-taking system that is not too far off from Denote or org-roam (all alternatives listed above use at least 3-5 times of that; org-node, for example, sits at 6720 LOC). I use very few external libraries and no common lisp. This should make the code really easy to understand even for those just getting started with elisp. 
 
 That this thing works, provides me with independence from note-taking trends or specific operating systems, which is one of the reasons I don't see myself stopping to work on this project anytime soon.
 
