@@ -494,7 +494,7 @@ This is what I did for a long time. But every time I (re-)installed my setup, e.
 
 - Is that all?
 
-No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only a single .el file with about 1900 lines of code (March 2025) is necessary for a note-taking system that is not too far off from Denote or org-roam (all alternatives listed above use at least 3-5 times of that; org-node, for example, sits at 6720 LOC). I use very few external libraries and no common lisp. This should make the code really easy to understand even for those just getting started with elisp. 
+No. I also wanted to learn more elisp. A small project like this seemed to be a good way to start. I'm still amazed that only a single .el file with about 2100 lines of code (May 2025) is necessary for a note-taking system that is not too far off from Denote or org-roam (all alternatives listed above use at least 3-5 times of that; org-node, for example, sits at 6720 LOC). I use very few external libraries and no common lisp. This should make the code really easy to understand even for those just getting started with elisp. 
 
 That this thing works, provides me with independence from note-taking trends or specific operating systems, which is one of the reasons I don't see myself stopping to work on this project anytime soon.
 
