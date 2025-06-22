@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 1.1
+;; Version: 1.1.1
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines
 
@@ -30,6 +30,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 1.1.1.
+;; - Added experimental support for Windows.
 ;;
 ;; 1.1.
 ;; - New function `orgrr-super-compile-sequence' combines `orgrr-compile-squence'
@@ -181,6 +184,13 @@ This became necessary due to some normalization issues with filenames that
 contain non-ascii characters and require NCD-formating."
   (eq system-type 'darwin))
 
+(defun orgrr-on-windows-p ()
+  "Check if Emacs is running on Windows.
+
+This became necessary due to some normalization issues with filenames that
+contain non-ascii characters and require NCD-formating."
+  (eq system-type 'windows-nt))
+
 (defun orgrr-show-backlinks (arg &optional filename super)
   "Show all backlinks in `org-directory' to the current org-file or FILENAME.
 If called with ARG backlinks for all orgrr-containers are shown.
@@ -197,7 +207,10 @@ If SUPER is non-nil, the results are directly inserted there."
 	 (orgrr-counter-quote (make-hash-table :test 'equal))
 	 (orgrr-counter-filename (make-hash-table :test 'equal))
 	 (orgrr-name-container (orgrr-get-list-of-containers))
+	 (filter-results-regexp "^\\(.*?\\):\\(.*\\)$")
 	 (containers (nreverse (hash-table-values orgrr-name-container))))
+    (when (orgrr-on-windows-p)
+      (setq filter-results-regexp "^\\([A-Za-z]:.*?\\):\\(.*\\)$"))
     (when (equal arg '(4))
       (setq call-with-arg 1))
     (orgrr-get-all-meta)
@@ -215,7 +228,7 @@ If SUPER is non-nil, the results are directly inserted there."
 	    (insert (shell-command-to-string (concat "rg -F \"" (file-name-nondirectory filename) "\" \"" (expand-file-name container) "\" -n --sort accessed -g \"*.org\""))))
 	  (let ((lines (split-string (buffer-string) "\n" t)))
 	    (dolist (line lines)
-	      (when (string-match "^\\(.*?\\):\\(.*\\)$" line)
+	      (when (string-match filter-results-regexp line)
  		(setq backlinks (+ backlinks 1))
 		(puthash backlinks (match-string 1 line) orgrr-counter-filename)
 		(puthash backlinks (match-string 2 line) orgrr-counter-quote)))))))
@@ -242,7 +255,7 @@ If SUPER is non-nil, the results are directly inserted there."
 		  (let* ((short_filename (file-name-nondirectory key))
 			 (full-filename key)
 			 (result (gethash (concat "\\" short_filename) orgrr-short_filename-title)))
-		    (string-match "^\\(.*?\\):\\(.*\\)$" value)
+		    (string-match filter-results-regexp value)
 		    (let* ((line-number (match-string 1 value))
 			   (snippet (match-string 2 value))
 			   (snippet (orgrr-adjust-links snippet))
@@ -269,7 +282,7 @@ If SUPER is non-nil, the results are directly inserted there."
 		      (let* ((short_filename (file-name-nondirectory key))
 			     (full-filename key)
 			     (result (gethash (concat "\\" short_filename) orgrr-short_filename-title)))
-			(string-match "^\\(.*?\\):\\(.*\\)$" value)
+			(string-match filter-results-regexp value)
 			(let* ((line-number (match-string 1 value))
 			       (snippet (match-string 2 value))
 			       (snippet (orgrr-adjust-links snippet))
@@ -2011,7 +2024,10 @@ containers will be searched. Regex don't need to be escaped."
 	     (orgrr-counter-quote (make-hash-table :test 'equal))
 	     (orgrr-counter-filename (make-hash-table :test 'equal))
 	     (orgrr-name-container (orgrr-get-list-of-containers))
+	     (filter-results-regexp "^\\(.*?\\):\\(.*\\)$")
 	     (containers (nreverse (hash-table-values orgrr-name-container))))
+	(when (orgrr-on-windows-p)
+	  (setq filter-results-regexp "^\\([A-Za-z]:.*?\\):\\(.*\\)$"))
     ;; collect all hits
 	  (with-temp-buffer
 	     (when (not call-with-arg)
@@ -2024,7 +2040,7 @@ containers will be searched. Regex don't need to be escaped."
 		(insert (shell-command-to-string (concat "rg -i -e \"" search "\" \"" (expand-file-name container) "\" -n --sort accessed -g \"*.org\""))))
 	    (let ((lines (split-string (buffer-string) "\n" t)))
 	      (dolist (line lines)
-		(when (string-match "^\\(.*?\\):\\(.*\\)$" line)
+		(when (string-match filter-results-regexp line)
  		  (setq hits (+ hits 1))
 		  (puthash hits (match-string 1 line) orgrr-counter-filename)
 		  (puthash hits (match-string 2 line) orgrr-counter-quote))))))
@@ -2050,7 +2066,7 @@ containers will be searched. Regex don't need to be escaped."
 		  (let* ((short_filename (file-name-nondirectory key))
 			 (full-filename key)
 			 (result (gethash (concat "\\" short_filename) orgrr-short_filename-title)))
-		    (string-match "^\\(.*?\\):\\(.*\\)$" value)
+		    (string-match filter-results-regexp value)
 		    (let* ((line-number (match-string 1 value))
 			   (snippet (match-string 2 value))
 			   (snippet (orgrr-adjust-links snippet))
