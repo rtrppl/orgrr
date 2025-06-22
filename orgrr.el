@@ -187,8 +187,7 @@ contain non-ascii characters and require NCD-formating."
 (defun orgrr-on-windows-p ()
   "Check if Emacs is running on Windows.
 
-This became necessary due to some normalization issues with filenames that
-contain non-ascii characters and require NCD-formating."
+This became necessary due to Windows having drive names."
   (eq system-type 'windows-nt))
 
 (defun orgrr-show-backlinks (arg &optional filename super)
