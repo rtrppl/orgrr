@@ -1500,6 +1500,7 @@ patient."
 	      (related-notes (+ related-notes (orgrr-forwardlinks-first-and-second-order)))
 	      (sorted-values '())
 	      (max-zettel-id-value 0)
+	      (sequence-p)
 	      (current-zettel (orgrr-read-current-zettel))
 	      (parent-zettel (orgrr-read-zettel-parent current-zettel))
 	      (zettel-filename (gethash current-zettel orgrr-zettel-filename))
@@ -1521,7 +1522,6 @@ patient."
 	     ;; of spacing in the list.
 	     (dolist (element orgrr-zettel-list)
 	       (let* ((last-char (substring selection-zettel -1))
-		      (sequence-p)
 		      (is-last-char-num (string-match-p "[0-9]" last-char))
 		      (regex (if is-last-char-num
 				 (concat "^" selection-zettel "[a-zA-Z]")
