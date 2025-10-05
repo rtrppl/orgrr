@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/orgrr
-;; Version: 1.1.1
+;; Version: 1.1.3
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines
 
@@ -30,6 +30,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 1.1.3
+;; - Added configurable config file location.
 ;;
 ;; 1.1.2
 ;; - Redesign of the results buffer; invoking orgrr-search will always start 
@@ -87,6 +90,8 @@
 (require 'ucs-normalize)
 (require 'org)
 (require 'json)
+
+(defvar orgrr-container-config-file "~/.orgrr-container-list")
 
 (defvar orgrr-window-management "single-window")
 (defvar orgrr-quick-add-token "quicknote")
@@ -1151,7 +1156,7 @@ filename (with the creation date) will not be modified."
     (if (buffer-file-name)
 	(setq filename (buffer-file-name)))
   (with-temp-buffer
-    (insert-file-contents "~/.orgrr-container-list")
+    (insert-file-contents orgrr-container-config-file)
     (if (fboundp 'json-parse-buffer)
 	(setq orgrr-name-container (json-parse-buffer))))
   (setq containers (hash-table-keys orgrr-name-container))
@@ -1697,20 +1702,20 @@ orgrr-change-container can be called with a specific container."
   "Creates a container file in ~/.orgrr-container-list in case one does
   not yet exist."
   (interactive)
-  (when (not (file-exists-p "~/.orgrr-container-list"))
+  (when (not (file-exists-p orgrr-container-config-file))
     (let ((orgrr-name-container (make-hash-table :test 'equal)))
        (when org-directory
          (puthash "main" org-directory orgrr-name-container)
        (with-temp-buffer
          (let ((json-data (json-encode orgrr-name-container)))
            (insert json-data)
-           (write-file "~/.orgrr-container-list"))))))
-  (when (file-exists-p "~/.orgrr-container-list")
+           (write-file orgrr-container-config-file))))))
+  (when (file-exists-p orgrr-container-config-file)
     (let ((orgrr-name-container (make-hash-table :test 'equal))
 	  (containers)
 	  (containers-folders))
        (with-temp-buffer
-	 (insert-file-contents "~/.orgrr-container-list")
+	 (insert-file-contents orgrr-container-config-file)
 	 (if (fboundp 'json-parse-buffer)
 	     (setq orgrr-name-container (json-parse-buffer))))
        (setq containers (nreverse (hash-table-keys orgrr-name-container)))
@@ -1726,7 +1731,7 @@ locations of all containers."
  (orgrr-check-for-container-file)
  (let ((orgrr-name-container (make-hash-table :test 'equal)))
    (with-temp-buffer
-     (insert-file-contents "~/.orgrr-container-list")
+     (insert-file-contents orgrr-container-config-file)
      (if (fboundp 'json-parse-buffer)
 	 (setq orgrr-name-container (json-parse-buffer))))
 orgrr-name-container))
@@ -1745,7 +1750,7 @@ orgrr-name-container))
 	    (with-temp-buffer
 	     (let* ((json-data (json-encode orgrr-name-container)))
 	       (insert json-data)
-	       (write-file "~/.orgrr-container-list"))))
+	       (write-file orgrr-container-config-file))))
 	  (setq org-directory new-container))
     (message "%s was not created!" new-container))))
 
@@ -1766,7 +1771,7 @@ orgrr-name-container))
 	    (with-temp-buffer
 	      (setq json-data (json-encode orgrr-name-container))
 	      (insert json-data)
-	      (write-file "~/.orgrr-container-list"))
+	      (write-file orgrr-container-config-file))
 	    (setq org-directory (gethash "main" orgrr-name-container))))))))
 
 (defun orgrr-fix-all-links-buffer ()

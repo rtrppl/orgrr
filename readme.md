@@ -25,6 +25,9 @@ search the local container or all containers for a specified term. Regex is welc
 
 ## Changelog
 
+**1.1.3**
+- Added configurable config file location (for the list of containers).
+
 **1.1.2**
 - Redesign of the results buffer; invoking orgrr-search will always start a new search - even in a search buffer
 
