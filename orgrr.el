@@ -110,6 +110,7 @@
 (defvar orgrr-zettelrank-zettel (make-hash-table :test 'equal) "Hashtable with the key rank of a zettel and the value zettel.") ;; rank means how a zettel value of a note relates to other notes
 (defvar orgrr-zettel-zettelrank (make-hash-table :test 'equal) "Hashtable with the key zettel and the value rank of a zettel.")
 (defvar orgrr-filename-mentions (make-hash-table :test 'equal) "Hashtable necessary for `orgrr-show-related-notes'.")
+(defvar orgrr-list-position (make-hash-table :test 'equal) "Hashtable with the key line and the value compiled title.")
 
 (define-minor-mode orgrr-results-buffer-mode
   "A minor mode for orgrr results buffers."
@@ -124,6 +125,23 @@
 	    (define-key map (kbd "SPC") 'scroll-up-command)
 	    (define-key map (kbd "TAB") 'org-next-link)
             map))
+
+(define-minor-mode orgrr-list-buffer-mode
+  "A minor mode for orgrr list buffers."
+  :lighter " orgrr-list-buffer"
+  :keymap (let ((map (make-sparse-keymap)))
+	  (define-key map (kbd "RET") 'orgrr-open-list-at-point)
+	  (define-key map (kbd "g") 'orgrr-list)
+	  (define-key map (kbd "w")
+		      (lambda () (interactive)
+			(if use-generic-p
+			    (website2org-url-to-org url)
+			  (website2org-to-buffer url))))
+	  (define-key map (kbd "n") (lambda () (interactive) (forward-line 1)))
+	  (define-key map (kbd "SPC") 'scroll-up-command)
+	  (define-key map (kbd "p") (lambda () (interactive) (forward-line -1)))
+	  (define-key map (kbd "q") 'orgrr-close-buffer)
+	  map))
 
 (defun orgrr-org-goto-first-link ()
   "Move point to the first link in the current buffer."
@@ -167,6 +185,19 @@
    (orgrr-results-buffer-mode t)
    (deactivate-mark))
  (setq buffer-read-only t))
+
+(defun orgrr-prepare-list-buffer (buffer)
+ "Preparing the orgrr list BUFFER."
+ (with-current-buffer buffer
+   (org-mode))
+ (let ((window (get-buffer-window buffer)))
+   (select-window window)
+   (goto-char (point-min))
+   (forward-line 4)
+   (orgrr-list-buffer-mode t)
+   (deactivate-mark))
+ (setq buffer-read-only t))
+
 
 (defun orgrr-close-buffer ()
    "A wrapper to close BUFFER according to `orgrr-window-management' settings."
@@ -543,14 +574,27 @@ hashtables."
 orgrr-selection-list-completion))
 
 (defun orgrr-selection ()
-  "Prepare the symbol orgrr-selection for completing-read and send the result
-in selection to orgrr-find and orgrr-insert. Prepends tags and zettel in front
-of title and alias."
+  "Prepare the symbol orgrr-selection-list for completing-read and send the 
+result in selection to orgrr-find and orgrr-insert. Prepends tags and zettel
+in front of title and alias."
+  (let* ((orgrr-selection-list (orgrr-create-selection-list))
+	 (orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
+	 (selection))
+    (if (region-active-p)
+	(setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
+      (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
+    (if (string-match "^\\[" selection)
+	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))
+    (if (string-match "^\(" selection)
+	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
+  selection)) ;; this line ensures that the value of selection is returned when this function is called
+
+(defun orgrr-create-selection-list ()
+  "Create ORGRR-SELECTION_LIST, which includes titles, tags and zettel ids."
   (orgrr-get-meta)
   (let* ((orgrr-selection-list ())
 	 (orgrr-selection-list-completion)
          (final-title)
-	 (selection)
 	 (titles (hash-table-keys orgrr-title-filename))
 	 (filenames-for-tags (hash-table-keys orgrr-filename-tags))
 	 (filenames-for-zettel (hash-table-keys orgrr-filename-zettel)))
@@ -564,16 +608,8 @@ of title and alias."
 	      (setq final-title (concat "[" (gethash (concat "\\" filename) orgrr-filename-zettel) "] " title))
 	  (setq final-title title)))
 	(setq orgrr-selection-list (cons final-title orgrr-selection-list))))
-    (setq orgrr-selection-list (reverse orgrr-selection-list))
-    (setq orgrr-selection-list-completion (orgrr-presorted-completion-table orgrr-selection-list))
-    (if (region-active-p)
-	(setq selection (completing-read "Select: " orgrr-selection-list-completion nil nil  (buffer-substring-no-properties (region-beginning)(region-end))))
-      (setq selection (completing-read "Select: " orgrr-selection-list-completion)))
-    (if (string-match "^\\[" selection)
-	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))
-    (if (string-match "^\(" selection)
-	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
-  selection)) ;; this line ensures that the value of selection is returned when this function is called
+    (setq orgrr-selection-list (reverse orgrr-selection-list))))
+
 
 (defun orgrr-global-selection ()
   "Use data from all containers to prepare the symbol orgrr-selection for
@@ -2097,6 +2133,45 @@ containers will be searched. Regex don't need to be escaped."
   (interactive)
   (orgrr-search '(4)))
 
+(defun orgrr-list (&optional list-string)
+  "A simple list of all notes containing STRING in title, tag or zettel."
+  (interactive)
+  (clrhash orgrr-list-position)
+  (let* ((search (if (not list-string)
+		     (read-from-minibuffer "Create list for: ")
+		   list-string))
+	 (list-buffer (concat "list for *" search "*"))
+	 (orgrr-selection-list (orgrr-create-selection-list))
+	 (count 4))
+      (with-current-buffer (get-buffer-create list-buffer)
+	(setq buffer-read-only nil)
+        (erase-buffer)
+	(orgrr-open-buffer list-buffer)
+	(insert (format "* List view for *%s* \n\n" search))
+	(insert "(RET=open space=scroll down/n=next line up/p=previous line g=update q=quit)\n\n")
+	(dolist (item orgrr-selection-list)
+	  (when (string-match-p search item)
+	  (insert (concat item "\n"))
+	  (setq count (+ 1 count))
+	  (puthash count item orgrr-list-position)))
+	(orgrr-prepare-list-buffer list-buffer))))
+	   
+(defun orgrr-open-list-at-point ()
+  "Visit the current entry of `orgrr-list'."
+  (interactive)
+  (let* ((selection (gethash (line-number-at-pos) orgrr-list-position)))
+    (if (string-match "^\\[" selection)
+	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))
+    (if (string-match "^\(" selection)
+	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
+    (when (member selection (hash-table-keys orgrr-title-short_filename))
+      (setq filename (gethash selection orgrr-title-short_filename))
+      (setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename))
+      (beginning-of-line)
+      (let ((ov (make-overlay (line-beginning-position) (line-end-position))))
+	(overlay-put ov 'face 'shadow))
+      (orgrr-open-file filename))))
+      
 (defun orgrr-toggle-use-cache ()
   "Toggle to turn usage of orgrr-cache on or off."
   (interactive)
