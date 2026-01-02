@@ -31,15 +31,18 @@
 ;;
 ;;; News
 ;;
+;; 1.1.4
+;; - Added `orgrr-list', a function to create a list view 
+;;
 ;; 1.1.3
-;; - Added configurable config file location.
+;; - Added configurable config file location
 ;;
 ;; 1.1.2
 ;; - Redesign of the results buffer; invoking orgrr-search will always start 
 ;; a new search - even in a search buffer
 ;;
 ;; 1.1.1.
-;; - Added experimental support for Windows.
+;; - Added experimental support for Windows
 ;;
 ;; 1.1.
 ;; - New function `orgrr-super-compile-sequence' combines `orgrr-compile-squence'
@@ -131,15 +134,18 @@
   :lighter " orgrr-list-buffer"
   :keymap (let ((map (make-sparse-keymap)))
 	  (define-key map (kbd "RET") 'orgrr-open-list-at-point)
-	  (define-key map (kbd "g") 'orgrr-list)
+	  (define-key map (kbd "j") 'orgrr-open-list-next)
+	  (define-key map (kbd "g") 'orgrr-list-refresh)
 	  (define-key map (kbd "w")
 		      (lambda () (interactive)
 			(if use-generic-p
 			    (website2org-url-to-org url)
 			  (website2org-to-buffer url))))
 	  (define-key map (kbd "n") (lambda () (interactive) (forward-line 1)))
+	  (define-key map (kbd "<down>") (lambda () (interactive) (forward-line 1)))
 	  (define-key map (kbd "SPC") 'scroll-up-command)
 	  (define-key map (kbd "p") (lambda () (interactive) (forward-line -1)))
+	  (define-key map (kbd "<up>") (lambda () (interactive) (forward-line -1)))
 	  (define-key map (kbd "q") 'orgrr-close-buffer)
 	  map))
 
@@ -2148,13 +2154,21 @@ containers will be searched. Regex don't need to be escaped."
         (erase-buffer)
 	(orgrr-open-buffer list-buffer)
 	(insert (format "* List view for *%s* \n\n" search))
-	(insert "(RET=open space=scroll down/n=next line up/p=previous line g=update q=quit)\n\n")
+	(insert "(RET=open j=open next/other window space=scroll down/n=next line up/p=previous line g=update q=quit)\n\n")
 	(dolist (item orgrr-selection-list)
 	  (when (string-match-p search item)
 	  (insert (concat item "\n"))
 	  (setq count (+ 1 count))
 	  (puthash count item orgrr-list-position)))
 	(orgrr-prepare-list-buffer list-buffer))))
+
+(defun orgrr-list-refresh ()
+  "Refreshes the current view."
+  (interactive)
+  (let* ((list-buffer (buffer-name))
+	 (search (string-replace "list for *" "" list-buffer))
+	 (search (string-remove-suffix "*" search)))
+    (orgrr-list search)))
 	   
 (defun orgrr-open-list-at-point ()
   "Visit the current entry of `orgrr-list'."
@@ -2171,6 +2185,22 @@ containers will be searched. Regex don't need to be escaped."
       (let ((ov (make-overlay (line-beginning-position) (line-end-position))))
 	(overlay-put ov 'face 'shadow))
       (orgrr-open-file filename))))
+
+(defun orgrr-open-list-next ()
+  (interactive)
+  (forward-line 1)
+  (let* ((selection (gethash (line-number-at-pos) orgrr-list-position)))
+    (if (string-match "^\\[" selection)
+	(setq selection (replace-regexp-in-string "\\[.*?\\]\\s-*" "" selection)))
+    (if (string-match "^\(" selection)
+	(setq selection (replace-regexp-in-string "\(.*?\)\\s-*" "" selection)))
+    (when (member selection (hash-table-keys orgrr-title-short_filename))
+      (setq filename (gethash selection orgrr-title-short_filename))
+      (setq filename (gethash (concat "\\" filename) orgrr-short_filename-filename))
+      (beginning-of-line)
+      (let ((ov (make-overlay (line-beginning-position) (line-end-position))))
+	(overlay-put ov 'face 'shadow))
+      (find-file-other-window filename))))
       
 (defun orgrr-toggle-use-cache ()
   "Toggle to turn usage of orgrr-cache on or off."
